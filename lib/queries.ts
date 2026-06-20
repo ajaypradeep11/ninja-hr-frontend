@@ -223,30 +223,9 @@ export async function getSalaryBenchmarks(): Promise<SalaryBenchmark[]> {
 export async function getOnboardingPipeline(): Promise<
   { id: string; name: string; title: string; startsInDays: number; progress: number }[]
 > {
-  const rows = await prisma.onboardingCase.findMany({
-    where: { status: { not: "ACTIVE" } },
-    include: { checklist: true },
-    orderBy: { startDate: "asc" },
-  });
-  return rows.map((c) => {
-    const forms = c.forms as Record<string, boolean>;
-    const formPct = Math.round(
-      (Object.values(forms).filter(Boolean).length / Object.values(forms).length) * 100,
-    );
-    const taskPct = c.checklist.length
-      ? Math.round(
-          (c.checklist.filter((t) => t.status === "COMPLETED").length / c.checklist.length) * 100,
-        )
-      : 0;
-    const start = c.startDate.toISOString().slice(0, 10);
-    return {
-      id: c.id,
-      name: c.name,
-      title: `${c.title} · starts ${start}`,
-      startsInDays: 0,
-      progress: Math.round((formPct + taskPct) / 2),
-    };
-  });
+  const { apiClient } = await import("@/lib/api/client");
+  const { data } = await apiClient("admin").GET("/api/v1/onboarding/pipeline");
+  return (data ?? []) as { id: string; name: string; title: string; startsInDays: number; progress: number }[];
 }
 
 export async function getHeadcountByDept(): Promise<{ dept: string; count: number }[]> {

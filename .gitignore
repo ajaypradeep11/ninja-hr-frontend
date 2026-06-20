@@ -29,3 +29,4 @@ yarn-error.log*
 *.tsbuildinfo
 
 /lib/generated/prisma
+/lib/api/generated

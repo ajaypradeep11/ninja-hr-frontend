@@ -29,4 +29,8 @@ yarn-error.log*
 *.tsbuildinfo
 
 /lib/generated/prisma
-/lib/api/generated
+# generated OpenAPI client types are committed so `next build` (and Docker) are hermetic;
+# regenerate with `npm run api:generate` when the backend API changes.
+!/lib/api/generated
+/lib/api/generated/*
+!/lib/api/generated/openapi.d.ts

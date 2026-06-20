@@ -1,0 +1,94 @@
+"use client";
+
+import * as React from "react";
+import type { OnboardingCase, ChecklistTask, TaskStatus, FormFlags } from "@/lib/onboarding";
+import * as actions from "@/app/actions/onboarding";
+
+type NewCaseInput = actions.NewCaseInput;
+
+interface Ctx {
+  cases: OnboardingCase[];
+  loading: boolean;
+  getCase: (id: string) => OnboardingCase | undefined;
+  getByToken: (token: string) => OnboardingCase | undefined;
+  refresh: () => Promise<void>;
+  createCase: (input: NewCaseInput) => Promise<OnboardingCase>;
+  // employee
+  markForm: (token: string, key: keyof FormFlags) => Promise<void>;
+  addConsent: (token: string, policy: string) => Promise<void>;
+  finalizeSubmission: (token: string) => Promise<void>;
+  // HR / admin
+  setChecklist: (id: string, tasks: ChecklistTask[]) => Promise<void>;
+  setTaskStatus: (id: string, taskId: string, status: TaskStatus) => Promise<void>;
+  verifyDocument: (id: string, docId: string) => Promise<void>;
+  togglePolicy: (id: string, policy: string) => Promise<void>;
+  activate: (id: string) => Promise<void>;
+}
+
+const OnboardingContext = React.createContext<Ctx | null>(null);
+
+export function OnboardingProvider({ children }: { children: React.ReactNode }) {
+  const [cases, setCases] = React.useState<OnboardingCase[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  const refresh = React.useCallback(async () => {
+    const data = await actions.listCases();
+    setCases(data);
+  }, []);
+
+  React.useEffect(() => {
+    let active = true;
+    actions
+      .listCases()
+      .then((data) => active && setCases(data))
+      .finally(() => active && setLoading(false));
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Replace (or insert) a case returned from a server action.
+  const upsert = React.useCallback((updated: OnboardingCase | null) => {
+    if (!updated) return;
+    setCases((prev) => {
+      const i = prev.findIndex((c) => c.id === updated.id);
+      if (i === -1) return [updated, ...prev];
+      const copy = [...prev];
+      copy[i] = updated;
+      return copy;
+    });
+  }, []);
+
+  const value: Ctx = {
+    cases,
+    loading,
+    getCase: (id) => cases.find((c) => c.id === id),
+    getByToken: (token) => cases.find((c) => c.token === token),
+    refresh,
+
+    createCase: async (input) => {
+      const created = await actions.createCase(input);
+      upsert(created);
+      return created;
+    },
+
+    markForm: async (token, key) => upsert(await actions.markForm(token, key)),
+    addConsent: async (token, policy) => upsert(await actions.addConsent(token, policy)),
+    finalizeSubmission: async (token) => upsert(await actions.finalizeSubmission(token)),
+
+    setChecklist: async (id, tasks) => upsert(await actions.setChecklist(id, tasks)),
+    setTaskStatus: async (id, taskId, status) =>
+      upsert(await actions.setTaskStatus(id, taskId, status)),
+    verifyDocument: async (id, docId) => upsert(await actions.verifyDocument(id, docId)),
+    togglePolicy: async (id, policy) => upsert(await actions.togglePolicy(id, policy)),
+    activate: async (id) => upsert(await actions.activate(id)),
+  };
+
+  return <OnboardingContext.Provider value={value}>{children}</OnboardingContext.Provider>;
+}
+
+export function useOnboarding() {
+  const ctx = React.useContext(OnboardingContext);
+  if (!ctx) throw new Error("useOnboarding must be used within OnboardingProvider");
+  return ctx;
+}

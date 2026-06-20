@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import Link from "next/link";
-import { Plus, Users2, FileSearch, Gauge, Clock } from "lucide-react";
+import { Plus, Users2, FileSearch, Gauge } from "lucide-react";
 import {
   Badge,
   Card,
@@ -11,8 +11,7 @@ import {
   Stat,
 } from "@/components/ui";
 import { getRequisitions, getCandidates } from "@/lib/queries";
-import { formatCAD, formatDate } from "@/lib/utils";
-import { provinceName } from "@/lib/compliance";
+import { formatCAD } from "@/lib/utils";
 
 const statusTone = {
   Draft: "gray",

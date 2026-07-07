@@ -1,5 +1,4 @@
 export const dynamic = "force-dynamic";
-import Link from "next/link";
 import {
   CalendarClock,
   CalendarDays,
@@ -7,7 +6,7 @@ import {
   Circle,
   GraduationCap,
   PartyPopper,
-  Sparkles,
+
   Wallet,
 } from "lucide-react";
 import {
@@ -16,9 +15,11 @@ import {
   LinkButton,
   ProgressBar,
 } from "@/components/ui";
-import { employeeLeaveBalances } from "@/lib/data";
-import { getTrainingCourses } from "@/lib/queries";
+import { getActor } from "@/lib/actor";
+import { getMyLeaveBalances } from "@/app/actions/modules";
+import { getMyTraining } from "@/app/actions/training";
 import { cn, formatDate } from "@/lib/utils";
+import { CopilotQuickAsk } from "@/components/copilot-quick-ask";
 
 const balanceTone: Record<string, { bg: string; bar: "brand" | "sky" | "amber"; text: string }> = {
   brand: { bg: "bg-brand-50", bar: "brand", text: "text-brand-700" },
@@ -40,13 +41,21 @@ const upcoming = [
 ];
 
 export default async function EmployeeDashboard() {
-  const trainingCourses = await getTrainingCourses();
-  const active = trainingCourses.filter((c) => c.progress > 0 && c.progress < 100);
+  // Live data: balances derive from the actor's actual approved requests, so
+  // this card, the Leave page and the assistant all quote the same numbers.
+  const [actor, myTraining, leaveBalances] = await Promise.all([
+    getActor(),
+    getMyTraining(),
+    getMyLeaveBalances(),
+  ]);
+  const active = myTraining.filter((a) => a.status !== "Completed");
 
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-[26px] font-bold tracking-tight text-ink">Welcome back, Jim</h1>
+        <h1 className="text-[26px] font-bold tracking-tight text-ink">
+          Welcome back, {actor.name.split(" ")[0]}
+        </h1>
         <p className="mt-1 text-sm text-ink-muted">
           Here&apos;s your day at a glance — tasks, time off, and growth.
         </p>
@@ -54,7 +63,7 @@ export default async function EmployeeDashboard() {
 
       {/* Leave balances */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-        {employeeLeaveBalances.map((b) => {
+        {leaveBalances.map((b) => {
           const t = balanceTone[b.tone];
           const total = b.available + b.used;
           return (
@@ -149,50 +158,50 @@ export default async function EmployeeDashboard() {
           </div>
         </Card>
 
-        {/* Ask AI */}
+        {/* Ask AI — one-line entry to the single global Co-Pilot panel. */}
         <Card className="card-pad lg:col-span-3 flex flex-col justify-between bg-gradient-to-br from-brand-500 to-brand-700 text-white">
           <div>
-            <Sparkles className="h-6 w-6" />
-            <h3 className="mt-3 text-base font-bold">Ask the HR Co-Pilot</h3>
+            <h3 className="text-base font-bold">HR Co-Pilot</h3>
             <p className="mt-1 text-sm text-white/80">
-              &ldquo;How many vacation days do I have left?&rdquo; — get instant answers, no
-              email needed.
+              &ldquo;How many vacation days do I have left?&rdquo; — press Enter and the
+              assistant panel opens with your answer.
             </p>
           </div>
-          <Link
-            href="/employee/assistant"
-            className="mt-4 inline-flex items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-brand-700 transition-colors hover:bg-white/90"
-          >
-            Open Assistant
-          </Link>
+          <div className="mt-4">
+            <CopilotQuickAsk />
+          </div>
         </Card>
 
-        {/* Active Training */}
+        {/* My Training */}
         <Card className="card-pad lg:col-span-12">
           <CardHeader
-            title="Active Training"
+            title="My Training"
             action={
               <LinkButton href="/employee/training" variant="ghost" size="sm">
                 View all
               </LinkButton>
             }
           />
-          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {active.map((c) => (
-              <div key={c.id} className="flex items-center gap-3 rounded-xl border border-line p-3">
-                <div className="flex h-12 w-16 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-brand-400 to-brand-600 text-white">
-                  <GraduationCap className="h-5 w-5" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-ink">{c.title}</p>
-                  <div className="mt-1.5 flex items-center gap-2">
-                    <ProgressBar value={c.progress} className="h-1" />
-                    <span className="text-[11px] font-medium text-ink-muted">{c.progress}%</span>
+          {active.length === 0 ? (
+            <p className="mt-4 text-sm text-ink-muted">You&apos;re all caught up on training. 🎉</p>
+          ) : (
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {active.map((a) => (
+                <div key={a.id} className="flex items-center gap-3 rounded-xl border border-line p-3">
+                  <div className="flex h-12 w-16 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-brand-400 to-brand-600 text-white">
+                    <GraduationCap className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-ink">{a.courseTitle}</p>
+                    <div className="mt-1.5 flex items-center gap-2">
+                      <ProgressBar value={a.progress} className="h-1" />
+                      <span className="text-[11px] font-medium text-ink-muted">{a.status}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </Card>
       </div>
     </div>

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
   ChevronLeft,
-  Sparkles,
+  ChevronDown,
   Upload,
   Plus,
   Trash2,
@@ -21,17 +21,20 @@ import {
   Download,
   CircleDot,
   Circle,
+  AlertTriangle,
+  HelpCircle,
 } from "lucide-react";
 import { Avatar, Badge, Card, CardHeader } from "@/components/ui";
+import { AssigneePicker } from "@/components/assignee-picker";
+import { TaskStatusPill, BlockingTag } from "@/components/task-pills";
 import { cn, formatDate } from "@/lib/utils";
 import { provinceName } from "@/lib/compliance";
 import { useOnboarding } from "@/components/onboarding-store";
+import { listEmployeeDirectory } from "@/app/actions/onboarding";
 import {
   activationGates,
   canActivate,
   caseProgress,
-  generateChecklist,
-  mandatoryPolicies,
   type CaseDocument,
   type ChecklistTask,
   type TaskOwner,
@@ -40,6 +43,15 @@ import {
 } from "@/lib/onboarding";
 
 const OWNERS: TaskOwner[] = ["HR", "Finance", "IT / Ops", "Manager"];
+
+/** Which company department typically staffs each task-owner team — used to
+ *  sort the best-fit people to the top of the per-department Assign picker. */
+const OWNER_HOME_DEPT: Record<TaskOwner, string | null> = {
+  HR: "People",
+  Finance: "Finance",
+  "IT / Ops": "Engineering",
+  Manager: null,
+};
 const STATUS_CYCLE: TaskStatus[] = ["Pending", "In-Progress", "Completed"];
 const ownerTone: Record<TaskOwner, "brand" | "sky" | "amber" | "violet"> = {
   HR: "brand",
@@ -52,11 +64,6 @@ const accessTone: Record<DataAccess, "gray" | "amber" | "red"> = {
   banking: "amber",
   medical: "red",
 };
-const statusTone: Record<TaskStatus, "gray" | "amber" | "green"> = {
-  Pending: "gray",
-  "In-Progress": "amber",
-  Completed: "green",
-};
 
 export default function CaseDetailPage() {
   const params = useParams<{ id: string }>();
@@ -65,8 +72,8 @@ export default function CaseDetailPage() {
     loading,
     setChecklist,
     setTaskStatus,
+    setTaskAssignee,
     verifyDocument,
-    togglePolicy,
     activate,
   } = useOnboarding();
   const c = getCase(params.id);
@@ -78,6 +85,28 @@ export default function CaseDetailPage() {
   const [newTask, setNewTask] = React.useState<{ label: string; owner: TaskOwner; blocking: boolean; access: DataAccess }>(
     { label: "", owner: "HR", blocking: false, access: "general" },
   );
+  const [actionError, setActionError] = React.useState<string | null>(null);
+  // Department accordion collapse state (all expanded by default).
+  const [collapsed, setCollapsed] = React.useState<Record<string, boolean>>({});
+
+  // Internal employee directory for the per-department Assign pickers.
+  const [directory, setDirectory] = React.useState<
+    { name: string; department: string; title: string }[]
+  >([]);
+  React.useEffect(() => {
+    listEmployeeDirectory()
+      .then(setDirectory)
+      .catch(() => setDirectory([]));
+  }, []);
+
+  // Surface failed mutations (e.g. activation blocked by gates → 409) instead
+  // of leaving them as silent unhandled rejections.
+  const run = (p: Promise<unknown>) =>
+    p
+      .then(() => setActionError(null))
+      .catch((err: unknown) =>
+        setActionError(err instanceof Error ? err.message : "Action failed"),
+      );
 
   if (!c) {
     return (
@@ -94,16 +123,27 @@ export default function CaseDetailPage() {
 
   const gates = activationGates(c);
   const ready = canActivate(c);
-  const required = mandatoryPolicies(c.province);
   const progress = caseProgress(c);
+
+  // Human-in-the-loop blockers: documents HR still has to verify before the
+  // account can be activated. Drives the tooltip + "Action Required" banner.
+  const pendingVerifyCount = c.documents.filter((d) => d.status === "Needs Verification").length;
+  const showActionBanner = pendingVerifyCount > 0 && c.status !== "Active";
+  const verifyHint =
+    pendingVerifyCount > 0
+      ? `Awaiting HR review of ${pendingVerifyCount} uploaded document${
+          pendingVerifyCount === 1 ? "" : "s"
+        } (e.g. TD1 tax forms) before the account can go Active.`
+      : "The new hire has submitted their forms — HR verification is required before this account can be activated.";
 
   function cycleStatus(t: ChecklistTask) {
     const idx = STATUS_CYCLE.indexOf(t.status);
-    setTaskStatus(c!.id, t.id, STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length]);
+    void run(setTaskStatus(c!.id, t.id, STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length]));
   }
 
-  function regenerate() {
-    setChecklist(c!.id, generateChecklist(c!.department, c!.province));
+  /** Assign an internal employee as owner of a department's task block. */
+  function assignOwner(owner: TaskOwner, employeeName: string | null) {
+    void run(setTaskAssignee(c!.id, owner, employeeName));
   }
 
   function applyUpload() {
@@ -126,7 +166,7 @@ export default function CaseDetailPage() {
           dataAccess: /deposit|payroll|bank/i.test(label) ? "banking" : "general",
         };
       });
-    if (tasks.length) setChecklist(c!.id, tasks);
+    if (tasks.length) void run(setChecklist(c!.id, tasks));
     setShowUpload(false);
     setUploadText("");
   }
@@ -141,12 +181,12 @@ export default function CaseDetailPage() {
       blocking: newTask.blocking,
       dataAccess: newTask.access,
     };
-    setChecklist(c!.id, [...c!.checklist, t]);
+    void run(setChecklist(c!.id, [...c!.checklist, t]));
     setNewTask({ label: "", owner: "HR", blocking: false, access: "general" });
   }
 
   function removeTask(id: string) {
-    setChecklist(c!.id, c!.checklist.filter((t) => t.id !== id));
+    void run(setChecklist(c!.id, c!.checklist.filter((t) => t.id !== id)));
   }
 
   function downloadDoc(doc: CaseDocument) {
@@ -183,6 +223,10 @@ Policy:     ESIGN / PIPEDA compliant signing
         <ChevronLeft className="h-3.5 w-3.5" /> Back to Onboarding
       </Link>
 
+      {actionError && (
+        <div className="mb-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{actionError}</div>
+      )}
+
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
@@ -200,7 +244,12 @@ Policy:     ESIGN / PIPEDA compliant signing
             <p className="text-2xl font-bold text-ink">{progress}%</p>
             <p className="text-[11px] uppercase tracking-wide text-ink-faint">Complete</p>
           </div>
-          <Badge tone={c.status === "Active" ? "green" : ready ? "brand" : "sky"}>{c.status}</Badge>
+          <span className="inline-flex items-center gap-1">
+            <Badge tone={c.status === "Active" ? "green" : ready ? "brand" : "sky"}>
+              {c.status}
+            </Badge>
+            {c.status === "Pending Verification" && <InfoTip text={verifyHint} />}
+          </span>
           <button
             onClick={() => setShowAudit(true)}
             className="rounded-lg border border-line p-2 text-ink-muted hover:bg-canvas"
@@ -211,50 +260,110 @@ Policy:     ESIGN / PIPEDA compliant signing
         </div>
       </div>
 
+      {/* Thick progress bar — a fast visual read of pipeline position. */}
+      <div className="mt-4">
+        <div className="mb-1.5 flex items-center justify-between">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
+            Onboarding progress
+          </span>
+          <span className="text-xs font-semibold text-ink-soft">{progress}% complete</span>
+        </div>
+        <div className="h-2.5 w-full overflow-hidden rounded-full bg-line">
+          <div
+            className={cn(
+              "h-full rounded-full transition-all",
+              progress === 100 ? "bg-emerald-500" : "bg-brand-500",
+            )}
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Action Required — surface human-in-the-loop blockers up top so HR
+          instantly sees why the account isn't Active. */}
+      {showActionBanner && (
+        <div className="mt-4 flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-amber-900">
+              Action Required: {pendingVerifyCount} document
+              {pendingVerifyCount === 1 ? "" : "s"} require HR verification to activate this account.
+            </p>
+            <a
+              href="#hr-verification"
+              className="mt-0.5 inline-block text-xs font-semibold text-amber-700 underline underline-offset-2 hover:text-amber-900"
+            >
+              Jump to verification →
+            </a>
+          </div>
+        </div>
+      )}
+
       <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-12">
         {/* LEFT column */}
         <div className="space-y-5 lg:col-span-8">
-          {/* Checklist engine */}
-          <Card className="card-pad">
-            <CardHeader
-              title="Onboarding Checklist"
-              action={
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={regenerate}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-brand-50 px-2.5 py-1.5 text-xs font-semibold text-brand-700 hover:bg-brand-100"
-                  >
-                    <Sparkles className="h-3.5 w-3.5" /> Regenerate with AI
-                  </button>
-                  <button
-                    onClick={() => setShowUpload(true)}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-line px-2.5 py-1.5 text-xs font-semibold text-ink-soft hover:bg-canvas"
-                  >
-                    <Upload className="h-3.5 w-3.5" /> Upload
-                  </button>
-                </div>
-              }
-            />
-            <p className="mt-1 text-xs text-ink-muted">
-              One checklist shared across departments. Each owner sees only the data their tasks
-              require — <span className="font-medium text-amber-600">banking</span> data is visible to
-              Finance &amp; HR, never IT.
-            </p>
+          {/* Checklist engine — one modern card per department. */}
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold tracking-tight text-ink">Onboarding Checklist</h2>
+              <p className="mt-0.5 text-xs text-ink-muted">
+                Grouped by department — assign an owner to each block. Each owner sees only the data
+                their tasks require (<span className="font-medium text-amber-600">banking</span> is
+                visible to Finance &amp; HR, never IT).
+              </p>
+            </div>
+            <button
+              onClick={() => setShowUpload(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-line px-2.5 py-1.5 text-xs font-semibold text-ink-soft hover:bg-canvas"
+            >
+              <Upload className="h-3.5 w-3.5" /> Upload
+            </button>
+          </div>
 
-            <div className="mt-4 space-y-5">
-              {grouped.map((g) => (
-                <div key={g.owner}>
-                  <div className="mb-2 flex items-center gap-2">
+          {grouped.map((g) => {
+            const done = g.tasks.filter((t) => t.status === "Completed").length;
+            const openBlockers = g.tasks.filter((t) => t.blocking && t.status !== "Completed").length;
+            const isCollapsed = collapsed[g.owner] ?? false;
+            return (
+              <Card key={g.owner} className="card-pad">
+                {/* Accordion header: department + progress + delegation */}
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <button
+                    onClick={() => setCollapsed((p) => ({ ...p, [g.owner]: !isCollapsed }))}
+                    className="flex items-center gap-2"
+                    aria-expanded={!isCollapsed}
+                  >
+                    <ChevronDown
+                      className={cn(
+                        "h-4 w-4 text-ink-faint transition-transform",
+                        isCollapsed && "-rotate-90",
+                      )}
+                    />
                     <Badge tone={ownerTone[g.owner]}>{g.owner}</Badge>
-                    <span className="text-[11px] text-ink-faint">
-                      {g.tasks.filter((t) => t.status === "Completed").length}/{g.tasks.length} done
+                    <span className="text-[11px] font-medium text-ink-faint">
+                      {done}/{g.tasks.length} done
                     </span>
-                  </div>
-                  <div className="space-y-1.5">
+                    {openBlockers > 0 && <BlockingTag />}
+                  </button>
+                  <AssigneePicker
+                    assignee={c.taskAssignees[g.owner] ?? null}
+                    homeDept={OWNER_HOME_DEPT[g.owner]}
+                    directory={directory}
+                    onAssign={(name) => assignOwner(g.owner, name)}
+                  />
+                </div>
+
+                {!isCollapsed && (
+                  <div className="mt-3 space-y-1.5">
                     {g.tasks.map((t) => (
                       <div
                         key={t.id}
-                        className="group flex items-center gap-3 rounded-xl border border-line px-3 py-2.5"
+                        className={cn(
+                          "group flex items-center gap-3 rounded-xl border px-3 py-2.5",
+                          t.blocking && t.status !== "Completed"
+                            ? "border-red-200 bg-red-50/40"
+                            : "border-line",
+                        )}
                       >
                         <button onClick={() => cycleStatus(t)} title="Cycle status">
                           {t.status === "Completed" ? (
@@ -265,19 +374,24 @@ Policy:     ESIGN / PIPEDA compliant signing
                             <Circle className="h-5 w-5 text-ink-faint" />
                           )}
                         </button>
-                        <span
-                          className={cn(
-                            "flex-1 text-sm",
-                            t.status === "Completed" ? "text-ink-muted line-through" : "text-ink-soft",
-                          )}
-                        >
-                          {t.label}
-                        </span>
-                        {t.blocking && <Badge tone="red">Blocking</Badge>}
+                        {/* Blocking marker sits right beside the task name. */}
+                        <div className="flex flex-1 flex-wrap items-center gap-x-2 gap-y-1">
+                          {t.blocking && t.status !== "Completed" && <BlockingTag />}
+                          <span
+                            className={cn(
+                              "text-sm",
+                              t.status === "Completed"
+                                ? "text-ink-muted line-through"
+                                : "text-ink-soft",
+                            )}
+                          >
+                            {t.label}
+                          </span>
+                        </div>
                         {t.dataAccess !== "general" && (
                           <Badge tone={accessTone[t.dataAccess]}>{t.dataAccess}</Badge>
                         )}
-                        <Badge tone={statusTone[t.status]}>{t.status}</Badge>
+                        <TaskStatusPill status={t.status} />
                         <button
                           onClick={() => removeTask(t.id)}
                           className="text-ink-faint opacity-0 transition hover:text-red-500 group-hover:opacity-100"
@@ -287,12 +401,14 @@ Policy:     ESIGN / PIPEDA compliant signing
                       </div>
                     ))}
                   </div>
-                </div>
-              ))}
-            </div>
+                )}
+              </Card>
+            );
+          })}
 
-            {/* Add task */}
-            <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl bg-canvas p-2.5">
+          {/* Add task */}
+          <Card className="card-pad">
+            <div className="flex flex-wrap items-center gap-2">
               <input
                 value={newTask.label}
                 onChange={(e) => setNewTask({ ...newTask, label: e.target.value })}
@@ -336,7 +452,7 @@ Policy:     ESIGN / PIPEDA compliant signing
           </Card>
 
           {/* Document verification queue */}
-          <Card className="card-pad">
+          <Card className="card-pad scroll-mt-6" id="hr-verification">
             <CardHeader title="Documents · HR Verification" />
             <p className="mt-1 text-xs text-ink-muted">
               Human-in-the-loop: identity &amp; banking documents must be verified by HR before the
@@ -357,6 +473,16 @@ Policy:     ESIGN / PIPEDA compliant signing
                         {d.type} · signed {d.signedAt}
                       </p>
                     </button>
+                    {/* Uploaded file — download to verify its contents. */}
+                    {d.hasFile && (
+                      <a
+                        href={`/api/onboarding/${c.id}/documents/${d.id}`}
+                        title="Download uploaded file"
+                        className="rounded-lg p-1.5 text-ink-muted hover:bg-canvas hover:text-ink"
+                      >
+                        <Download className="h-4 w-4" />
+                      </a>
+                    )}
                     {d.status === "Verified" ? (
                       <Badge tone="green">
                         <CheckCircle2 className="h-3 w-3" /> Verified
@@ -365,7 +491,7 @@ Policy:     ESIGN / PIPEDA compliant signing
                       <>
                         <Badge tone="amber">Needs verification</Badge>
                         <button
-                          onClick={() => verifyDocument(c.id, d.id)}
+                          onClick={() => run(verifyDocument(c.id, d.id))}
                           className="rounded-lg bg-brand-500 px-2.5 py-1 text-xs font-semibold text-white hover:bg-brand-600"
                         >
                           Verify
@@ -408,7 +534,7 @@ Policy:     ESIGN / PIPEDA compliant signing
               <>
                 <button
                   disabled={!ready}
-                  onClick={() => activate(c.id)}
+                  onClick={() => run(activate(c.id))}
                   className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Rocket className="h-4 w-4" /> Activate account
@@ -424,36 +550,55 @@ Policy:     ESIGN / PIPEDA compliant signing
             )}
           </Card>
 
-          {/* Provincial policy geofencing */}
+          {/* Standard new-hire form — submitted via the preboarding portal.
+              SIN + bank account arrive MASKED from the API; HR never sees raw. */}
           <Card className="card-pad">
-            <CardHeader title={`Mandatory policies · ${c.province}`} />
-            <p className="mt-1 text-xs text-ink-muted">
-              Geofenced to {provinceName(c.province)}. All must be attached before activation.
-            </p>
-            <div className="mt-3 space-y-1.5">
-              {required.map((p) => {
-                const on = c.policiesAttached.includes(p);
-                return (
-                  <button
-                    key={p}
-                    onClick={() => togglePolicy(c.id, p)}
-                    className={cn(
-                      "flex w-full items-center gap-2.5 rounded-xl border px-3 py-2 text-left text-sm transition",
-                      on ? "border-emerald-200 bg-emerald-50/60 text-ink-soft" : "border-line text-ink-soft hover:bg-canvas",
-                    )}
-                  >
-                    {on ? (
-                      <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                    ) : (
-                      <Circle className="h-4 w-4 text-ink-faint" />
-                    )}
-                    <span className="flex-1">{p}</span>
-                    {!on && <span className="text-[10px] font-semibold text-red-500">missing</span>}
-                  </button>
-                );
-              })}
-            </div>
+            <CardHeader title="New hire form" />
+            {c.profile ? (
+              <div className="mt-3 space-y-1.5 text-sm">
+                {[
+                  ["Legal name", `${c.profile.legalFirstName} ${c.profile.legalLastName}`],
+                  ["Preferred name", c.profile.preferredName || "—"],
+                  ["Date of birth", c.profile.dateOfBirth],
+                  ["SIN", c.profile.sin],
+                  ["Phone", c.profile.phone],
+                  [
+                    "Address",
+                    `${c.profile.addressStreet}, ${c.profile.addressCity} ON ${c.profile.addressPostal}`,
+                  ],
+                  [
+                    "Emergency contact",
+                    `${c.profile.emergencyName} (${c.profile.emergencyRelationship}) · ${c.profile.emergencyPhone}`,
+                  ],
+                  [
+                    "Work eligibility",
+                    c.profile.workEligibility +
+                      (c.profile.workPermitExpiry ? ` · expires ${c.profile.workPermitExpiry}` : ""),
+                  ],
+                  [
+                    "Direct deposit",
+                    `Inst ${c.profile.bankInstitution} · Transit ${c.profile.bankTransit} · Acct ${c.profile.bankAccount}`,
+                  ],
+                  ["Account holder", c.profile.bankAccountHolder ?? "—"],
+                ].map(([label, value]) => (
+                  <div key={label} className="flex items-start justify-between gap-3">
+                    <span className="shrink-0 text-xs text-ink-faint">{label}</span>
+                    <span className="text-right text-xs font-medium text-ink-soft">{value}</span>
+                  </div>
+                ))}
+                <p className="mt-2 flex items-center gap-1 border-t border-line pt-2 text-[11px] text-ink-faint">
+                  <ShieldCheck className="h-3 w-3 text-emerald-500" />
+                  SIN and account number are masked — raw values never leave the database.
+                </p>
+              </div>
+            ) : (
+              <p className="mt-3 rounded-xl border border-dashed border-line px-3 py-4 text-center text-xs text-ink-muted">
+                Not submitted yet — the new hire fills this in step 1 of preboarding, along with
+                the TD1 &amp; TD1ON (2026) tax forms.
+              </p>
+            )}
           </Card>
+
 
           {/* Consent log */}
           <Card className="card-pad">
@@ -550,6 +695,27 @@ Policy:     ESIGN / PIPEDA compliant signing
         </Modal>
       )}
     </div>
+  );
+}
+
+/** Small hover/focus tooltip used to clarify ambiguous status labels. */
+function InfoTip({ text }: { text: string }) {
+  return (
+    <span className="group/tip relative inline-flex">
+      <button
+        type="button"
+        aria-label={text}
+        className="text-ink-faint transition hover:text-ink"
+      >
+        <HelpCircle className="h-3.5 w-3.5" />
+      </button>
+      <span
+        role="tooltip"
+        className="pointer-events-none absolute left-1/2 top-full z-30 mt-1.5 w-56 -translate-x-1/2 rounded-lg bg-ink px-3 py-2 text-[11px] font-medium leading-snug text-white opacity-0 shadow-lg transition-opacity group-hover/tip:opacity-100"
+      >
+        {text}
+      </span>
+    </span>
   );
 }
 

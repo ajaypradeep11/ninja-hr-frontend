@@ -21,7 +21,6 @@ import {
 import {
   currentUser,
   offboardingEmployee,
-  payrollPeriod,
   upcomingEvents,
 } from "@/lib/data";
 import {
@@ -33,7 +32,6 @@ import {
   getEmployees,
 } from "@/lib/queries";
 import { formatCAD, formatDate } from "@/lib/utils";
-import { TimesheetButton } from "./timesheet-button";
 
 const eventIcon = {
   probation: CalendarClock,
@@ -53,7 +51,8 @@ export default async function AdminDashboard() {
       getEmployees(),
     ]);
 
-  const maxSalary = Math.max(...salaryBenchmarks.flatMap((b) => [b.high]));
+  // Guard the empty case — Math.max() of nothing is -Infinity, which breaks bar widths.
+  const maxSalary = salaryBenchmarks.length ? Math.max(...salaryBenchmarks.map((b) => b.high)) : 1;
   const pendingLeave = leaveRequests.filter((l) => l.status === "Pending");
 
   return (
@@ -167,66 +166,33 @@ export default async function AdminDashboard() {
           </div>
         </Card>
 
-        {/* Payroll Engine */}
-        <Card className="card-pad lg:col-span-4">
-          <CardHeader title="Payroll Engine" />
-          <p className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
-            Next period: {payrollPeriod.label}
-          </p>
-          <div className="mt-1.5 flex items-end justify-between">
-            <div>
-              <p className="text-[10px] uppercase tracking-wide text-ink-faint">
-                Est. biweekly salary
-              </p>
-              <p className="text-2xl font-bold text-ink">
-                {formatCAD(payrollPeriod.estBiweekly, { maximumFractionDigits: 0 })}
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-[10px] uppercase tracking-wide text-ink-faint">
-                LTD contributions
-              </p>
-              <p className="text-sm font-semibold text-ink-soft">
-                {formatCAD(payrollPeriod.ltdContributions)}
-              </p>
-            </div>
-          </div>
-          <TimesheetButton employees={employees} period={payrollPeriod.label} />
-          <div className="mt-4 flex items-center justify-between text-xs">
-            <span className="text-ink-muted">Completed Reviews</span>
-            <span className="font-semibold text-ink">
-              {payrollPeriod.completedReviews}/{payrollPeriod.totalReviews}
-            </span>
-          </div>
-        </Card>
-
         {/* Active Training */}
         <Card className="card-pad lg:col-span-4">
           <CardHeader
-            title="Active Training"
+            title="Company Training"
             action={
               <Link
-                href="/admin/tracker"
+                href="/admin/training"
                 className="text-xs font-semibold text-brand-600 hover:text-brand-700"
               >
-                View all
+                Manage
               </Link>
             }
           />
           <div className="mt-4 space-y-3">
-            {trainingCourses.slice(0, 3).map((c) => (
+            {trainingCourses.length === 0 && (
+              <p className="text-sm text-ink-muted">No courses yet — create one in Training.</p>
+            )}
+            {trainingCourses.slice(0, 4).map((c) => (
               <div key={c.id} className="flex items-center gap-3">
-                <div className="flex h-12 w-16 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-brand-400 to-brand-600 text-white">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-brand-400 to-brand-600 text-white">
                   <GraduationCap className="h-5 w-5" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-ink">{c.title}</p>
-                  <div className="mt-1.5 flex items-center gap-2">
-                    <ProgressBar value={c.progress} className="h-1" />
-                    <span className="text-[11px] font-medium text-ink-muted">
-                      {c.progress}%
-                    </span>
-                  </div>
+                  <p className="text-[11px] text-ink-muted">
+                    {c.category} · {c.assignedCount ?? 0} assigned · {c.completedCount ?? 0} completed
+                  </p>
                 </div>
               </div>
             ))}
@@ -271,9 +237,13 @@ export default async function AdminDashboard() {
                       {formatDate(l.end, { year: undefined })}
                     </td>
                     <td className="py-2.5 text-right">
-                      <button className="text-xs font-semibold text-brand-600 hover:text-brand-700">
-                        Approve
-                      </button>
+                      {/* Approval happens on the Leave page — a bare button here did nothing. */}
+                      <Link
+                        href="/admin/leave"
+                        className="text-xs font-semibold text-brand-600 hover:text-brand-700"
+                      >
+                        Review
+                      </Link>
                     </td>
                   </tr>
                 ))}

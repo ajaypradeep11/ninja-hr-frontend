@@ -3,7 +3,6 @@
 import * as React from "react";
 import {
   LogOut,
-  Lock,
   ShieldAlert,
   Power,
   CheckCircle2,
@@ -19,13 +18,17 @@ import {
   Avatar,
   PageHeader,
 } from "@/components/ui";
+import { AssigneePicker } from "@/components/assignee-picker";
+import { TaskStatusPill, BlockingTag } from "@/components/task-pills";
 import { offboardingEmployee } from "@/lib/data";
 import type { OffboardingTask } from "@/lib/data";
 import { cn, formatDate } from "@/lib/utils";
 import {
   setOffboardingTaskStatus,
+  setOffboardingAssignee,
   finalizeTermination,
 } from "@/app/actions/modules";
+import { listEmployeeDirectory } from "@/app/actions/onboarding";
 
 type Status = "Pending" | "In-Progress" | "Completed";
 type Owner = "Manager" | "IT / Ops" | "HR / Payroll";
@@ -42,10 +45,18 @@ const COLUMNS: { owner: Owner; tone: string }[] = [
   { owner: "HR / Payroll", tone: "text-emerald-600" },
 ];
 
-const statusMeta: Record<Status, { tone: "gray" | "amber" | "green"; icon: typeof Clock }> = {
-  Pending: { tone: "gray", icon: Clock },
-  "In-Progress": { tone: "amber", icon: Loader2 },
-  Completed: { tone: "green", icon: CheckCircle2 },
+/** Which company department typically heads each offboarding track — used to
+ *  suggest the best-fit owner first in the delegation picker. */
+const OWNER_HOME_DEPT: Record<Owner, string | null> = {
+  Manager: null,
+  "IT / Ops": "Engineering",
+  "HR / Payroll": "Finance",
+};
+
+const statusMeta: Record<Status, { icon: typeof Clock }> = {
+  Pending: { icon: Clock },
+  "In-Progress": { icon: Loader2 },
+  Completed: { icon: CheckCircle2 },
 };
 
 const NEXT: Record<Status, Status> = {
@@ -54,11 +65,42 @@ const NEXT: Record<Status, Status> = {
   Completed: "Pending",
 };
 
-export function OffboardingView({ initialTasks }: { initialTasks: OffboardingTask[] }) {
+export function OffboardingView({
+  initialTasks,
+  subjectName,
+}: {
+  initialTasks: OffboardingTask[];
+  subjectName?: string;
+}) {
   const [template, setTemplate] = React.useState(TEMPLATES[1]);
   const [tasks, setTasks] = React.useState(initialTasks);
   const [override, setOverride] = React.useState(false);
   const [terminated, setTerminated] = React.useState(false);
+  const [actionError, setActionError] = React.useState<string | null>(null);
+
+  // Internal directory for the per-department delegation pickers.
+  const [directory, setDirectory] = React.useState<
+    { name: string; department: string; title: string }[]
+  >([]);
+  React.useEffect(() => {
+    listEmployeeDirectory()
+      .then(setDirectory)
+      .catch(() => setDirectory([]));
+  }, []);
+
+  async function delegate(owner: Owner, assignee: string | null) {
+    try {
+      setActionError(null);
+      setTasks(await setOffboardingAssignee(owner, assignee));
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Failed to delegate tasks");
+    }
+  }
+
+  // When deep-linked from the directory ("Initiate Offboarding"), the flow is
+  // scoped to that employee; otherwise it falls back to the demo record.
+  const subject = subjectName?.trim() || offboardingEmployee.name;
+  const isCustomSubject = subject !== offboardingEmployee.name;
 
   const blockers = tasks.filter((t) => t.blocking && t.status !== "Completed");
   const canFinalize = blockers.length === 0 || override;
@@ -67,7 +109,13 @@ export function OffboardingView({ initialTasks }: { initialTasks: OffboardingTas
     const task = tasks.find((t) => t.id === id);
     if (!task) return;
     const nextStatus = NEXT[task.status as Status];
-    setTasks(await setOffboardingTaskStatus(id, nextStatus));
+    try {
+      setActionError(null);
+      setTasks(await setOffboardingTaskStatus(id, nextStatus));
+    } catch (err) {
+      // Keep the current list — a failed PATCH must not wipe the task matrix.
+      setActionError(err instanceof Error ? err.message : "Failed to update task");
+    }
   }
 
   return (
@@ -93,16 +141,31 @@ export function OffboardingView({ initialTasks }: { initialTasks: OffboardingTas
         }
       />
 
+      {isCustomSubject && !terminated && (
+        <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <Bell className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>
+            Offboarding initiated for <span className="font-semibold">{subject}</span>. Assign the
+            separation checklist below, clear all blocking tasks, then finalize the termination.
+          </span>
+        </div>
+      )}
+
       {/* Employee header */}
       <Card className="card-pad">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Avatar name={offboardingEmployee.name} size={44} />
+            <Avatar name={subject} size={44} />
             <div>
-              <p className="text-base font-bold text-ink">{offboardingEmployee.name}</p>
+              <p className="text-base font-bold text-ink">{subject}</p>
               <p className="text-xs text-ink-muted">
-                {offboardingEmployee.title} · Last day{" "}
-                {formatDate(offboardingEmployee.lastDay)}
+                {isCustomSubject ? (
+                  "Separation checklist"
+                ) : (
+                  <>
+                    {offboardingEmployee.title} · Last day {formatDate(offboardingEmployee.lastDay)}
+                  </>
+                )}
               </p>
             </div>
           </div>
@@ -112,25 +175,47 @@ export function OffboardingView({ initialTasks }: { initialTasks: OffboardingTas
         </div>
       </Card>
 
-      {/* Task matrix */}
+      {/* Task matrix — one card per department, with delegation in the header. */}
       <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-3">
         {COLUMNS.map((col) => {
           const colTasks = tasks.filter((t) => t.owner === col.owner);
+          const done = colTasks.filter((t) => t.status === "Completed").length;
+          // Tasks in a column share one delegated owner (set via the header).
+          const assignee = colTasks.find((t) => t.assignee)?.assignee ?? null;
           return (
-            <Card key={col.owner} className="card-pad">
-              <h3 className={cn("text-sm font-bold", col.tone)}>{col.owner}</h3>
-              <p className="mt-0.5 text-[11px] text-ink-faint">
-                {colTasks.filter((t) => t.status === "Completed").length}/{colTasks.length} done
-              </p>
+            <Card key={col.owner} className="card-pad flex flex-col">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <h3 className={cn("text-sm font-bold", col.tone)}>{col.owner}</h3>
+                  <p className="mt-0.5 text-[11px] text-ink-faint">
+                    {done}/{colTasks.length} done
+                  </p>
+                </div>
+              </div>
+              <div className="mt-2.5 border-t border-line pt-2.5">
+                <AssigneePicker
+                  assignee={assignee}
+                  homeDept={OWNER_HOME_DEPT[col.owner]}
+                  directory={directory}
+                  onAssign={(name) => delegate(col.owner, name)}
+                  disabled={terminated}
+                />
+              </div>
               <div className="mt-3 space-y-2.5">
                 {colTasks.map((t) => {
-                  const meta = statusMeta[t.status as Status];
-                  const Icon = meta.icon;
+                  const Icon = statusMeta[t.status as Status].icon;
                   return (
                     <button
                       key={t.id}
                       onClick={() => cycle(t.id)}
-                      className="flex w-full items-start gap-2.5 rounded-xl border border-line p-3 text-left transition-colors hover:border-brand-300"
+                      disabled={terminated}
+                      className={cn(
+                        "flex w-full items-start gap-2.5 rounded-xl border p-3 text-left transition-colors hover:border-brand-300 disabled:cursor-not-allowed disabled:opacity-60",
+                        t.blocking && t.status !== "Completed"
+                          ? "border-red-200 bg-red-50/40"
+                          : "border-line",
+                      )}
+                      title="Click to advance status"
                     >
                       <Icon
                         className={cn(
@@ -142,15 +227,13 @@ export function OffboardingView({ initialTasks }: { initialTasks: OffboardingTas
                               : "text-ink-faint",
                         )}
                       />
-                      <span className="flex-1">
-                        <span className="block text-sm font-medium text-ink">{t.label}</span>
-                        <span className="mt-1 flex items-center gap-1.5">
-                          <Badge tone={meta.tone}>{t.status}</Badge>
-                          {t.blocking && (
-                            <Badge tone="red">
-                              <Lock className="h-2.5 w-2.5" /> Blocking
-                            </Badge>
-                          )}
+                      <span className="min-w-0 flex-1">
+                        <span className="flex flex-wrap items-center gap-1.5">
+                          {t.blocking && t.status !== "Completed" && <BlockingTag />}
+                          <span className="text-sm font-medium text-ink">{t.label}</span>
+                        </span>
+                        <span className="mt-1.5 block">
+                          <TaskStatusPill status={t.status} />
                         </span>
                       </span>
                     </button>
@@ -216,11 +299,23 @@ export function OffboardingView({ initialTasks }: { initialTasks: OffboardingTas
           <b>Super Admin override</b> — force termination and log the bypass reason to the
           immutable audit trail.
         </label>
+        {actionError && (
+          <div className="mt-3 flex items-start gap-2 rounded-xl bg-red-50 px-3.5 py-3 text-sm text-red-600">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{actionError}</span>
+          </div>
+        )}
         <button
           disabled={!canFinalize || terminated}
           onClick={async () => {
-            await finalizeTermination(offboardingEmployee.name);
-            setTerminated(true);
+            try {
+              setActionError(null);
+              await finalizeTermination(subject, override);
+              setTerminated(true);
+            } catch (err) {
+              // Only mark terminated when the backend actually confirmed it.
+              setActionError(err instanceof Error ? err.message : "Termination failed");
+            }
           }}
           className="mt-4 inline-flex items-center gap-2 rounded-xl bg-red-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
         >

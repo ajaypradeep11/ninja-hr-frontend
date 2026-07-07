@@ -43,12 +43,17 @@ export default function PreboardPage() {
   const valid = name.trim() && start && email.includes("@");
   const inviteLink = created ? `${siteOrigin()}/employee/onboarding?case=${created.token}` : "";
 
+  const [launchError, setLaunchError] = React.useState<string | null>(null);
+
   async function launch() {
     if (submitting) return;
     setSubmitting(true);
+    setLaunchError(null);
     try {
       const c = await createCase({ name, title, department, province, startDate: start, personalEmail: email });
       setCreated(c);
+    } catch (err) {
+      setLaunchError(err instanceof Error ? err.message : "Failed to create onboarding case");
     } finally {
       setSubmitting(false);
     }
@@ -203,6 +208,11 @@ export default function PreboardPage() {
                 </div>
               </div>
 
+              {launchError && (
+                <p className="mt-4 rounded-xl bg-red-50 px-3.5 py-2.5 text-xs text-red-600">
+                  {launchError}
+                </p>
+              )}
               <div className="mt-7 flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                   <span className="inline-flex items-center gap-1.5 rounded-lg bg-canvas px-2.5 py-1.5 text-[11px] font-semibold text-ink-soft">
@@ -235,7 +245,7 @@ export default function PreboardPage() {
             <p className="mt-2 text-sm leading-relaxed text-ink-muted">
               The AI will create the profile and send all onboarding forms{" "}
               <span className="font-semibold text-brand-600">
-                (TD1, New Hire Form, Direct Deposit)
+                (Standard New Hire Form incl. direct deposit, TD1 &amp; TD1ON 2026 tax forms)
               </span>{" "}
               to the employee&apos;s personal email for completion.
             </p>

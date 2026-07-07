@@ -7,6 +7,7 @@ export const BRAND = {
   tagline: "Agentic HR for the Canadian market",
   adminConsoleLabel: "ADMIN CONSOLE",
   employeeConsoleLabel: "EMPLOYEE PORTAL",
-  // "today" is fixed so the prototype renders deterministically.
-  today: "2026-06-18",
+  // Real current date — compliance logic (training deadlines, Bill 149 ghosting
+  // windows, probation watchlists) must not run against a frozen clock.
+  today: new Date().toISOString().slice(0, 10),
 } as const;

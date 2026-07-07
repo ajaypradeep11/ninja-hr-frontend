@@ -5,8 +5,9 @@ import { CornerDownLeft, Lock, Sparkles } from "lucide-react";
 import { Card } from "@/components/ui";
 import { Avatar } from "@/components/ui";
 import { cn } from "@/lib/utils";
-import { employeeLeaveBalances } from "@/lib/data";
+import type { LeaveBalance } from "@/lib/data";
 import { askCoPilot } from "@/app/actions/ai";
+import { getMyLeaveBalances } from "@/app/actions/modules";
 
 interface Msg {
   role: "user" | "agent";
@@ -21,20 +22,24 @@ const SUGGESTIONS = [
   "What mandatory training do I still owe?",
 ];
 
-function respond(input: string): Msg {
+function respond(input: string, balances: LeaveBalance[]): Msg {
   const q = input.toLowerCase();
   if (q.includes("vacation") || (q.includes("days") && q.includes("left"))) {
-    const v = employeeLeaveBalances.find((b) => b.type.includes("Vacation"));
+    const v = balances.find((b) => b.type.includes("Vacation"));
     return {
       role: "agent",
-      text: `You have ${v?.available ?? 12} vacation days remaining for 2026 (you've used ${v?.used ?? 6}). As a BC employee you accrue at 4% — that's about 2 weeks per year. Want me to start a request?`,
+      text: v
+        ? `You have ${v.available} vacation days remaining for ${new Date().getFullYear()} (you've used ${v.used}) — the same numbers as your Leave page. Want me to start a request?`
+        : "Your vacation balance is on the My Time Off page — want me to start a request?",
     };
   }
   if (q.includes("sick")) {
-    const s = employeeLeaveBalances.find((b) => b.type.includes("Sick"));
+    const s = balances.find((b) => b.type.includes("Sick"));
     return {
       role: "agent",
-      text: `You have ${s?.available ?? 5} paid sick days remaining. BC mandates a minimum of 5 paid sick days per year after 90 days of employment, plus 3 unpaid.`,
+      text: s
+        ? `You have ${s.available} paid sick days remaining (${s.used} used). Ontario's ESA also provides 3 unpaid, job-protected sick days per year.`
+        : "Your sick-leave balance is on the My Time Off page.",
     };
   }
   if (q.includes("payday") || q.includes("paid")) {
@@ -71,6 +76,14 @@ export default function EmployeeAssistant() {
   const [input, setInput] = React.useState("");
   const endRef = React.useRef<HTMLDivElement>(null);
 
+  // Live balances so fallback answers quote the SAME numbers as the Leave page.
+  const [balances, setBalances] = React.useState<LeaveBalance[]>([]);
+  React.useEffect(() => {
+    getMyLeaveBalances()
+      .then(setBalances)
+      .catch(() => setBalances([]));
+  }, []);
+
   React.useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -88,9 +101,9 @@ export default function EmployeeAssistant() {
     let reply: Msg;
     try {
       const res = await askCoPilot(t, "employee");
-      reply = res.live && res.text ? { role: "agent", text: res.text } : respond(t);
+      reply = res.live && res.text ? { role: "agent", text: res.text } : respond(t, balances);
     } catch {
-      reply = respond(t);
+      reply = respond(t, balances);
     }
     setMessages((m) => {
       const next = [...m];

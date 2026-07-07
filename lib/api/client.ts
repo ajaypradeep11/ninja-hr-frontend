@@ -4,7 +4,7 @@ import type { paths } from './generated/openapi';
 
 export type Persona = 'admin' | 'employee';
 
-export function apiClient(persona: Persona = 'admin') {
+export function apiClient(persona: Persona = 'admin', actorId?: string) {
   // NINJA_HR_API_URL may include "/api/v1" suffix; the generated OpenAPI paths
   // already contain "/api/v1/...", so we strip that suffix to avoid doubling.
   const rawBase = process.env.NINJA_HR_API_URL ?? '';
@@ -14,6 +14,8 @@ export function apiClient(persona: Persona = 'admin') {
     headers: {
       'x-internal-key': process.env.INTERNAL_API_KEY ?? '',
       'x-actor-persona': persona,
+      // Resolved to a full ActorContext (user/employee/role) by the backend.
+      ...(actorId ? { 'x-actor-id': actorId } : {}),
     },
     // Always hit the backend fresh from Server Actions; reads may opt into caching per-call.
     cache: 'no-store',

@@ -14,6 +14,9 @@ import { Card, CardHeader, Button, Badge } from "@/components/ui";
 import type { VaultDocument } from "@/lib/data";
 import { cn, formatDate } from "@/lib/utils";
 
+// The employee filing cabinet — previously the standalone /employee/documents
+// page, now embedded as the Documents tab of My Profile.
+
 interface MyDoc {
   id: string;
   name: string;
@@ -62,28 +65,33 @@ function download(filename: string, content: string, mime = "text/plain") {
   URL.revokeObjectURL(url);
 }
 
-interface Props {
-  documents: VaultDocument[];
-}
-
-export default function DocumentsView({ documents }: Props) {
+export function DocumentsTab({ documents }: { documents: VaultDocument[] }) {
   const folders = buildFolders(documents);
   const [active, setActive] = React.useState(folders[0]?.id ?? "");
   const folder = folders.find((f) => f.id === active) ?? folders[0];
 
+  const exportButton = (
+    <Button
+      variant="outline"
+      onClick={() =>
+        download("my-data-export.json", JSON.stringify(documents, null, 2), "application/json")
+      }
+    >
+      <PackageOpen className="h-4 w-4" /> Export My Data
+    </Button>
+  );
+
   if (!folder) {
     return (
       <div>
-        <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-ink">My Documents</h1>
-            <p className="mt-1 text-sm text-ink-muted">
-              Your personal, read-only filing cabinet. Access it anytime, on any device.
+            <h2 className="text-base font-bold text-ink">Filing Cabinet</h2>
+            <p className="mt-0.5 text-sm text-ink-muted">
+              Your personal, read-only records. Access them anytime, on any device.
             </p>
           </div>
-          <Button variant="outline" onClick={() => download("my-data-export.json", JSON.stringify(documents, null, 2), "application/json")}>
-            <PackageOpen className="h-4 w-4" /> Export My Data
-          </Button>
+          {exportButton}
         </div>
         <p className="text-sm text-ink-muted">No documents available.</p>
       </div>
@@ -92,16 +100,14 @@ export default function DocumentsView({ documents }: Props) {
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-ink">My Documents</h1>
-          <p className="mt-1 text-sm text-ink-muted">
-            Your personal, read-only filing cabinet. Access it anytime, on any device.
+          <h2 className="text-base font-bold text-ink">Filing Cabinet</h2>
+          <p className="mt-0.5 text-sm text-ink-muted">
+            Your personal, read-only records. Access them anytime, on any device.
           </p>
         </div>
-        <Button variant="outline" onClick={() => download("my-data-export.json", JSON.stringify(documents, null, 2), "application/json")}>
-          <PackageOpen className="h-4 w-4" /> Export My Data
-        </Button>
+        {exportButton}
       </div>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[260px_1fr]">

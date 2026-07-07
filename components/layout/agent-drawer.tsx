@@ -58,9 +58,12 @@ function respond(input: string): Msg {
 export function AgentDrawer({
   open,
   onClose,
+  ask,
 }: {
   open: boolean;
   onClose: () => void;
+  /** Externally handed-in question (dashboard quick-ask) — auto-submitted. */
+  ask?: { q: string; nonce: number } | null;
 }) {
   const [messages, setMessages] = React.useState<Msg[]>([
     {
@@ -74,6 +77,15 @@ export function AgentDrawer({
   React.useEffect(() => {
     if (open) endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, open]);
+
+  // Auto-submit a question handed in from outside (dashboard quick-ask).
+  const consumedNonce = React.useRef(0);
+  React.useEffect(() => {
+    if (ask && ask.nonce !== consumedNonce.current) {
+      consumedNonce.current = ask.nonce;
+      void send(ask.q);
+    }
+  }, [ask]);
 
   async function send(text: string) {
     const t = text.trim();

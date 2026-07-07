@@ -314,10 +314,28 @@ export function Stat({
   );
 }
 
-export function ComplianceBadge({ children = "Bill 149 Compliant" }: { children?: React.ReactNode }) {
+export function ComplianceBadge({
+  children = "Bill 149 Compliant",
+  variant = "ok",
+}: {
+  children?: React.ReactNode;
+  /** "warn" flips the badge red — e.g. salary data missing on an active posting. */
+  variant?: "ok" | "warn";
+}) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+    <span
+      role="status"
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold",
+        variant === "ok" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-600",
+      )}
+    >
+      <span
+        className={cn(
+          "h-1.5 w-1.5 rounded-full",
+          variant === "ok" ? "bg-emerald-500" : "bg-red-500",
+        )}
+      />
       {children}
     </span>
   );

@@ -6,17 +6,25 @@ import { Search, Bell, HelpCircle, Sparkles, ArrowLeftRight } from "lucide-react
 import { Avatar } from "@/components/ui";
 import { AgentDrawer } from "./agent-drawer";
 import { currentUser } from "@/lib/data";
+import { UserSwitcher, type SwitcherUser } from "./user-switcher";
 
 export function Topbar({
   searchPlaceholder,
   switchHref,
   switchLabel,
+  users,
+  actor,
 }: {
   searchPlaceholder: string;
-  switchHref: string;
-  switchLabel: string;
+  switchHref?: string;
+  switchLabel?: string;
+  users?: SwitcherUser[];
+  actor?: SwitcherUser;
 }) {
   const [agentOpen, setAgentOpen] = React.useState(false);
+  // Question handed in from elsewhere (e.g. the dashboard quick-ask input) —
+  // the nonce lets the same question be re-asked and still retrigger.
+  const [ask, setAsk] = React.useState<{ q: string; nonce: number } | null>(null);
 
   React.useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -25,8 +33,17 @@ export function Topbar({
         setAgentOpen((o) => !o);
       }
     }
+    function onAsk(e: Event) {
+      const q = (e as CustomEvent<{ question?: string }>).detail?.question?.trim();
+      setAgentOpen(true);
+      if (q) setAsk((prev) => ({ q, nonce: (prev?.nonce ?? 0) + 1 }));
+    }
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("ninjahr:ask-copilot", onAsk);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("ninjahr:ask-copilot", onAsk);
+    };
   }, []);
 
   return (
@@ -44,13 +61,15 @@ export function Topbar({
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          <Link
-            href={switchHref}
-            className="hidden items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-ink-muted transition-colors hover:bg-canvas hover:text-ink sm:inline-flex"
-          >
-            <ArrowLeftRight className="h-3.5 w-3.5" />
-            {switchLabel}
-          </Link>
+          {switchHref && switchLabel && (
+            <Link
+              href={switchHref}
+              className="hidden items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-ink-muted transition-colors hover:bg-canvas hover:text-ink sm:inline-flex"
+            >
+              <ArrowLeftRight className="h-3.5 w-3.5" />
+              {switchLabel}
+            </Link>
+          )}
 
           <button
             onClick={() => setAgentOpen(true)}
@@ -70,12 +89,16 @@ export function Topbar({
           </button>
 
           <div className="ml-1 flex items-center gap-2">
-            <Avatar name={currentUser.name} size={32} />
+            {users && actor ? (
+              <UserSwitcher users={users} current={actor} />
+            ) : (
+              <Avatar name={currentUser.name} size={32} />
+            )}
           </div>
         </div>
       </header>
 
-      <AgentDrawer open={agentOpen} onClose={() => setAgentOpen(false)} />
+      <AgentDrawer open={agentOpen} onClose={() => setAgentOpen(false)} ask={ask} />
     </>
   );
 }

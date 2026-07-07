@@ -201,10 +201,9 @@ export function ReportsView({ employees, headcountByDept, requisitions }: Report
               <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-brand-500" />
               <p>
                 <span className="font-semibold text-ink">Insight:</span> You have{" "}
-                {nonCompliantJobs || 3} open role(s) in Ontario that may be non-compliant with Bill
-                149 salary mandates, and mandatory training completion is trending below target (74%).
-                Clicking <span className="font-semibold text-brand-700">Fix</span> will auto-update
-                affected postings and re-assign overdue AODA/WHMIS modules.
+                {nonCompliantJobs} open role(s) in Ontario that may be non-compliant with Bill
+                149 salary mandates. Review the affected postings and re-assign any overdue
+                AODA/WHMIS modules from the Tracker page.
               </p>
             </div>
           )}

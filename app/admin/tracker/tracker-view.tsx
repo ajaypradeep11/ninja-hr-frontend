@@ -18,7 +18,8 @@ import {
   PageHeader,
   ProgressBar,
 } from "@/components/ui";
-import type { TrainingCourse, Employee, UpcomingEvent } from "@/lib/data";
+import type { Employee, UpcomingEvent } from "@/lib/data";
+import type { TrainingAssignment } from "@/lib/training";
 import { formatDate } from "@/lib/utils";
 import { provinceName, probationStatus } from "@/lib/compliance";
 import { BRAND } from "@/lib/brand";
@@ -31,23 +32,25 @@ const checklistTemplate = [
   "Add to team channels",
 ];
 
-function trainingStatus(course: TrainingCourse) {
-  if (course.progress >= 100) return { label: "Compliant", tone: "green" as const };
-  if (course.due && course.due < BRAND.today)
-    return { label: "Non-Compliant", tone: "red" as const };
-  return { label: "In Progress", tone: "amber" as const };
+function assignmentStatus(a: TrainingAssignment) {
+  if (a.status === "Completed") return { label: "Complete", tone: "green" as const };
+  if (a.dueDate && a.dueDate < BRAND.today) return { label: "Overdue", tone: "red" as const };
+  return { label: a.status, tone: "amber" as const };
 }
 
 interface TrackerViewProps {
-  trainingCourses: TrainingCourse[];
+  assignments: TrainingAssignment[];
   employees: Employee[];
   upcomingEvents: UpcomingEvent[];
 }
 
-export function TrackerView({ trainingCourses, employees, upcomingEvents }: TrackerViewProps) {
+export function TrackerView({ assignments, employees, upcomingEvents }: TrackerViewProps) {
   const [publicRecognition, setPublicRecognition] = React.useState(true);
 
-  const mandatory = trainingCourses.filter((c) => c.mandatory);
+  const completed = assignments.filter((a) => a.status === "Completed").length;
+  const overdue = assignments.filter(
+    (a) => a.status !== "Completed" && a.dueDate && a.dueDate < BRAND.today,
+  ).length;
 
   const probationWatch = employees
     .map((e) => ({ e, p: probationStatus(e.hireDate, BRAND.today) }))
@@ -62,47 +65,51 @@ export function TrackerView({ trainingCourses, employees, upcomingEvents }: Trac
     <div>
       <PageHeader
         title="Lifecycle Tracker"
-        subtitle="Mandatory training, probation milestones and recognition — with the agent doing the chasing."
+        subtitle="Company training completion, probation milestones and recognition — with the agent doing the chasing."
       />
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
-        {/* Mandatory training tracker */}
+        {/* Training completion tracker */}
         <Card className="card-pad lg:col-span-7">
           <CardHeader
-            title="Mandatory Training Tracker"
+            title="Training Completion Tracker"
             action={<ShieldCheck className="h-4 w-4 text-brand-500" />}
           />
           <p className="mt-1 text-xs text-ink-muted">
-            Province-specific courses are auto-assigned. Accounts flag{" "}
-            <span className="font-semibold text-red-600">Non-Compliant</span> when overdue.
+            {completed}/{assignments.length} assignments complete
+            {overdue > 0 && (
+              <>
+                {" · "}
+                <span className="font-semibold text-red-600">{overdue} overdue</span>
+              </>
+            )}
+            . Assigned from the Training catalog.
           </p>
-          <div className="mt-4 space-y-3">
-            {mandatory.map((c) => {
-              const st = trainingStatus(c);
+          <div className="mt-4 space-y-2.5">
+            {assignments.length === 0 && (
+              <p className="py-6 text-center text-sm text-ink-muted">
+                No training assigned yet. Create and assign courses from the Training page.
+              </p>
+            )}
+            {assignments.map((a) => {
+              const st = assignmentStatus(a);
               return (
-                <div
-                  key={c.id}
-                  className="flex items-center gap-3 rounded-xl border border-line p-3.5"
-                >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
-                    <GraduationCap className="h-5 w-5" />
+                <div key={a.id} className="flex items-center gap-3 rounded-xl border border-line p-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+                    <GraduationCap className="h-4 w-4" />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="truncate text-sm font-semibold text-ink">{c.title}</p>
-                      {c.province && <Badge tone="gray">{c.province}</Badge>}
-                    </div>
-                    <div className="mt-1.5 flex items-center gap-2">
-                      <ProgressBar
-                        value={c.progress}
-                        tone={c.progress >= 100 ? "green" : "amber"}
-                        className="h-1"
-                      />
-                      <span className="text-[11px] font-medium text-ink-muted">
-                        {c.progress}%
-                      </span>
-                    </div>
+                    <p className="truncate text-sm font-medium text-ink">{a.courseTitle}</p>
+                    <p className="truncate text-[11px] text-ink-muted">
+                      {a.employeeName}
+                      {a.dueDate && ` · due ${formatDate(a.dueDate)}`}
+                    </p>
                   </div>
+                  <ProgressBar
+                    value={a.progress}
+                    tone={a.status === "Completed" ? "green" : "amber"}
+                    className="hidden h-1 max-w-[80px] sm:block"
+                  />
                   <Badge tone={st.tone}>{st.label}</Badge>
                 </div>
               );

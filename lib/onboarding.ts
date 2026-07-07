@@ -35,6 +35,26 @@ export interface CaseDocument {
   signedAt?: string;
   signedBy?: string;
   ip?: string;
+  /** Set when the new hire uploaded a file (HR downloads it to verify). */
+  mimeType?: string;
+  size?: number;
+  hasFile: boolean;
+}
+
+/** Whitelisted preboarding uploads — mirrors the backend's UPLOAD_KINDS map. */
+export type UploadKind = "td1-federal" | "td1-ontario" | "benefits-enrollment" | "manual-acknowledgment";
+
+/** The fixed stored-name prefix per kind (re-uploads replace; vault matches on it). */
+export const UPLOAD_KIND_NAMES: Record<UploadKind, string> = {
+  "td1-federal": "TD1 2026 — Federal (signed)",
+  "td1-ontario": "TD1ON 2026 — Ontario (signed)",
+  "benefits-enrollment": "Benefits Enrollment Form (completed)",
+  "manual-acknowledgment": "Employee Manual Acknowledgment (signed)",
+};
+
+/** True when the case already has an upload of this kind. */
+export function hasUpload(documents: CaseDocument[], kind: UploadKind): boolean {
+  return documents.some((d) => d.name.startsWith(UPLOAD_KIND_NAMES[kind]) && d.hasFile);
 }
 
 export interface ConsentEntry {
@@ -52,6 +72,38 @@ export interface FormFlags {
   handbook: boolean;
 }
 
+export type WorkEligibilityLabel = "Citizen" | "Permanent Resident" | "Work Permit" | "Study Permit";
+
+/**
+ * Standard new-hire form (Ontario). On reads the API masks SIN (••• ••• 123)
+ * and bank account (••••1234) — the raw values never come back to the browser
+ * after submission.
+ */
+export interface NewHireProfile {
+  legalFirstName: string;
+  legalLastName: string;
+  preferredName?: string;
+  dateOfBirth: string;
+  sin: string;
+  phone: string;
+  addressStreet: string;
+  addressCity: string;
+  addressPostal: string;
+  emergencyName: string;
+  emergencyRelationship: string;
+  emergencyPhone: string;
+  workEligibility: WorkEligibilityLabel;
+  workPermitExpiry?: string;
+  bankInstitution: string;
+  bankTransit: string;
+  bankAccount: string;
+  /** Must match the legal name — payroll deposits bounce otherwise. */
+  bankAccountHolder: string;
+  submittedAt?: string;
+}
+
+export type NewHireProfileInput = Omit<NewHireProfile, "submittedAt">;
+
 export interface OnboardingCase {
   id: string;
   token: string;
@@ -64,6 +116,10 @@ export interface OnboardingCase {
   status: CaseStatus;
   createdAt: string;
   forms: FormFlags;
+  /** Present once the new hire submits the standard form (SIN/bank masked). */
+  profile?: NewHireProfile;
+  /** Per-department task ownership, e.g. { "HR": "Sarah Mitchell" }. */
+  taskAssignees: Partial<Record<TaskOwner, string>>;
   checklist: ChecklistTask[];
   documents: CaseDocument[];
   consent: ConsentEntry[];
@@ -186,8 +242,6 @@ export function activationGates(c: OnboardingCase): Gate[] {
   const blockingTasks = c.checklist.filter((t) => t.blocking);
   const blockingDone = blockingTasks.filter((t) => t.status === "Completed");
   const unverified = c.documents.filter((d) => d.status === "Needs Verification");
-  const required = mandatoryPolicies(c.province);
-  const missingPolicies = required.filter((p) => !c.policiesAttached.includes(p));
   const formsDone = formProgress(c.forms) === 100;
 
   return [
@@ -212,11 +266,8 @@ export function activationGates(c: OnboardingCase): Gate[] {
       label: "All documents verified by HR (human-in-the-loop)",
       detail: unverified.length ? unverified.map((d) => d.name).join(", ") : undefined,
     },
-    {
-      ok: missingPolicies.length === 0,
-      label: `Provincial mandatory policies attached (${c.province})`,
-      detail: missingPolicies.length ? `Missing: ${missingPolicies.join(", ")}` : undefined,
-    },
+    // Policy attachment is no longer an activation condition — policy
+    // acknowledgment is handled by the employee's handbook consent step.
   ];
 }
 
@@ -247,6 +298,7 @@ export function generateSubmittedDocuments(c: OnboardingCase): CaseDocument[] {
     signedAt: today,
     signedBy: c.name,
     ip: "203.0.113.42",
+    hasFile: false,
   });
   return [
     sign("TD1 Federal 2026 (signed).pdf", "TD1 Form"),
@@ -282,6 +334,7 @@ export function seedCases(): OnboardingCase[] {
       { policy: "Privacy Policy", version: PRIVACY_POLICY_VERSION, timestamp: "2026-06-08T14:22:00", ip: "203.0.113.42" },
     ],
     policiesAttached: ["AODA Awareness Training", "Workplace Violence & Harassment Policy"],
+    taskAssignees: {},
     auditLog: [
       { at: "2026-06-05", event: "Profile created; invite emailed to personal address" },
       { at: "2026-06-08", event: "Employee submitted onboarding forms" },
@@ -312,6 +365,7 @@ export function seedCases(): OnboardingCase[] {
     documents: [],
     consent: [],
     policiesAttached: ["Bullying & Harassment (WorkSafeBC)"],
+    taskAssignees: {},
     auditLog: [{ at: "2026-06-12", event: "Profile created; invite emailed to personal address" }],
   };
 

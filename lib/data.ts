@@ -24,6 +24,7 @@ export interface Employee {
   status: EmployeeStatus;
   salary: number;
   avatar?: string; // optional image url
+  employeeNumber?: string;
 }
 
 export interface OnboardingHire {
@@ -52,12 +53,16 @@ export interface SalaryBenchmark {
 export interface LeaveRequest {
   id: string;
   employee: string;
-  type: "Vacation" | "Sick Leave" | "Personal" | "Parental" | "Bereavement";
+  /** Routing key: pending requests go to this department's manager. */
+  department: string;
+  type: "Vacation" | "Sick Leave" | "Personal" | "Parental" | "Bereavement" | "Overtime";
   start: string;
   end: string;
   status: "Pending" | "Approved" | "Denied";
   province: ProvinceCode;
   days: number;
+  /** Partial-day request: hours taken on `start` (1–7). Undefined = full day(s). */
+  hours?: number;
 }
 
 export interface LeaveBalance {
@@ -68,14 +73,33 @@ export interface LeaveBalance {
   tone: "brand" | "sky" | "amber";
 }
 
+// Company-created training course (catalog). Per-employee state lives on the
+// TrainingAssignment (see lib/training.ts).
 export interface TrainingCourse {
   id: string;
   title: string;
   category: string;
-  progress: number;
-  mandatory: boolean;
-  province?: ProvinceCode;
-  due?: string;
+  description?: string;
+  contentUrl?: string;
+  durationMins?: number;
+  passMark?: number;
+  active: boolean;
+  // Peer-created courses flow Draft → Pending HR Approval → Published/Rejected;
+  // HR catalog entries are born Published.
+  status?: "Draft" | "Pending HR Approval" | "Published" | "Rejected";
+  createdById?: string;
+  creatorName?: string;
+  assignedCount?: number;
+  completedCount?: number;
+}
+
+/** What an employee may set on their own peer-created course. */
+export interface PeerCourseInput {
+  title: string;
+  category: string;
+  description?: string;
+  contentUrl?: string;
+  durationMins?: number;
 }
 
 export interface OffboardingTask {
@@ -84,6 +108,8 @@ export interface OffboardingTask {
   owner: "Manager" | "IT / Ops" | "HR / Payroll";
   status: "Pending" | "In-Progress" | "Completed";
   blocking: boolean;
+  /** Internal employee delegated to own this department's tasks. */
+  assignee?: string;
 }
 
 export interface Candidate {
@@ -109,6 +135,7 @@ export interface Requisition {
   status: "Draft" | "Pending Approval" | "Approved" | "Published";
   applicants: number;
   openedDate: string;
+  archived?: boolean;
 }
 
 export interface DocFolder {
@@ -161,15 +188,6 @@ export interface AgentRun {
   affected: number;
   summary: string;
   time: string;
-}
-
-export interface BenefitsCarrier {
-  id: string;
-  name: string;
-  status: "Connected" | "File-based" | "Not connected";
-  enrolled: number;
-  method: "API" | "CSV / SFTP";
-  lastSync: string;
 }
 
 /* ------------------------------------------------------------------ */
@@ -335,35 +353,17 @@ export const salaryBenchmarks: SalaryBenchmark[] = [
   { role: "Sales Account Exec", low: 78000, high: 120000, current: 86000 },
 ];
 
-export const payrollPeriod = {
-  label: "Oct 15 – Oct 31",
-  estBiweekly: 24500,
-  ltdContributions: 1120.45,
-  completedReviews: 42,
-  totalReviews: 45,
-};
-
 export const leaveRequests: LeaveRequest[] = [
-  { id: "l1", employee: "Jim Scott", type: "Vacation", start: "2026-06-18", end: "2026-06-22", status: "Pending", province: "BC", days: 3 },
-  { id: "l2", employee: "Kelly Baker", type: "Sick Leave", start: "2026-06-20", end: "2026-06-21", status: "Pending", province: "QC", days: 2 },
-  { id: "l3", employee: "Dwight Schrute", type: "Personal", start: "2026-07-01", end: "2026-07-01", status: "Pending", province: "SK", days: 1 },
-  { id: "l4", employee: "Angela Martin", type: "Vacation", start: "2026-07-14", end: "2026-07-25", status: "Approved", province: "ON", days: 9 },
-  { id: "l5", employee: "Pam Beesly", type: "Parental", start: "2026-05-01", end: "2026-12-01", status: "Approved", province: "ON", days: 154 },
+  { id: "l1", employee: "Jim Scott", department: "Sales", type: "Vacation", start: "2026-06-18", end: "2026-06-22", status: "Pending", province: "BC", days: 3 },
+  { id: "l2", employee: "Kelly Baker", department: "Marketing", type: "Sick Leave", start: "2026-06-20", end: "2026-06-21", status: "Pending", province: "QC", days: 2 },
+  { id: "l3", employee: "Dwight Schrute", department: "Sales", type: "Personal", start: "2026-07-01", end: "2026-07-01", status: "Pending", province: "SK", days: 1 },
+  { id: "l4", employee: "Angela Martin", department: "Finance", type: "Vacation", start: "2026-07-14", end: "2026-07-25", status: "Approved", province: "ON", days: 9 },
+  { id: "l5", employee: "Pam Beesly", department: "Design", type: "Parental", start: "2026-05-01", end: "2026-12-01", status: "Approved", province: "ON", days: 154 },
 ];
 
-export const employeeLeaveBalances: LeaveBalance[] = [
-  { type: "Vacation Days Available", available: 12, used: 6, unit: "days", tone: "brand" },
-  { type: "Sick Leave Remaining", available: 5, used: 0, unit: "days", tone: "sky" },
-  { type: "Paid / Unpaid Personal", available: 3, used: 1, unit: "days", tone: "amber" },
-];
-
-export const trainingCourses: TrainingCourse[] = [
-  { id: "t1", title: "EDI & Workplace Belonging", category: "Culture", progress: 60, mandatory: false },
-  { id: "t2", title: "Cybersecurity Essentials", category: "Security", progress: 25, mandatory: true, due: "2026-07-15" },
-  { id: "t3", title: "AODA Awareness Training", category: "Compliance", progress: 100, mandatory: true, province: "ON" },
-  { id: "t4", title: "WHMIS 2015", category: "Health & Safety", progress: 0, mandatory: true, due: "2026-06-30" },
-  { id: "t5", title: "Bullying & Harassment (WorkSafeBC)", category: "Compliance", progress: 40, mandatory: true, province: "BC" },
-];
+// NOTE: static leave balances were removed — balances are now DERIVED from the
+// actor's approved requests via lib/leave-balances.ts (computeLeaveBalances),
+// so cards, the Leave page and the assistant always agree with the history.
 
 export const offboardingTasks: OffboardingTask[] = [
   { id: "f1", label: "Exit interview", owner: "Manager", status: "Completed", blocking: false },
@@ -436,12 +436,6 @@ export const agentRuns: AgentRun[] = [
   { id: "a2", intent: "Purge rejected candidate files past 24-month Law 25 window", status: "Awaiting Approval", progress: 100, affected: 3, summary: "Identified 3 rejected candidate profiles exceeding the 24-month retention window.", time: "8 min ago" },
   { id: "a3", intent: "Draft BC vacation accrual policy update to new statutory floor", status: "Awaiting Approval", progress: 100, affected: 2, summary: "Detected BC ESA update. Drafted accrual policy change for 2 affected employees.", time: "1 hr ago" },
   { id: "a4", intent: "Generate offboarding checklist for Stanley Hudson + alert manager", status: "Completed", progress: 100, affected: 1, summary: "Created Sales Team Offboarding checklist, assigned 7 tasks, notified Michael Scott.", time: "Yesterday" },
-];
-
-export const benefitsCarriers: BenefitsCarrier[] = [
-  { id: "b1", name: "Sun Life", status: "Connected", enrolled: 38, method: "API", lastSync: "2026-06-17" },
-  { id: "b2", name: "Manulife", status: "File-based", enrolled: 0, method: "CSV / SFTP", lastSync: "2026-06-15" },
-  { id: "b3", name: "Canada Life", status: "Not connected", enrolled: 0, method: "CSV / SFTP", lastSync: "—" },
 ];
 
 export const complianceScore = {

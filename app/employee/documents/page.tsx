@@ -1,8 +1,6 @@
-export const dynamic = "force-dynamic";
-import { getVaultDocuments } from "@/lib/queries";
-import DocumentsView from "./documents-view";
+import { redirect } from "next/navigation";
 
-export default async function EmployeeDocuments() {
-  const documents = await getVaultDocuments();
-  return <DocumentsView documents={documents} />;
+// Documents moved into My Profile → Documents tab. Keep old links working.
+export default function EmployeeDocuments() {
+  redirect("/employee/profile?tab=documents");
 }

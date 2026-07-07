@@ -37,8 +37,6 @@ const INTEGRATION_FIELDS: { key: keyof Integrations; name: string }[] = [
   { key: "slack", name: "Slack" },
   { key: "sharepoint", name: "SharePoint" },
   { key: "esign", name: "Xodo Sign (e-signature)" },
-  { key: "wagepoint", name: "Wagepoint (payroll)" },
-  { key: "payworks", name: "Payworks (payroll)" },
   { key: "quickbooks", name: "QuickBooks Online" },
 ];
 

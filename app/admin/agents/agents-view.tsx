@@ -53,6 +53,7 @@ interface AgentsViewProps {
 export function AgentsView({ initial }: AgentsViewProps) {
   const [runs, setRuns] = React.useState<AgentRun[]>(initial);
   const [command, setCommand] = React.useState("");
+  const [runError, setRunError] = React.useState<string | null>(null);
 
   const pending = runs.filter((r) => r.status === "Awaiting Approval");
 
@@ -60,11 +61,23 @@ export function AgentsView({ initial }: AgentsViewProps) {
     const t = command.trim();
     if (!t) return;
     setCommand("");
-    setRuns(await createAgentRun(t));
+    try {
+      setRunError(null);
+      setRuns(await createAgentRun(t));
+    } catch (err) {
+      // Restore the command so the user can retry; keep the current run list.
+      setCommand(t);
+      setRunError(err instanceof Error ? err.message : "Failed to start agent run");
+    }
   }
 
   async function resolve(id: string) {
-    setRuns(await setAgentRunStatus(id, "Completed"));
+    try {
+      setRunError(null);
+      setRuns(await setAgentRunStatus(id, "Completed"));
+    } catch (err) {
+      setRunError(err instanceof Error ? err.message : "Failed to update run");
+    }
   }
 
   return (
@@ -73,6 +86,10 @@ export function AgentsView({ initial }: AgentsViewProps) {
         title="AI Agents"
         subtitle="Autonomous workflow executors for the admin heavy lifting — with hard guardrails."
       />
+
+      {runError && (
+        <div className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{runError}</div>
+      )}
 
       {/* Command bar */}
       <Card className="card-pad mb-5">

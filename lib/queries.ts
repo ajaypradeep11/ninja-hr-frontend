@@ -9,7 +9,6 @@ import type {
   Pip,
   TrainingCourse,
   OffboardingTask,
-  BenefitsCarrier,
   AgentRun,
   VaultDocument,
   SalaryBenchmark,
@@ -17,91 +16,94 @@ import type {
 
 const api = () => apiClient("admin");
 
+/**
+ * Unwraps an openapi-fetch result, throwing on HTTP errors instead of
+ * silently coercing them to empty data — a backend 500/401 must surface as an
+ * error state, not render as "the company has zero employees".
+ */
+async function unwrap<T>(
+  promise: Promise<{ data?: unknown; error?: unknown; response: Response }>,
+  fallback?: T,
+): Promise<T> {
+  const { data, error, response } = await promise;
+  if (error !== undefined || !response.ok) {
+    throw new Error(`NinjaHR API request failed: ${response.status} ${response.statusText} (${response.url})`);
+  }
+  return (data ?? fallback) as T;
+}
+
 /* ------------------------------- Employees ------------------------------- */
 
 export async function getEmployees(): Promise<Employee[]> {
-  const { data } = await api().GET("/api/v1/people/employees");
-  return (data ?? []) as unknown as Employee[];
+  return unwrap<Employee[]>(api().GET("/api/v1/people/employees"), []);
 }
 
 export async function getEmployeeByName(name: string): Promise<Employee | null> {
-  const { data } = await api().GET("/api/v1/people/employees/by-name/{name}", {
-    params: { path: { name } },
-  });
-  return (data ?? null) as unknown as Employee | null;
+  return unwrap<Employee | null>(
+    api().GET("/api/v1/people/employees/by-name/{name}", { params: { path: { name } } }),
+    null,
+  );
 }
 
 /* -------------------------------- Leave ---------------------------------- */
 
 export async function getLeaveRequests(): Promise<LeaveRequest[]> {
-  const { data } = await api().GET("/api/v1/timeoff/leave-requests");
-  return (data ?? []) as unknown as LeaveRequest[];
+  return unwrap<LeaveRequest[]>(api().GET("/api/v1/timeoff/leave-requests"), []);
 }
 
 /* ----------------------------- Recruitment ------------------------------- */
 
-export async function getRequisitions(): Promise<Requisition[]> {
-  const { data } = await api().GET("/api/v1/recruitment/requisitions");
-  return (data ?? []) as unknown as Requisition[];
+export async function getRequisitions(includeArchived = false): Promise<Requisition[]> {
+  return unwrap<Requisition[]>(
+    api().GET("/api/v1/recruitment/requisitions", {
+      params: { query: { includeArchived: includeArchived ? "true" : "false" } },
+    }),
+    [],
+  );
 }
 
 export async function getCandidates(): Promise<Candidate[]> {
-  const { data } = await api().GET("/api/v1/recruitment/candidates");
-  return (data ?? []) as unknown as Candidate[];
+  return unwrap<Candidate[]>(api().GET("/api/v1/recruitment/candidates"), []);
 }
 
 /* ----------------------------- Performance ------------------------------- */
 
 export async function getPerformanceReviews(): Promise<PerformanceReview[]> {
-  const { data } = await api().GET("/api/v1/performance/reviews");
-  return (data ?? []) as unknown as PerformanceReview[];
+  return unwrap<PerformanceReview[]>(api().GET("/api/v1/performance/reviews"), []);
 }
 
 export async function getPips(): Promise<Pip[]> {
-  const { data } = await api().GET("/api/v1/performance/pips");
-  return (data ?? []) as unknown as Pip[];
+  return unwrap<Pip[]>(api().GET("/api/v1/performance/pips"), []);
 }
 
 /* ------------------------------- Training -------------------------------- */
 
 export async function getTrainingCourses(): Promise<TrainingCourse[]> {
-  const { data } = await api().GET("/api/v1/workplace/training-courses");
-  return (data ?? []) as unknown as TrainingCourse[];
+  return unwrap<TrainingCourse[]>(api().GET("/api/v1/workplace/training-courses"), []);
 }
 
 /* ------------------------------ Offboarding ------------------------------ */
 
 export async function getOffboardingTasks(): Promise<OffboardingTask[]> {
-  const { data } = await api().GET("/api/v1/offboarding/tasks");
-  return (data ?? []) as unknown as OffboardingTask[];
-}
-
-/* ------------------------------- Benefits -------------------------------- */
-
-export async function getBenefitsCarriers(): Promise<BenefitsCarrier[]> {
-  const { data } = await api().GET("/api/v1/workplace/benefits-carriers");
-  return (data ?? []) as unknown as BenefitsCarrier[];
+  return unwrap<OffboardingTask[]>(api().GET("/api/v1/offboarding/tasks"), []);
 }
 
 /* -------------------------------- Agents --------------------------------- */
 
 export async function getAgentRuns(): Promise<AgentRun[]> {
-  const { data } = await api().GET("/api/v1/platform/agent-runs");
-  return (data ?? []) as unknown as AgentRun[];
+  return unwrap<AgentRun[]>(api().GET("/api/v1/platform/agent-runs"), []);
 }
 
 /* ------------------------------- Documents ------------------------------- */
 
 export async function getVaultDocuments(): Promise<VaultDocument[]> {
-  const { data } = await api().GET("/api/v1/workplace/documents");
-  return (data ?? []) as unknown as VaultDocument[];
+  return unwrap<VaultDocument[]>(api().GET("/api/v1/workplace/documents"), []);
 }
 
 /* ------------------------------ Benchmarks ------------------------------- */
 
 export async function getSalaryBenchmarks(): Promise<SalaryBenchmark[]> {
-  const { data } = await api().GET("/api/v1/people/salary-benchmarks");
-  return (data ?? []) as unknown as SalaryBenchmark[];
+  return unwrap<SalaryBenchmark[]>(api().GET("/api/v1/people/salary-benchmarks"), []);
 }
 
 /* ------------------------------ Aggregates ------------------------------- */
@@ -109,13 +111,11 @@ export async function getSalaryBenchmarks(): Promise<SalaryBenchmark[]> {
 export async function getOnboardingPipeline(): Promise<
   { id: string; name: string; title: string; startsInDays: number; progress: number }[]
 > {
-  const { data } = await apiClient("admin").GET("/api/v1/onboarding/pipeline");
-  return (data ?? []) as { id: string; name: string; title: string; startsInDays: number; progress: number }[];
+  return unwrap(apiClient("admin").GET("/api/v1/onboarding/pipeline"), []);
 }
 
 export async function getHeadcountByDept(): Promise<{ dept: string; count: number }[]> {
-  const { data } = await api().GET("/api/v1/people/headcount");
-  return (data ?? []) as unknown as { dept: string; count: number }[];
+  return unwrap(api().GET("/api/v1/people/headcount"), []);
 }
 
 /* ------------------------------- Settings -------------------------------- */
@@ -126,8 +126,6 @@ export interface Integrations {
   slack: boolean;
   sharepoint: boolean;
   esign: boolean;
-  wagepoint: boolean;
-  payworks: boolean;
   quickbooks: boolean;
 }
 
@@ -147,14 +145,11 @@ const DEFAULT_SETTINGS: CompanySettings = {
     slack: true,
     sharepoint: true,
     esign: false,
-    wagepoint: false,
-    payworks: false,
     quickbooks: true,
   },
   recognitionPublic: true,
 };
 
 export async function getSettings(): Promise<CompanySettings> {
-  const { data } = await api().GET("/api/v1/platform/settings");
-  return (data ?? DEFAULT_SETTINGS) as unknown as CompanySettings;
+  return unwrap<CompanySettings>(api().GET("/api/v1/platform/settings"), DEFAULT_SETTINGS);
 }

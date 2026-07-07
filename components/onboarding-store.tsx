@@ -1,7 +1,15 @@
 "use client";
 
 import * as React from "react";
-import type { OnboardingCase, ChecklistTask, TaskStatus, FormFlags } from "@/lib/onboarding";
+import type {
+  OnboardingCase,
+  ChecklistTask,
+  TaskOwner,
+  TaskStatus,
+  FormFlags,
+  NewHireProfileInput,
+  UploadKind,
+} from "@/lib/onboarding";
 import * as actions from "@/app/actions/onboarding";
 
 type NewCaseInput = actions.NewCaseInput;
@@ -15,11 +23,17 @@ interface Ctx {
   createCase: (input: NewCaseInput) => Promise<OnboardingCase>;
   // employee
   markForm: (token: string, key: keyof FormFlags) => Promise<void>;
+  submitProfile: (token: string, input: NewHireProfileInput) => Promise<void>;
+  uploadDocument: (
+    token: string,
+    input: { kind: UploadKind; fileName: string; mimeType: string; dataBase64: string },
+  ) => Promise<void>;
   addConsent: (token: string, policy: string) => Promise<void>;
   finalizeSubmission: (token: string) => Promise<void>;
   // HR / admin
   setChecklist: (id: string, tasks: ChecklistTask[]) => Promise<void>;
   setTaskStatus: (id: string, taskId: string, status: TaskStatus) => Promise<void>;
+  setTaskAssignee: (id: string, owner: TaskOwner, employeeName: string | null) => Promise<void>;
   verifyDocument: (id: string, docId: string) => Promise<void>;
   togglePolicy: (id: string, policy: string) => Promise<void>;
   activate: (id: string) => Promise<void>;
@@ -41,6 +55,11 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     actions
       .listCases()
       .then((data) => active && setCases(data))
+      .catch((err: unknown) => {
+        // Don't let a backend outage become an unhandled rejection; pages
+        // render their empty states and the console records the cause.
+        console.error("Failed to load onboarding cases:", err);
+      })
       .finally(() => active && setLoading(false));
     return () => {
       active = false;
@@ -73,12 +92,17 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     },
 
     markForm: async (token, key) => upsert(await actions.markForm(token, key)),
+    submitProfile: async (token, input) => upsert(await actions.submitNewHireProfile(token, input)),
+    // upsert() re-binds the returned case, so the vault + progress update live.
+    uploadDocument: async (token, input) => upsert(await actions.uploadCaseDocument(token, input)),
     addConsent: async (token, policy) => upsert(await actions.addConsent(token, policy)),
     finalizeSubmission: async (token) => upsert(await actions.finalizeSubmission(token)),
 
     setChecklist: async (id, tasks) => upsert(await actions.setChecklist(id, tasks)),
     setTaskStatus: async (id, taskId, status) =>
       upsert(await actions.setTaskStatus(id, taskId, status)),
+    setTaskAssignee: async (id, owner, employeeName) =>
+      upsert(await actions.setTaskAssignee(id, owner, employeeName)),
     verifyDocument: async (id, docId) => upsert(await actions.verifyDocument(id, docId)),
     togglePolicy: async (id, policy) => upsert(await actions.togglePolicy(id, policy)),
     activate: async (id) => upsert(await actions.activate(id)),

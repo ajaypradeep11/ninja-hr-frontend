@@ -1,43 +1,100 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { apiClient } from "@/lib/api/client";
+import { ACTOR_COOKIE, getActor } from "@/lib/actor";
+import { computeLeaveBalances } from "@/lib/leave-balances";
 import type {
   LeaveRequest,
-  Candidate,
+
   Pip,
   OffboardingTask,
   PerformanceReview,
   AgentRun,
 } from "@/lib/data";
 import type { CompanySettings } from "@/lib/queries";
-import type { ProvinceCode } from "@/lib/compliance";
 
 const api = () => apiClient("admin");
 
+/** Actor-aware client — required wherever the backend routes by role/department. */
+async function actorApi() {
+  const store = await cookies();
+  return apiClient("admin", store.get(ACTOR_COOKIE)?.value);
+}
+
+/**
+ * Unwraps an openapi-fetch mutation result. Throws on HTTP errors — coercing
+ * a failed mutation to `[]` would wipe the caller's entire client-side list.
+ */
+async function unwrap<T>(
+  promise: Promise<{ data?: unknown; error?: unknown; response: Response }>,
+  fallback?: T,
+): Promise<T> {
+  const { data, error, response } = await promise;
+  if (error !== undefined || !response.ok) {
+    const detail =
+      error && typeof error === "object" && "message" in error
+        ? String((error as { message: unknown }).message)
+        : `${response.status} ${response.statusText}`;
+    throw new Error(`Request failed: ${detail}`);
+  }
+  return (data ?? fallback) as T;
+}
+
 /* ------------------------------- Leave ----------------------------------- */
+
+/** Actor-scoped list: HR = all, manager = own department, employee = own. */
+export async function listLeaveRequests(): Promise<LeaveRequest[]> {
+  const client = await actorApi();
+  return unwrap<LeaveRequest[]>(client.GET("/api/v1/timeoff/leave-requests"), []);
+}
+
+/** The actor's live balance cards — same derivation the Leave page uses. */
+export async function getMyLeaveBalances() {
+  const [actor, all] = await Promise.all([getActor(), listLeaveRequests()]);
+  return computeLeaveBalances(all, actor.name);
+}
 
 export async function setLeaveStatus(
   id: string,
   status: "Approved" | "Denied",
 ): Promise<LeaveRequest[]> {
-  const { data } = await api().PATCH("/api/v1/timeoff/leave-requests/{id}/status", {
-    params: { path: { id } },
-    body: { status } as never,
-  });
-  return (data ?? []) as unknown as LeaveRequest[];
+  const client = await actorApi();
+  return unwrap<LeaveRequest[]>(
+    client.PATCH("/api/v1/timeoff/leave-requests/{id}/status", {
+      params: { path: { id } },
+      body: { status } as never,
+    }),
+  );
 }
 
-/* --------------------------- Recruitment / ATS --------------------------- */
+/** Cancel/withdraw a request — owner while Pending, or HR any time. */
+export async function cancelLeaveRequest(id: string): Promise<LeaveRequest[]> {
+  const client = await actorApi();
+  return unwrap<LeaveRequest[]>(
+    client.DELETE("/api/v1/timeoff/leave-requests/{id}", { params: { path: { id } } }),
+  );
+}
 
-export async function setCandidateStage(
+/** Edit a record — HR overrides anything; owners edit their own PENDING requests. */
+export async function updateLeaveRecord(
   id: string,
-  stage: Candidate["stage"],
-): Promise<Candidate[]> {
-  const { data } = await api().PATCH("/api/v1/recruitment/candidates/{id}/stage", {
-    params: { path: { id } },
-    body: { stage } as never,
-  });
-  return (data ?? []) as unknown as Candidate[];
+  patch: {
+    type?: LeaveRequest["type"];
+    start?: string;
+    end?: string;
+    days?: number;
+    hours?: number | null;
+    status?: "Pending" | "Approved" | "Denied";
+  },
+): Promise<LeaveRequest[]> {
+  const client = await actorApi();
+  return unwrap<LeaveRequest[]>(
+    client.PATCH("/api/v1/timeoff/leave-requests/{id}", {
+      params: { path: { id } },
+      body: patch as never,
+    }),
+  );
 }
 
 /* ----------------------------- Performance ------------------------------- */
@@ -49,32 +106,12 @@ export interface NewPipInput {
 }
 
 export async function issuePip(input: NewPipInput): Promise<Pip[]> {
-  const { data } = await api().POST("/api/v1/performance/pips", {
-    body: { employee: input.employee, manager: input.manager, durationDays: input.durationDays },
-  });
-  return (data ?? []) as unknown as Pip[];
-}
-
-/* ----------------------------- Recruitment ------------------------------- */
-
-export interface NewRequisitionInput {
-  title: string;
-  department: string;
-  province: ProvinceCode;
-  salaryMin: number;
-  salaryMax: number;
-}
-
-export async function publishRequisition(input: NewRequisitionInput): Promise<void> {
-  await api().POST("/api/v1/recruitment/requisitions", {
-    body: {
-      title: input.title,
-      department: input.department,
-      province: input.province,
-      salaryMin: input.salaryMin,
-      salaryMax: input.salaryMax,
-    },
-  });
+  if (!input.employee.trim()) throw new Error("PIP employee name is required");
+  return unwrap<Pip[]>(
+    api().POST("/api/v1/performance/pips", {
+      body: { employee: input.employee, manager: input.manager, durationDays: input.durationDays },
+    }),
+  );
 }
 
 /* ------------------------ Employee self-service leave -------------------- */
@@ -85,19 +122,24 @@ export interface NewLeaveInput {
   start: string;
   end: string;
   days: number;
+  /** Partial-day request: hours on `start` (1–7). Omit for full day(s). */
+  hours?: number;
 }
 
 export async function createLeaveRequest(input: NewLeaveInput): Promise<LeaveRequest[]> {
-  const { data } = await api().POST("/api/v1/timeoff/leave-requests", {
-    body: {
-      employeeName: input.employeeName,
-      type: input.type,
-      start: input.start,
-      end: input.end,
-      days: input.days,
-    },
-  });
-  return (data ?? []) as unknown as LeaveRequest[];
+  const client = await actorApi();
+  return unwrap<LeaveRequest[]>(
+    client.POST("/api/v1/timeoff/leave-requests", {
+      body: {
+        employeeName: input.employeeName,
+        type: input.type,
+        start: input.start,
+        end: input.end,
+        days: input.days,
+        ...(input.hours ? { hours: input.hours } : {}),
+      } as never,
+    }),
+  );
 }
 
 /* ------------------------------ Offboarding ------------------------------ */
@@ -106,54 +148,75 @@ export async function setOffboardingTaskStatus(
   id: string,
   status: OffboardingTask["status"],
 ): Promise<OffboardingTask[]> {
-  const { data } = await api().PATCH("/api/v1/offboarding/tasks/{id}/status", {
-    params: { path: { id } },
-    body: { status } as never,
-  });
-  return (data ?? []) as unknown as OffboardingTask[];
+  return unwrap<OffboardingTask[]>(
+    api().PATCH("/api/v1/offboarding/tasks/{id}/status", {
+      params: { path: { id } },
+      body: { status } as never,
+    }),
+  );
+}
+
+/** Delegate a whole department's offboarding tasks to an internal owner. */
+export async function setOffboardingAssignee(
+  owner: OffboardingTask["owner"],
+  assignee: string | null,
+): Promise<OffboardingTask[]> {
+  return unwrap<OffboardingTask[]>(
+    api().PATCH("/api/v1/offboarding/assignees", {
+      body: { owner, assignee } as never,
+    }),
+  );
 }
 
 /** Finalize termination — sets the employee's status to TERMINATED (kill switch). */
-export async function finalizeTermination(employeeName: string): Promise<void> {
-  await api().POST("/api/v1/offboarding/terminate", {
-    body: { employeeName },
-  });
+export async function finalizeTermination(employeeName: string, override = false): Promise<void> {
+  await unwrap(
+    api().POST("/api/v1/offboarding/terminate", {
+      body: { employeeName, override } as never,
+    }),
+    null,
+  );
 }
 
 /* ------------------------------ Performance ------------------------------ */
 
 export async function advanceReviewState(id: string): Promise<PerformanceReview[]> {
-  const { data } = await api().POST("/api/v1/performance/reviews/{id}/advance", {
-    params: { path: { id } },
-  });
-  return (data ?? []) as unknown as PerformanceReview[];
+  return unwrap<PerformanceReview[]>(
+    api().POST("/api/v1/performance/reviews/{id}/advance", {
+      params: { path: { id } },
+    }),
+  );
 }
 
 /* -------------------------------- Agents --------------------------------- */
 
 export async function createAgentRun(intent: string): Promise<AgentRun[]> {
-  const { data } = await api().POST("/api/v1/platform/agent-runs", {
-    body: { intent },
-  });
-  return (data ?? []) as unknown as AgentRun[];
+  return unwrap<AgentRun[]>(
+    api().POST("/api/v1/platform/agent-runs", {
+      body: { intent },
+    }),
+  );
 }
 
 export async function setAgentRunStatus(
   id: string,
   status: AgentRun["status"],
 ): Promise<AgentRun[]> {
-  const { data } = await api().PATCH("/api/v1/platform/agent-runs/{id}/status", {
-    params: { path: { id } },
-    body: { status } as never,
-  });
-  return (data ?? []) as unknown as AgentRun[];
+  return unwrap<AgentRun[]>(
+    api().PATCH("/api/v1/platform/agent-runs/{id}/status", {
+      params: { path: { id } },
+      body: { status } as never,
+    }),
+  );
 }
 
 /* -------------------------------- Settings ------------------------------- */
 
 export async function saveSettings(settings: CompanySettings): Promise<CompanySettings> {
-  const { data } = await api().PUT("/api/v1/platform/settings", {
-    body: settings as never,
-  });
-  return (data ?? settings) as unknown as CompanySettings;
+  return unwrap<CompanySettings>(
+    api().PUT("/api/v1/platform/settings", {
+      body: settings as never,
+    }),
+    settings,
+  );
 }

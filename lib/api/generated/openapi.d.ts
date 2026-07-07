@@ -1236,6 +1236,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workplace/letter-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["WorkplaceController_getLetterTemplates"];
+        put?: never;
+        post: operations["WorkplaceController_createLetterTemplate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workplace/letter-templates/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["WorkplaceController_deleteLetterTemplate"];
+        options?: never;
+        head?: never;
+        patch: operations["WorkplaceController_updateLetterTemplate"];
+        trace?: never;
+    };
+    "/api/v1/workplace/letters/issue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["WorkplaceController_issueLetter"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workplace/training-courses": {
         parameters: {
             query?: never;
@@ -1426,6 +1474,38 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/calc-rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["PlatformController_getCalcRules"];
+        put?: never;
+        post: operations["PlatformController_createCalcRule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/calc-rules/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["PlatformController_deleteCalcRule"];
+        options?: never;
+        head?: never;
+        patch: operations["PlatformController_updateCalcRule"];
         trace?: never;
     };
 }
@@ -1753,6 +1833,22 @@ export interface components {
             employeeName: string;
             override?: boolean;
         };
+        LetterTemplateDto: {
+            name: string;
+            category: string;
+            body: string;
+        };
+        UpdateLetterTemplateDto: {
+            name?: string;
+            category?: string;
+            body?: string;
+        };
+        IssueLetterDto: {
+            employeeId: string;
+            name: string;
+            /** @enum {string} */
+            mode: "save" | "signature";
+        };
         CreateCourseDto: {
             title: string;
             category: string;
@@ -1819,6 +1915,28 @@ export interface components {
         };
         AskCopilotDto: {
             question: string;
+        };
+        CalcRuleDto: {
+            /** @enum {string} */
+            category: "Timesheet" | "Accrual" | "Bonus";
+            field: string;
+            /** @enum {string} */
+            operator: ">" | ">=" | "<" | "<=" | "=";
+            threshold: number;
+            action: string;
+            value: number;
+            active?: boolean;
+        };
+        UpdateCalcRuleDto: {
+            /** @enum {string} */
+            category?: "Timesheet" | "Accrual" | "Bonus";
+            field?: string;
+            /** @enum {string} */
+            operator?: ">" | ">=" | "<" | "<=" | "=";
+            threshold?: number;
+            action?: string;
+            value?: number;
+            active?: boolean;
         };
     };
     responses: never;
@@ -3621,6 +3739,107 @@ export interface operations {
             };
         };
     };
+    WorkplaceController_getLetterTemplates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    WorkplaceController_createLetterTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LetterTemplateDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    WorkplaceController_deleteLetterTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    WorkplaceController_updateLetterTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateLetterTemplateDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    WorkplaceController_issueLetter: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IssueLetterDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     WorkplaceController_getTrainingCourses: {
         parameters: {
             query?: never;
@@ -3991,6 +4210,86 @@ export interface operations {
         };
         responses: {
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PlatformController_getCalcRules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PlatformController_createCalcRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CalcRuleDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PlatformController_deleteCalcRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PlatformController_updateCalcRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCalcRuleDto"];
+            };
+        };
+        responses: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

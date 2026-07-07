@@ -14,6 +14,8 @@ import {
   Settings,
   GraduationCap,
   ClipboardList,
+  FileSignature,
+  Calculator,
   Contact,
   Globe,
   MessageSquareHeart,
@@ -63,6 +65,8 @@ export const adminNav: NavGroup[] = [
       { label: "Reports", href: "/admin/reports", icon: BarChart3 },
       { label: "Tracker", href: "/admin/tracker", icon: ListChecks },
       { label: "AI Agents", href: "/admin/agents", icon: Bot },
+      { label: "Letter Lab", href: "/admin/letter-lab", icon: FileSignature },
+      { label: "Calculator", href: "/admin/calculator", icon: Calculator },
     ],
   },
   {

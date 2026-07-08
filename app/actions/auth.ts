@@ -4,8 +4,8 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { adminAuth } from "@/lib/firebase/admin";
 import { ACTOR_COOKIE } from "@/lib/actor";
+import { SESSION_COOKIE } from "@/lib/session";
 
-export const SESSION_COOKIE = "hr-session";
 const FIVE_DAYS_MS = 5 * 24 * 60 * 60 * 1000;
 
 /** Verify a fresh Firebase ID token and mint an httpOnly session cookie. */

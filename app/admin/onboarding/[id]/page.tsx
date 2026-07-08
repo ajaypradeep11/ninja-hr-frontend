@@ -111,7 +111,7 @@ export default function CaseDetailPage() {
   if (!c) {
     return (
       <div>
-        <Link href="/admin/onboarding" className="text-sm font-semibold text-brand-600">
+        <Link href="/admin/onboarding" className="text-sm font-semibold text-brand-600 dark:text-brand-400">
           ← Back to Onboarding
         </Link>
         <p className="mt-6 text-sm text-ink-muted">
@@ -218,13 +218,13 @@ Policy:     ESIGN / PIPEDA compliant signing
     <div>
       <Link
         href="/admin/onboarding"
-        className="mb-3 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700"
+        className="mb-3 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300"
       >
         <ChevronLeft className="h-3.5 w-3.5" /> Back to Onboarding
       </Link>
 
       {actionError && (
-        <div className="mb-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{actionError}</div>
+        <div className="mb-3 rounded-xl bg-red-50 dark:bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-300">{actionError}</div>
       )}
 
       {/* Header */}
@@ -282,8 +282,8 @@ Policy:     ESIGN / PIPEDA compliant signing
       {/* Action Required — surface human-in-the-loop blockers up top so HR
           instantly sees why the account isn't Active. */}
       {showActionBanner && (
-        <div className="mt-4 flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
-          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+        <div className="mt-4 flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 dark:bg-amber-500/10 px-4 py-3">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-300" />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-amber-900">
               Action Required: {pendingVerifyCount} document
@@ -291,7 +291,7 @@ Policy:     ESIGN / PIPEDA compliant signing
             </p>
             <a
               href="#hr-verification"
-              className="mt-0.5 inline-block text-xs font-semibold text-amber-700 underline underline-offset-2 hover:text-amber-900"
+              className="mt-0.5 inline-block text-xs font-semibold text-amber-700 dark:text-amber-300 underline underline-offset-2 hover:text-amber-900"
             >
               Jump to verification →
             </a>
@@ -308,7 +308,7 @@ Policy:     ESIGN / PIPEDA compliant signing
               <h2 className="text-lg font-bold tracking-tight text-ink">Onboarding Checklist</h2>
               <p className="mt-0.5 text-xs text-ink-muted">
                 Grouped by department — assign an owner to each block. Each owner sees only the data
-                their tasks require (<span className="font-medium text-amber-600">banking</span> is
+                their tasks require (<span className="font-medium text-amber-600 dark:text-amber-300">banking</span> is
                 visible to Finance &amp; HR, never IT).
               </p>
             </div>
@@ -361,15 +361,15 @@ Policy:     ESIGN / PIPEDA compliant signing
                         className={cn(
                           "group flex items-center gap-3 rounded-xl border px-3 py-2.5",
                           t.blocking && t.status !== "Completed"
-                            ? "border-red-200 bg-red-50/40"
+                            ? "border-red-200 dark:border-red-500/30 bg-red-50/40 dark:bg-red-500/10"
                             : "border-line",
                         )}
                       >
                         <button onClick={() => cycleStatus(t)} title="Cycle status">
                           {t.status === "Completed" ? (
-                            <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                            <CheckCircle2 className="h-5 w-5 text-emerald-500 dark:text-emerald-400" />
                           ) : t.status === "In-Progress" ? (
-                            <CircleDot className="h-5 w-5 text-amber-500" />
+                            <CircleDot className="h-5 w-5 text-amber-500 dark:text-amber-400" />
                           ) : (
                             <Circle className="h-5 w-5 text-ink-faint" />
                           )}
@@ -413,12 +413,12 @@ Policy:     ESIGN / PIPEDA compliant signing
                 value={newTask.label}
                 onChange={(e) => setNewTask({ ...newTask, label: e.target.value })}
                 placeholder="Add a task…"
-                className="h-9 flex-1 rounded-lg border border-line bg-white px-3 text-sm outline-none focus:border-brand-300"
+                className="h-9 flex-1 rounded-lg border border-line bg-card px-3 text-sm outline-none focus:border-brand-300"
               />
               <select
                 value={newTask.owner}
                 onChange={(e) => setNewTask({ ...newTask, owner: e.target.value as TaskOwner })}
-                className="h-9 rounded-lg border border-line bg-white px-2 text-sm"
+                className="h-9 rounded-lg border border-line bg-card px-2 text-sm"
               >
                 {OWNERS.map((o) => (
                   <option key={o}>{o}</option>
@@ -427,7 +427,7 @@ Policy:     ESIGN / PIPEDA compliant signing
               <select
                 value={newTask.access}
                 onChange={(e) => setNewTask({ ...newTask, access: e.target.value as DataAccess })}
-                className="h-9 rounded-lg border border-line bg-white px-2 text-sm"
+                className="h-9 rounded-lg border border-line bg-card px-2 text-sm"
               >
                 <option value="general">general</option>
                 <option value="banking">banking</option>
@@ -466,9 +466,9 @@ Policy:     ESIGN / PIPEDA compliant signing
               <div className="mt-4 space-y-1.5">
                 {c.documents.map((d) => (
                   <div key={d.id} className="flex items-center gap-3 rounded-xl border border-line px-3 py-2.5">
-                    <FileText className="h-4 w-4 shrink-0 text-brand-500" />
+                    <FileText className="h-4 w-4 shrink-0 text-brand-500 dark:text-brand-400" />
                     <button onClick={() => setPreview(d)} className="min-w-0 flex-1 text-left">
-                      <p className="truncate text-sm font-medium text-ink hover:text-brand-600">{d.name}</p>
+                      <p className="truncate text-sm font-medium text-ink hover:text-brand-600 dark:hover:text-brand-300">{d.name}</p>
                       <p className="truncate text-[11px] text-ink-faint">
                         {d.type} · signed {d.signedAt}
                       </p>
@@ -514,20 +514,20 @@ Policy:     ESIGN / PIPEDA compliant signing
               {gates.map((g, i) => (
                 <div key={i} className="flex items-start gap-2.5">
                   {g.ok ? (
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500 dark:text-emerald-400" />
                   ) : (
                     <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />
                   )}
                   <div>
                     <p className={cn("text-sm", g.ok ? "text-ink-soft" : "text-ink")}>{g.label}</p>
-                    {!g.ok && g.detail && <p className="text-[11px] text-red-500">{g.detail}</p>}
+                    {!g.ok && g.detail && <p className="text-[11px] text-red-500 dark:text-red-400">{g.detail}</p>}
                   </div>
                 </div>
               ))}
             </div>
 
             {c.status === "Active" ? (
-              <div className="mt-4 flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-700">
+              <div className="mt-4 flex items-center gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 px-3 py-2.5 text-sm font-semibold text-emerald-700 dark:text-emerald-300">
                 <ShieldCheck className="h-4 w-4" /> Account active — payroll &amp; SSO provisioned
               </div>
             ) : (
@@ -541,7 +541,7 @@ Policy:     ESIGN / PIPEDA compliant signing
                 </button>
                 {!ready && (
                   <p className="mt-2 flex items-start gap-1.5 text-[11px] text-ink-muted">
-                    <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+                    <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500 dark:text-amber-400" />
                     Activation fires <code>onboarding.workflow.finished</code> → sets payroll status
                     Active and provisions SSO.
                   </p>
@@ -587,7 +587,7 @@ Policy:     ESIGN / PIPEDA compliant signing
                   </div>
                 ))}
                 <p className="mt-2 flex items-center gap-1 border-t border-line pt-2 text-[11px] text-ink-faint">
-                  <ShieldCheck className="h-3 w-3 text-emerald-500" />
+                  <ShieldCheck className="h-3 w-3 text-emerald-500 dark:text-emerald-400" />
                   SIN and account number are masked — raw values never leave the database.
                 </p>
               </div>
@@ -610,7 +610,7 @@ Policy:     ESIGN / PIPEDA compliant signing
                 {c.consent.map((e, i) => (
                   <div key={i} className="rounded-xl bg-canvas px-3 py-2 text-xs">
                     <p className="font-semibold text-ink">
-                      {e.policy} <span className="text-brand-600">{e.version}</span>
+                      {e.policy} <span className="text-brand-600 dark:text-brand-400">{e.version}</span>
                     </p>
                     <p className="text-ink-faint">
                       {e.timestamp.replace("T", " ")} · IP {e.ip}
@@ -653,7 +653,7 @@ Policy:     ESIGN / PIPEDA compliant signing
         <Modal onClose={() => setPreview(null)} title={preview.name}>
           <div className="rounded-xl border border-line bg-canvas p-4 text-sm">
             <div className="flex items-center gap-2 text-ink">
-              <FileText className="h-4 w-4 text-brand-500" />
+              <FileText className="h-4 w-4 text-brand-500 dark:text-brand-400" />
               <span className="font-semibold">{preview.type}</span>
             </div>
             <dl className="mt-3 space-y-1.5 text-xs text-ink-soft">
@@ -663,7 +663,7 @@ Policy:     ESIGN / PIPEDA compliant signing
               <Row k="IP address" v={preview.ip ?? "—"} />
               <Row k="Status" v={preview.status} />
             </dl>
-            <p className="mt-3 flex items-center gap-1.5 text-[11px] text-emerald-600">
+            <p className="mt-3 flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-300">
               <Lock className="h-3.5 w-3.5" /> ESIGN / PIPEDA-compliant electronic signature
             </p>
           </div>
@@ -740,7 +740,7 @@ function Modal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog">
       <div className="absolute inset-0 bg-ink/20" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-lg rounded-2xl bg-white p-6 shadow-pop">
+      <div className="relative z-10 w-full max-w-lg rounded-2xl bg-card p-6 shadow-pop">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-base font-bold text-ink">{title}</h3>
           <button onClick={onClose} className="rounded-lg p-1.5 text-ink-muted hover:bg-canvas">

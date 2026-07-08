@@ -241,7 +241,7 @@ export function CandidateDetailView({
             Interview Guide tab.
           </p>
         )}
-        {error && <p className="mt-3 rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-600">{error}</p>}
+        {error && <p className="mt-3 rounded-xl bg-red-50 dark:bg-red-500/10 px-3.5 py-2.5 text-sm text-red-600 dark:text-red-300">{error}</p>}
       </Card>
 
       {/* Tab bar */}
@@ -261,7 +261,7 @@ export function CandidateDetailView({
               onClick={() => setTab(t.key)}
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-semibold transition",
-                on ? "bg-brand-500 text-white shadow-sm" : "border border-line bg-white text-ink-soft hover:bg-canvas",
+                on ? "bg-brand-500 text-white shadow-sm" : "border border-line bg-card text-ink-soft hover:bg-canvas",
               )}
             >
               <Icon className="h-4 w-4" />
@@ -290,7 +290,7 @@ export function CandidateDetailView({
 
             {/* Pre-screen answers */}
             <Card className="card-pad">
-              <CardHeader title="Pre-screening answers" action={<FileText className="h-4 w-4 text-brand-500" />} />
+              <CardHeader title="Pre-screening answers" action={<FileText className="h-4 w-4 text-brand-500 dark:text-brand-400" />} />
               <div className="mt-3 space-y-2.5">
                 {candidate.answers.length === 0 && (
                   <p className="text-sm text-ink-muted">No pre-screening answers.</p>
@@ -308,14 +308,14 @@ export function CandidateDetailView({
           <div className="space-y-5">
             {/* Profile */}
             <Card className="card-pad">
-              <CardHeader title="Profile" action={<UserRound className="h-4 w-4 text-brand-500" />} />
+              <CardHeader title="Profile" action={<UserRound className="h-4 w-4 text-brand-500 dark:text-brand-400" />} />
 
               {/* Résumé + AI-parsed data */}
               {candidate.resume && (
                 <div className="mt-3 rounded-xl border border-line p-3.5">
                   <div className="flex items-center justify-between gap-3">
                     <span className="flex min-w-0 items-center gap-2">
-                      <FileText className="h-4 w-4 shrink-0 text-brand-500" />
+                      <FileText className="h-4 w-4 shrink-0 text-brand-500 dark:text-brand-400" />
                       <span className="truncate text-sm font-medium text-ink">
                         {candidate.resume.fileName ?? "Résumé"}
                       </span>
@@ -374,7 +374,7 @@ export function CandidateDetailView({
                 !candidate.resume && <p className="mt-3 text-sm text-ink-muted">No résumé on file.</p>
               )}
               {candidate.consentAt && (
-                <p className="mt-3 flex items-center gap-1.5 text-[11px] text-emerald-600">
+                <p className="mt-3 flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-300">
                   <ShieldCheck className="h-3.5 w-3.5" />
                   Privacy consent {candidate.consentVersion} recorded{" "}
                   {formatDate(candidate.consentAt.slice(0, 10))}
@@ -388,7 +388,7 @@ export function CandidateDetailView({
       {/* ---------------------------- Interview Panel --------------------------- */}
       {tab === "panel" && (
         <div className="space-y-5">
-          <p className="flex items-start gap-2 rounded-xl bg-violet-50 px-4 py-3 text-xs text-violet-700">
+          <p className="flex items-start gap-2 rounded-xl bg-violet-50 dark:bg-violet-500/10 px-4 py-3 text-xs text-violet-700 dark:text-violet-300">
             <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             <span>
               <span className="font-semibold">Visibility rules:</span> every panelist fills in
@@ -399,7 +399,7 @@ export function CandidateDetailView({
           </p>
 
           {/* Evaluation profile — aggregated KPIs + completed scorecards */}
-          <Card className="card-pad border-violet-200 bg-violet-50/10">
+          <Card className="card-pad border-violet-200 dark:border-violet-500/30 bg-violet-50/10 dark:bg-violet-500/10">
             <CardHeader
               title="Panel feedback & evaluation profile"
               action={
@@ -407,22 +407,22 @@ export function CandidateDetailView({
                   {completedScorecards.length > 0 && (
                     <button
                       onClick={exportScorecards}
-                      className="inline-flex items-center gap-1 rounded-lg bg-white px-2 py-1 text-[11px] font-semibold text-ink-soft ring-1 ring-line hover:bg-canvas"
+                      className="inline-flex items-center gap-1 rounded-lg bg-card px-2 py-1 text-[11px] font-semibold text-ink-soft ring-1 ring-line hover:bg-canvas"
                     >
                       <Download className="h-3 w-3" /> Export CSV
                     </button>
                   )}
-                  <ClipboardList className="h-4 w-4 text-violet-500" />
+                  <ClipboardList className="h-4 w-4 text-violet-500 dark:text-violet-400" />
                 </div>
               }
             />
-            <p className="mt-1 flex items-center gap-1 text-[11px] font-medium text-violet-700">
+            <p className="mt-1 flex items-center gap-1 text-[11px] font-medium text-violet-700 dark:text-violet-300">
               <Lock className="h-3 w-3" /> Internal evaluation record — separate from the application, never shared with the candidate.
             </p>
 
             {/* Aggregate KPIs */}
             {candidate.evaluationSummary.submittedCount > 0 && (
-              <div className="mt-3 rounded-xl border border-violet-100 bg-white p-3.5">
+              <div className="mt-3 rounded-xl border border-violet-100 dark:border-violet-500/30 bg-card p-3.5">
                 <div className="flex flex-wrap items-center gap-4">
                   <div>
                     <p className="text-2xl font-bold text-ink">
@@ -463,7 +463,7 @@ export function CandidateDetailView({
             {/* Completed scorecards — read-only for the whole panel */}
             <div className="mt-3 space-y-3">
               {debriefLocked ? (
-                <div className="rounded-xl border border-dashed border-violet-200 bg-white px-4 py-6 text-center">
+                <div className="rounded-xl border border-dashed border-violet-200 dark:border-violet-500/30 bg-card px-4 py-6 text-center">
                   <Lock className="mx-auto h-5 w-5 text-violet-400" />
                   <p className="mt-2 text-sm font-semibold text-ink">
                     Panel feedback unlocks after you submit
@@ -473,7 +473,7 @@ export function CandidateDetailView({
                     stay hidden until you submit your own. Head to the{" "}
                     <button
                       onClick={() => setTab("guide")}
-                      className="font-semibold text-violet-700 underline"
+                      className="font-semibold text-violet-700 dark:text-violet-300 underline"
                     >
                       Interview Guide
                     </button>{" "}
@@ -492,7 +492,7 @@ export function CandidateDetailView({
                   ? Math.round((s.ratings.reduce((sum, r) => sum + r.rating, 0) / s.ratings.length) * 10) / 10
                   : null;
                 return (
-                  <div key={s.id} className="rounded-xl border border-line bg-white p-3.5">
+                  <div key={s.id} className="rounded-xl border border-line bg-card p-3.5">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
                         <Avatar name={s.panelistName} size={26} />
@@ -513,7 +513,7 @@ export function CandidateDetailView({
                             {[1, 2, 3, 4, 5].map((n) => (
                               <span key={n}>
                                 {n <= r.rating ? (
-                                  <CheckCircle2 className="h-3.5 w-3.5 text-brand-500" />
+                                  <CheckCircle2 className="h-3.5 w-3.5 text-brand-500 dark:text-brand-400" />
                                 ) : (
                                   <Circle className="h-3.5 w-3.5 text-line" />
                                 )}
@@ -539,7 +539,7 @@ export function CandidateDetailView({
             {myDraft && (
               <button
                 onClick={() => setTab("guide")}
-                className="mt-3 w-full rounded-lg bg-amber-50 px-3 py-2 text-left text-[11px] text-amber-700 transition hover:bg-amber-100"
+                className="mt-3 w-full rounded-lg bg-amber-50 dark:bg-amber-500/10 px-3 py-2 text-left text-[11px] text-amber-700 dark:text-amber-300 transition hover:bg-amber-100 dark:hover:bg-amber-500/20"
               >
                 You have a draft in progress — finish and submit it in the{" "}
                 <span className="font-semibold underline">Interview Guide</span> tab.
@@ -552,7 +552,7 @@ export function CandidateDetailView({
       {/* ----------------------------- Interview Guide -------------------------- */}
       {tab === "guide" && scorecardSlot && (
         <div className="space-y-4">
-          <p className="flex items-start gap-2 rounded-xl bg-brand-50 px-4 py-3 text-xs text-brand-700">
+          <p className="flex items-start gap-2 rounded-xl bg-brand-50 px-4 py-3 text-xs text-brand-700 dark:text-brand-400">
             <NotebookPen className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             <span>
               <span className="font-semibold">Your interview workspace.</span> Take notes and
@@ -579,12 +579,12 @@ export function CandidateDetailView({
       {tab === "activity" && (
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           {/* Internal evaluation notes — strictly internal, RBAC'd. */}
-          <Card className="card-pad border-violet-200 bg-violet-50/20">
+          <Card className="card-pad border-violet-200 dark:border-violet-500/30 bg-violet-50/20 dark:bg-violet-500/10">
             <CardHeader
               title="Internal notes"
-              action={<Lock className="h-4 w-4 text-violet-500" />}
+              action={<Lock className="h-4 w-4 text-violet-500 dark:text-violet-400" />}
             />
-            <p className="mt-1 flex items-center gap-1 text-[11px] font-medium text-violet-700">
+            <p className="mt-1 flex items-center gap-1 text-[11px] font-medium text-violet-700 dark:text-violet-300">
               <Lock className="h-3 w-3" /> Internal — hiring team only, never shared with the candidate.
             </p>
             <div className="mt-3">
@@ -608,7 +608,7 @@ export function CandidateDetailView({
                 <p className="text-sm text-ink-muted">No internal notes yet.</p>
               )}
               {candidate.notes.map((n) => (
-                <div key={n.id} className="rounded-xl border border-violet-100 bg-white p-3">
+                <div key={n.id} className="rounded-xl border border-violet-100 dark:border-violet-500/30 bg-card p-3">
                   <div className="flex items-center justify-between gap-2">
                     <span className="flex items-center gap-1.5 text-xs font-semibold text-ink">
                       <Avatar name={n.authorName ?? "?"} size={20} /> {n.authorName ?? "Unknown"}
@@ -644,7 +644,7 @@ export function CandidateDetailView({
 
             {/* Privacy tools (HR) */}
             {isHr && !candidate.anonymized && (
-              <Card className="card-pad border-red-200 bg-red-50/20">
+              <Card className="card-pad border-red-200 dark:border-red-500/30 bg-red-50/20 dark:bg-red-500/10">
                 <CardHeader title="Data privacy (Ontario compliance)" />
                 <p className="mt-2 text-xs text-ink-muted">
                   Permanently anonymize this candidate&apos;s personal data: name, email, resume,
@@ -653,11 +653,11 @@ export function CandidateDetailView({
                   written to the audit trail.
                 </p>
                 {confirmPurge ? (
-                  <div className="mt-3 rounded-xl bg-red-50 p-3.5">
-                    <p className="text-sm font-semibold text-red-700">
+                  <div className="mt-3 rounded-xl bg-red-50 dark:bg-red-500/10 p-3.5">
+                    <p className="text-sm font-semibold text-red-700 dark:text-red-300">
                       Purge all personal data for {candidate.name}?
                     </p>
-                    <p className="mt-1 text-xs text-red-600">This cannot be undone.</p>
+                    <p className="mt-1 text-xs text-red-600 dark:text-red-300">This cannot be undone.</p>
                     <div className="mt-2.5 flex gap-2">
                       <button
                         disabled={busy}
@@ -668,7 +668,7 @@ export function CandidateDetailView({
                       </button>
                       <button
                         onClick={() => setConfirmPurge(false)}
-                        className="rounded-lg border border-line bg-white px-3 py-1.5 text-xs font-semibold text-ink-soft hover:bg-canvas"
+                        className="rounded-lg border border-line bg-card px-3 py-1.5 text-xs font-semibold text-ink-soft hover:bg-canvas"
                       >
                         Cancel
                       </button>
@@ -677,7 +677,7 @@ export function CandidateDetailView({
                 ) : (
                   <button
                     onClick={() => setConfirmPurge(true)}
-                    className="mt-3 rounded-xl border border-red-300 bg-white px-3.5 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50"
+                    className="mt-3 rounded-xl border border-red-300 bg-card px-3.5 py-2 text-xs font-semibold text-red-600 dark:text-red-300 transition hover:bg-red-50 dark:hover:bg-red-500/20"
                   >
                     Purge personal data…
                   </button>

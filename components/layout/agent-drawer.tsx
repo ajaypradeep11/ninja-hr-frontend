@@ -124,7 +124,7 @@ export function AgentDrawer({
       />
       <aside
         className={cn(
-          "fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col bg-white shadow-pop transition-transform duration-300",
+          "fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col bg-card shadow-pop transition-transform duration-300",
           open ? "translate-x-0" : "translate-x-full",
         )}
       >
@@ -135,7 +135,7 @@ export function AgentDrawer({
             </span>
             <div>
               <p className="text-sm font-semibold text-ink">HR Co-Pilot</p>
-              <p className="flex items-center gap-1 text-[11px] text-emerald-600">
+              <p className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-300">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Live AI Agent
               </p>
             </div>
@@ -158,7 +158,7 @@ export function AgentDrawer({
               >
                 {m.text}
                 {m.guard && (
-                  <div className="mt-2 flex items-start gap-1.5 rounded-lg bg-amber-50 px-2.5 py-2 text-[12px] text-amber-700">
+                  <div className="mt-2 flex items-start gap-1.5 rounded-lg bg-amber-50 dark:bg-amber-500/10 px-2.5 py-2 text-[12px] text-amber-700 dark:text-amber-300">
                     <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                     <span>{m.guard}</span>
                   </div>
@@ -186,7 +186,7 @@ export function AgentDrawer({
         </div>
 
         <div className="border-t border-line p-3">
-          <div className="flex items-center gap-2 rounded-xl border border-line bg-white px-3 py-1.5 focus-within:border-brand-400 focus-within:ring-2 focus-within:ring-brand-100">
+          <div className="flex items-center gap-2 rounded-xl border border-line bg-card px-3 py-1.5 focus-within:border-brand-400 focus-within:ring-2 focus-within:ring-brand-100">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}

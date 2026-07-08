@@ -96,7 +96,7 @@ export function LetterLabView({
       />
 
       {error && (
-        <p className="mb-4 rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-600">{error}</p>
+        <p className="mb-4 rounded-xl bg-red-50 dark:bg-red-500/10 px-3.5 py-2.5 text-sm text-red-600 dark:text-red-300">{error}</p>
       )}
 
       {mode.view === "library" ? (
@@ -104,7 +104,7 @@ export function LetterLabView({
           {templates.map((t) => (
             <Card key={t.id} className="card-pad flex flex-col">
               <div className="flex items-start justify-between gap-2">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:text-brand-400">
                   <FileText className="h-5 w-5" />
                 </span>
                 <Badge tone={categoryTone[t.category] ?? "gray"}>{t.category}</Badge>
@@ -133,7 +133,7 @@ export function LetterLabView({
                 <button
                   onClick={() => removeTemplate(t)}
                   title="Delete template"
-                  className="rounded-lg border border-line p-1.5 text-ink-muted hover:bg-red-50 hover:text-red-600"
+                  className="rounded-lg border border-line p-1.5 text-ink-muted hover:bg-red-50 dark:hover:bg-red-500/20 hover:text-red-600 dark:hover:text-red-300"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -284,7 +284,7 @@ function TemplateBuilder({
                 <span className="block text-xs font-semibold text-ink">{v.label}</span>
                 <span className="block truncate text-[10px] text-ink-faint">{v.hint}</span>
               </span>
-              <code className="shrink-0 rounded bg-canvas px-1.5 py-0.5 text-[10px] text-brand-600">
+              <code className="shrink-0 rounded bg-canvas px-1.5 py-0.5 text-[10px] text-brand-600 dark:text-brand-400">
                 {v.token}
               </code>
             </button>
@@ -381,7 +381,7 @@ function GenerateModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-ink/30" onClick={onClose} />
-      <div className="relative z-10 flex max-h-[90vh] w-full max-w-2xl flex-col rounded-2xl bg-white shadow-pop">
+      <div className="relative z-10 flex max-h-[90vh] w-full max-w-2xl flex-col rounded-2xl bg-card shadow-pop">
         <div className="flex items-center justify-between border-b border-line px-6 py-4">
           <div>
             <h3 className="text-sm font-bold text-ink">Generate for Employee</h3>
@@ -402,7 +402,7 @@ function GenerateModal({
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search by name, title or department…"
-                  className="h-10 w-full rounded-xl border border-line bg-canvas pl-9 pr-3 text-sm outline-none focus:border-brand-300 focus:bg-white"
+                  className="h-10 w-full rounded-xl border border-line bg-canvas pl-9 pr-3 text-sm outline-none focus:border-brand-300 focus:bg-card"
                 />
               </div>
               <div className="mt-2 max-h-48 space-y-1 overflow-y-auto rounded-xl border border-line p-1.5">
@@ -432,7 +432,7 @@ function GenerateModal({
 
             <div>
               <label className="field-label flex items-center gap-1.5">
-                <Sparkles className="h-3.5 w-3.5 text-violet-500" /> AI Customization Prompt
+                <Sparkles className="h-3.5 w-3.5 text-violet-500 dark:text-violet-400" /> AI Customization Prompt
                 (optional)
               </label>
               <textarea
@@ -463,14 +463,14 @@ function GenerateModal({
         ) : (
           <div className="flex min-h-0 flex-1 flex-col p-6">
             {aiNote && (
-              <p className="mb-3 rounded-lg bg-violet-50 px-3 py-2 text-[11px] font-medium text-violet-700">
+              <p className="mb-3 rounded-lg bg-violet-50 dark:bg-violet-500/10 px-3 py-2 text-[11px] font-medium text-violet-700 dark:text-violet-300">
                 {aiNote}
               </p>
             )}
             {/* PDF-style preview */}
             <div className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-line bg-canvas p-4">
-              <div className="mx-auto max-w-lg rounded-md bg-white p-8 shadow-md">
-                <p className="text-xs font-bold uppercase tracking-widest text-brand-600">
+              <div className="mx-auto max-w-lg rounded-md bg-card p-8 shadow-md">
+                <p className="text-xs font-bold uppercase tracking-widest text-brand-600 dark:text-brand-400">
                   TestHR Inc.
                 </p>
                 <div className="mb-5 mt-1 h-px bg-line" />
@@ -481,7 +481,7 @@ function GenerateModal({
             </div>
 
             {issued ? (
-              <div className="mt-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+              <div className="mt-4 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-300">
                 {issued}
                 <button onClick={onClose} className="ml-2 font-semibold underline">
                   Done

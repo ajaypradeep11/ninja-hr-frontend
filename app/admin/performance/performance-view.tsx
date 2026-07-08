@@ -37,18 +37,18 @@ const REVIEW_STATES = [
 
 /** Color-coded review pills that signal who is holding up the cycle at a glance. */
 const reviewPill: Record<string, { cls: string; label: string; waiting?: "employee" | "manager" }> = {
-  Draft: { cls: "bg-slate-100 text-slate-500", label: "Draft" },
+  Draft: { cls: "bg-slate-100 dark:bg-slate-500/20 text-slate-500 dark:text-slate-400", label: "Draft" },
   "Self-Evaluation": {
-    cls: "bg-yellow-100 text-yellow-800",
+    cls: "bg-yellow-100 dark:bg-yellow-500/20 text-yellow-800 dark:text-yellow-200",
     label: "Self-Evaluation",
     waiting: "employee",
   },
   "Manager-Evaluation": {
-    cls: "bg-orange-100 text-orange-700",
+    cls: "bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-300",
     label: "Manager-Evaluation",
     waiting: "manager",
   },
-  Calibrated: { cls: "bg-emerald-100 text-emerald-700", label: "Calibrated" },
+  Calibrated: { cls: "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300", label: "Calibrated" },
   Completed: { cls: "bg-emerald-500 text-white", label: "Completed" },
 };
 
@@ -181,15 +181,15 @@ export function PerformanceView({
       {pendingApprovals.length > 0 && (
         <a
           href="#guardrail-approvals"
-          className="mb-5 flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 transition hover:bg-amber-100/70"
+          className="mb-5 flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 dark:bg-amber-500/10 px-4 py-3 transition hover:bg-amber-100/70 dark:hover:bg-amber-500/20"
         >
-          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-300" />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-amber-900">
               Action Required: {pendingApprovals.length} goal change
               {pendingApprovals.length === 1 ? "" : "s"} exceed the 15% guardrail and need HR review.
             </p>
-            <p className="mt-0.5 text-xs text-amber-700">
+            <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-300">
               A manager attempted to change a core responsibility beyond the constructive-dismissal
               threshold — review before it takes effect →
             </p>
@@ -218,7 +218,7 @@ export function PerformanceView({
                 >
                   <Bell className="h-3.5 w-3.5" /> Send Reminders
                   {dueSoon.length > 0 && (
-                    <span className="rounded-full bg-amber-100 px-1.5 text-[10px] font-bold text-amber-700">
+                    <span className="rounded-full bg-amber-100 dark:bg-amber-500/20 px-1.5 text-[10px] font-bold text-amber-700 dark:text-amber-300">
                       {dueSoon.length}
                     </span>
                   )}
@@ -230,13 +230,13 @@ export function PerformanceView({
             }
           />
           {reminderMsg && (
-            <div className="mt-3 flex items-start justify-between gap-3 rounded-xl bg-emerald-50 px-3.5 py-2.5 text-xs text-emerald-700">
+            <div className="mt-3 flex items-start justify-between gap-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 px-3.5 py-2.5 text-xs text-emerald-700 dark:text-emerald-300">
               <span className="flex items-start gap-1.5">
                 <Bell className="mt-0.5 h-3.5 w-3.5 shrink-0" /> {reminderMsg}
               </span>
               <button
                 onClick={() => setReminderMsg(null)}
-                className="shrink-0 text-emerald-600 hover:text-emerald-800"
+                className="shrink-0 text-emerald-600 dark:text-emerald-300 hover:text-emerald-800 dark:hover:text-emerald-300"
                 aria-label="Dismiss"
               >
                 <X className="h-3.5 w-3.5" />
@@ -244,7 +244,7 @@ export function PerformanceView({
             </div>
           )}
           {advanceError && (
-            <div className="mt-3 rounded-xl bg-red-50 px-3.5 py-2.5 text-xs text-red-600">
+            <div className="mt-3 rounded-xl bg-red-50 dark:bg-red-500/10 px-3.5 py-2.5 text-xs text-red-600 dark:text-red-300">
               {advanceError}
             </div>
           )}
@@ -267,7 +267,7 @@ export function PerformanceView({
                       {r.state !== "Completed" && (
                         <button
                           onClick={() => handleAdvance(r.id)}
-                          className="rounded-lg border border-brand-300 bg-brand-50 px-2 py-0.5 text-[11px] font-semibold text-brand-600 hover:bg-brand-100"
+                          className="rounded-lg border border-brand-300 bg-brand-50 px-2 py-0.5 text-[11px] font-semibold text-brand-600 dark:text-brand-400 hover:bg-brand-100"
                         >
                           Advance
                         </button>
@@ -280,7 +280,7 @@ export function PerformanceView({
                       <React.Fragment key={s}>
                         <div className="flex flex-col items-center">
                           {i <= idx ? (
-                            <CheckCircle2 className="h-4 w-4 text-brand-500" />
+                            <CheckCircle2 className="h-4 w-4 text-brand-500 dark:text-brand-400" />
                           ) : (
                             <Circle className="h-4 w-4 text-line" />
                           )}
@@ -313,7 +313,7 @@ export function PerformanceView({
           {/* Probation trigger */}
           <Card className="card-pad">
             <div className="flex items-center gap-2 text-sm font-semibold text-ink">
-              <CalendarClock className="h-4 w-4 text-brand-500" /> 90-Day probation trigger
+              <CalendarClock className="h-4 w-4 text-brand-500 dark:text-brand-400" /> 90-Day probation trigger
             </div>
             <p className="mt-2 text-xs text-ink-muted">
               At day 60 the system auto-initializes a probationary review: <i>&quot;Complete the
@@ -323,11 +323,11 @@ export function PerformanceView({
           </Card>
 
           {/* Constructive dismissal guardrail */}
-          <Card className="card-pad border-amber-200 bg-amber-50/40">
-            <div className="flex items-center gap-2 text-sm font-semibold text-amber-700">
+          <Card className="card-pad border-amber-200 dark:border-amber-500/30 bg-amber-50/40 dark:bg-amber-500/10">
+            <div className="flex items-center gap-2 text-sm font-semibold text-amber-700 dark:text-amber-300">
               <ShieldAlert className="h-4 w-4" /> Constructive dismissal guardrail
             </div>
-            <p className="mt-2 text-xs text-amber-700/90">
+            <p className="mt-2 text-xs text-amber-700 dark:text-amber-300/90">
               Changing a signed goal&apos;s weight or core responsibility by more than{" "}
               <b>15%</b> is blocked and routed to a mandatory approval workflow with mutual
               signed consent.
@@ -348,13 +348,13 @@ export function PerformanceView({
             />
             {pendingApprovals.length === 0 ? (
               <p className="mt-3 flex items-center gap-1.5 text-xs text-ink-muted">
-                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> No goal changes are
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 dark:text-emerald-400" /> No goal changes are
                 breaching the 15% guardrail right now.
               </p>
             ) : (
               <div className="mt-3 space-y-3">
                 {pendingApprovals.map((g) => (
-                  <div key={g.id} className="rounded-xl border border-amber-200 bg-amber-50/50 p-3">
+                  <div key={g.id} className="rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50/50 dark:bg-amber-500/10 p-3">
                     <div className="flex items-center gap-2">
                       <Avatar name={g.employee} size={24} />
                       <p className="text-sm font-semibold text-ink">{g.employee}</p>
@@ -364,7 +364,7 @@ export function PerformanceView({
                       <span className="font-medium">{g.manager}</span> wants to change{" "}
                       <span className="font-medium">{g.field.toLowerCase()}</span> on “{g.goalTitle}”
                       from <span className="font-mono">{g.previousValue}</span> →{" "}
-                      <span className="font-mono font-semibold text-amber-700">
+                      <span className="font-mono font-semibold text-amber-700 dark:text-amber-300">
                         {g.proposedValue}
                       </span>
                       .
@@ -397,7 +397,7 @@ export function PerformanceView({
                   .map((g) => (
                     <p key={g.id} className="flex items-center gap-1.5 text-[11px] text-ink-faint">
                       {g.status === "Approved" ? (
-                        <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                        <CheckCircle2 className="h-3 w-3 text-emerald-500 dark:text-emerald-400" />
                       ) : (
                         <X className="h-3 w-3 text-red-400" />
                       )}
@@ -455,7 +455,7 @@ export function PerformanceView({
 
 function SignOff({ label, ok }: { label: string; ok: boolean }) {
   return (
-    <span className={cn("inline-flex items-center gap-1.5", ok ? "text-emerald-600" : "text-ink-faint")}>
+    <span className={cn("inline-flex items-center gap-1.5", ok ? "text-emerald-600 dark:text-emerald-300" : "text-ink-faint")}>
       {ok ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Circle className="h-3.5 w-3.5" />}
       {label}
     </span>
@@ -510,11 +510,11 @@ function CreatePipForm({
   return (
     <Card className="card-pad">
       <div className="flex items-center gap-2 text-sm font-semibold text-ink">
-        <FileWarning className="h-4 w-4 text-brand-500" /> Create PIP
+        <FileWarning className="h-4 w-4 text-brand-500 dark:text-brand-400" /> Create PIP
       </div>
 
       {issued ? (
-        <div className="mt-4 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-700">
+        <div className="mt-4 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 p-4 text-sm text-emerald-700 dark:text-emerald-300">
           <CheckCircle2 className="h-5 w-5" />
           <p className="mt-2 font-semibold">PIP issued</p>
           <p className="mt-1 text-xs">
@@ -563,7 +563,7 @@ function CreatePipForm({
               className="field-input"
             />
             {durationError && (
-              <p className="mt-1.5 flex items-start gap-1.5 text-[11px] text-red-600">
+              <p className="mt-1.5 flex items-start gap-1.5 text-[11px] text-red-600 dark:text-red-300">
                 <ShieldAlert className="mt-0.5 h-3 w-3 shrink-0" />
                 {durationError}
               </p>
@@ -599,7 +599,7 @@ function CreatePipForm({
               className="field-input resize-none"
             />
             <p className="mt-1 flex items-start gap-1.5 text-[11px] text-ink-faint">
-              <ShieldAlert className="mt-0.5 h-3 w-3 shrink-0 text-amber-500" />
+              <ShieldAlert className="mt-0.5 h-3 w-3 shrink-0 text-amber-500 dark:text-amber-400" />
               Legally required: a valid PIP must state the outcome of not meeting expectations.
             </p>
           </div>
@@ -633,7 +633,7 @@ function CreatePipForm({
               type="checkbox"
               checked={refusedBypass}
               onChange={(e) => setRefusedBypass(e.target.checked)}
-              className="h-4 w-4 rounded border-line text-brand-500"
+              className="h-4 w-4 rounded border-line text-brand-500 dark:text-brand-400"
             />
             <PenLine className="h-3.5 w-3.5 text-ink-faint" />
             Refused to sign — verified by witness HR Admin
@@ -646,7 +646,7 @@ function CreatePipForm({
             Issue PIP
           </Button>
           {issueError && (
-            <p className="text-center text-[11px] text-red-600">{issueError}</p>
+            <p className="text-center text-[11px] text-red-600 dark:text-red-300">{issueError}</p>
           )}
           {!canIssue && !durationError && (
             <p className="text-center text-[11px] text-ink-faint">

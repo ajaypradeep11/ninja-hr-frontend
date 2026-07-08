@@ -55,13 +55,13 @@ export function Sidebar({
     href === homeHref ? pathname === href : pathname.startsWith(href);
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 flex w-60 flex-col border-r border-line bg-white">
+    <aside className="fixed inset-y-0 left-0 z-30 flex w-60 flex-col border-r border-line bg-card">
       <Link href={homeHref} className="flex items-center gap-2.5 px-5 pb-4 pt-5">
         <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500 text-white shadow-sm">
           <Sparkles className="h-5 w-5" />
         </span>
         <span className="leading-tight">
-          <span className="block text-[15px] font-bold text-brand-700">{BRAND.name}</span>
+          <span className="block text-[15px] font-bold text-brand-700 dark:text-brand-400">{BRAND.name}</span>
           <span className="block text-[10px] font-semibold uppercase tracking-wider text-ink-faint">
             {consoleLabel}
           </span>
@@ -143,7 +143,7 @@ function CollapsibleGroup({
         aria-expanded={open}
         className={cn(
           "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
-          hasActiveChild ? "text-brand-700" : "text-ink-soft hover:bg-canvas",
+          hasActiveChild ? "text-brand-700 dark:text-brand-400" : "text-ink-soft hover:bg-canvas",
         )}
       >
         {GroupIcon && <GroupIcon className="h-[18px] w-[18px]" />}

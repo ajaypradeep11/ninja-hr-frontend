@@ -107,7 +107,7 @@ export function AssigneePicker({
           {e.title} · {e.department}
         </span>
       </span>
-      {e.name === assignee && <Check className="h-3.5 w-3.5 shrink-0 text-brand-500" />}
+      {e.name === assignee && <Check className="h-3.5 w-3.5 shrink-0 text-brand-500 dark:text-brand-400" />}
     </button>
   );
 
@@ -126,7 +126,7 @@ export function AssigneePicker({
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={toggleOpen}
-        className="inline-flex h-7 items-center gap-1 rounded-lg border border-line bg-white px-2 text-[11px] font-semibold text-ink-soft outline-none transition hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex h-7 items-center gap-1 rounded-lg border border-line bg-card px-2 text-[11px] font-semibold text-ink-soft outline-none transition hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-50"
       >
         {assignee ? (
           "Reassign"
@@ -141,7 +141,7 @@ export function AssigneePicker({
       {open && (
         <div
           role="listbox"
-          className="absolute right-0 top-full z-30 mt-1 w-64 overflow-hidden rounded-xl border border-line bg-white shadow-lg"
+          className="absolute right-0 top-full z-30 mt-1 w-64 overflow-hidden rounded-xl border border-line bg-card shadow-lg"
         >
           <div className="flex items-center gap-1.5 border-b border-line px-2.5 py-2">
             <Search className="h-3.5 w-3.5 shrink-0 text-ink-faint" />
@@ -170,7 +170,7 @@ export function AssigneePicker({
               <button
                 type="button"
                 onClick={() => choose(null)}
-                className="flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-xs font-medium text-red-600 hover:bg-red-50"
+                className="flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-xs font-medium text-red-600 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/20"
               >
                 <span className="flex h-[22px] w-[22px] items-center justify-center">
                   <X className="h-3.5 w-3.5" />

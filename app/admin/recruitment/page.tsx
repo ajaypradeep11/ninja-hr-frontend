@@ -90,7 +90,7 @@ export default async function RecruitmentPage() {
       </div>
 
       {awaitingPublish > 0 && (
-        <Card className="card-pad mb-5 border-sky-200 bg-sky-50/30">
+        <Card className="card-pad mb-5 border-sky-200 dark:border-sky-500/30 bg-sky-50/30 dark:bg-sky-500/10">
           <CardHeader title="Publish queue — approved and waiting on HR" />
           <div className="mt-3 space-y-2">
             {activeReqs
@@ -99,7 +99,7 @@ export default async function RecruitmentPage() {
                 <Link
                   key={r.id}
                   href={`/admin/recruitment/${r.id}`}
-                  className="flex items-center justify-between rounded-xl border border-sky-200 bg-white px-4 py-3 transition hover:border-sky-300"
+                  className="flex items-center justify-between rounded-xl border border-sky-200 dark:border-sky-500/30 bg-card px-4 py-3 transition hover:border-sky-300"
                 >
                   <span>
                     <span className="block text-sm font-semibold text-ink">{r.title}</span>
@@ -107,7 +107,7 @@ export default async function RecruitmentPage() {
                       {r.department} · Ontario
                     </span>
                   </span>
-                  <span className="text-xs font-semibold text-sky-600">
+                  <span className="text-xs font-semibold text-sky-600 dark:text-sky-300">
                     Add JD &amp; publish →
                   </span>
                 </Link>
@@ -135,7 +135,7 @@ export default async function RecruitmentPage() {
           { icon: Gauge, t: "Match Ranking", d: "0–100% fit with strengths and gaps breakdown." },
         ].map((x) => (
           <Card key={x.t} className="card-pad">
-            <x.icon className="h-5 w-5 text-brand-500" />
+            <x.icon className="h-5 w-5 text-brand-500 dark:text-brand-400" />
             <p className="mt-2 text-sm font-semibold text-ink">{x.t}</p>
             <p className="mt-1 text-xs text-ink-muted">{x.d}</p>
           </Card>

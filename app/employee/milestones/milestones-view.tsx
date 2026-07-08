@@ -18,10 +18,10 @@ const categoryMeta: Record<
   MilestoneCategory,
   { icon: typeof Wallet; dot: string; chip: string }
 > = {
-  Compliance: { icon: ShieldAlert, dot: "bg-amber-500", chip: "bg-amber-50 text-amber-700" },
-  Tenure: { icon: PartyPopper, dot: "bg-violet-500", chip: "bg-violet-50 text-violet-700" },
-  Performance: { icon: Gauge, dot: "bg-sky-500", chip: "bg-sky-50 text-sky-700" },
-  Pay: { icon: Wallet, dot: "bg-emerald-500", chip: "bg-emerald-50 text-emerald-700" },
+  Compliance: { icon: ShieldAlert, dot: "bg-amber-500", chip: "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300" },
+  Tenure: { icon: PartyPopper, dot: "bg-violet-500", chip: "bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-300" },
+  Performance: { icon: Gauge, dot: "bg-sky-500", chip: "bg-sky-50 dark:bg-sky-500/10 text-sky-700 dark:text-sky-300" },
+  Pay: { icon: Wallet, dot: "bg-emerald-500", chip: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" },
 };
 
 const FILTERS: { key: MilestoneCategory | "All"; label: string }[] = [
@@ -73,7 +73,7 @@ export function MilestonesView({ mine, team }: { mine: Milestone[]; team: Milest
                   onClick={() => setScope(t.key)}
                   className={
                     scope === t.key
-                      ? "inline-flex items-center gap-1.5 rounded-lg bg-white px-3.5 py-2 text-sm font-semibold text-ink shadow-sm"
+                      ? "inline-flex items-center gap-1.5 rounded-lg bg-card px-3.5 py-2 text-sm font-semibold text-ink shadow-sm"
                       : "inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium text-ink-muted hover:text-ink"
                   }
                 >
@@ -96,7 +96,7 @@ export function MilestonesView({ mine, team }: { mine: Milestone[]; team: Milest
               "rounded-full px-3.5 py-1.5 text-xs font-semibold transition",
               filter === f.key
                 ? "bg-brand-500 text-white"
-                : "border border-line bg-white text-ink-muted hover:bg-canvas hover:text-ink",
+                : "border border-line bg-card text-ink-muted hover:bg-canvas hover:text-ink",
             )}
           >
             {f.label}
@@ -125,7 +125,7 @@ export function MilestonesView({ mine, team }: { mine: Milestone[]; team: Milest
             {groups.map((g) => (
               <div key={g.label}>
                 <p className="relative mb-3 text-[11px] font-bold uppercase tracking-wider text-ink-faint">
-                  <span className="absolute -left-6 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full border-2 border-white bg-ink-faint" />
+                  <span className="absolute -left-6 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full border-2 border-card bg-ink-faint" />
                   {g.label}
                 </p>
                 <div className="space-y-3">
@@ -141,7 +141,7 @@ export function MilestonesView({ mine, team }: { mine: Milestone[]; team: Milest
                       >
                         <span
                           className={cn(
-                            "absolute -left-6 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full border-2 border-white",
+                            "absolute -left-6 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full border-2 border-card",
                             meta.dot,
                           )}
                         />
@@ -181,7 +181,7 @@ export function MilestonesView({ mine, team }: { mine: Milestone[]; team: Milest
                                 <Link
                                   key={a.label}
                                   href={a.href}
-                                  className="rounded-lg border border-line px-2.5 py-1.5 text-[11px] font-semibold text-ink-soft transition hover:border-brand-300 hover:bg-brand-50/50 hover:text-brand-700"
+                                  className="rounded-lg border border-line px-2.5 py-1.5 text-[11px] font-semibold text-ink-soft transition hover:border-brand-300 hover:bg-brand-50/50 hover:text-brand-700 dark:hover:text-brand-300"
                                 >
                                   {a.label}
                                 </Link>

@@ -163,7 +163,7 @@ export function ProfileView({
             onClick={() => setTab(t.key)}
             className={
               tab === t.key
-                ? "-mb-px border-b-2 border-brand-500 px-4 py-2.5 text-sm font-semibold text-brand-600"
+                ? "-mb-px border-b-2 border-brand-500 px-4 py-2.5 text-sm font-semibold text-brand-600 dark:text-brand-400"
                 : "-mb-px border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-ink-muted hover:text-ink"
             }
           >
@@ -180,7 +180,7 @@ export function ProfileView({
       {tab === "documents" && <DocumentsTab documents={documents} />}
 
       {error && tab === "personal" && (
-        <p className="mb-4 rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-600">{error}</p>
+        <p className="mb-4 rounded-xl bg-red-50 dark:bg-red-500/10 px-3.5 py-2.5 text-sm text-red-600 dark:text-red-300">{error}</p>
       )}
 
       <div
@@ -191,7 +191,7 @@ export function ProfileView({
         <div className="space-y-5">
           {/* Personal */}
           <Card className="card-pad">
-            <CardHeader title="Personal" action={<UserRound className="h-4 w-4 text-brand-500" />} />
+            <CardHeader title="Personal" action={<UserRound className="h-4 w-4 text-brand-500 dark:text-brand-400" />} />
             <div className="mt-3 grid grid-cols-2 gap-4">
               <div>
                 <label className="field-label">Legal name</label>
@@ -222,7 +222,7 @@ export function ProfileView({
                 <span className="flex items-center gap-2 text-xs font-semibold text-ink">
                   Keep my birthday private
                   {savedAt === "privacy" && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-300">
                       <Check className="h-3 w-3" /> Saved
                     </span>
                   )}
@@ -241,7 +241,7 @@ export function ProfileView({
 
           {/* Contact & address — directly editable */}
           <Card className="card-pad">
-            <CardHeader title="Contact & Address" action={<MapPin className="h-4 w-4 text-brand-500" />} />
+            <CardHeader title="Contact & Address" action={<MapPin className="h-4 w-4 text-brand-500 dark:text-brand-400" />} />
             <div className="mt-3 grid grid-cols-2 gap-4">
               <div>
                 <label className="field-label">Phone</label>
@@ -273,7 +273,7 @@ export function ProfileView({
                 {busy ? "Saving…" : "Save changes"}
               </button>
               {savedAt === "contact" && (
-                <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600">
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-300">
                   <Check className="h-3.5 w-3.5" /> Saved
                 </span>
               )}
@@ -282,7 +282,7 @@ export function ProfileView({
 
           {/* Emergency contacts — directly editable */}
           <Card className="card-pad">
-            <CardHeader title="Emergency Contacts" action={<Phone className="h-4 w-4 text-brand-500" />} />
+            <CardHeader title="Emergency Contacts" action={<Phone className="h-4 w-4 text-brand-500 dark:text-brand-400" />} />
             <div className="mt-3 space-y-2">
               {emp.emergencyContacts.length === 0 && (
                 <p className="text-sm text-ink-muted">None on file — add one below.</p>
@@ -325,7 +325,7 @@ export function ProfileView({
         <div className="space-y-5">
           {/* Employment — read-only */}
           <Card className="card-pad">
-            <CardHeader title="Employment" action={<Briefcase className="h-4 w-4 text-brand-500" />} />
+            <CardHeader title="Employment" action={<Briefcase className="h-4 w-4 text-brand-500 dark:text-brand-400" />} />
             <div className="mt-3 space-y-1.5 text-sm">
               {[
                 ["Title", emp.title],
@@ -347,7 +347,7 @@ export function ProfileView({
 
           {/* Tax & eligibility — read-only */}
           <Card className="card-pad">
-            <CardHeader title="Work Eligibility & Tax" action={<ShieldCheck className="h-4 w-4 text-brand-500" />} />
+            <CardHeader title="Work Eligibility & Tax" action={<ShieldCheck className="h-4 w-4 text-brand-500 dark:text-brand-400" />} />
             <div className="mt-3 space-y-1.5 text-sm">
               {[
                 ["Status", emp.workEligibility ?? "—"],
@@ -364,9 +364,9 @@ export function ProfileView({
           </Card>
 
           {/* Sensitive: SIN + direct deposit — masked, HR-mediated changes */}
-          <Card className="card-pad border-violet-200 bg-violet-50/20">
-            <CardHeader title="SIN & Direct Deposit" action={<Landmark className="h-4 w-4 text-violet-500" />} />
-            <p className="mt-1 flex items-center gap-1 text-[11px] font-medium text-violet-700">
+          <Card className="card-pad border-violet-200 dark:border-violet-500/30 bg-violet-50/20 dark:bg-violet-500/10">
+            <CardHeader title="SIN & Direct Deposit" action={<Landmark className="h-4 w-4 text-violet-500 dark:text-violet-400" />} />
+            <p className="mt-1 flex items-center gap-1 text-[11px] font-medium text-violet-700 dark:text-violet-300">
               <Lock className="h-3 w-3" /> Stored securely — always masked, even to HR.
             </p>
             <div className="mt-3 space-y-1.5 text-sm">
@@ -383,7 +383,7 @@ export function ProfileView({
             </div>
             <button
               onClick={requestBankingUpdate}
-              className="mt-3 w-full rounded-xl border border-violet-300 bg-white px-3.5 py-2 text-xs font-semibold text-violet-700 transition hover:bg-violet-50"
+              className="mt-3 w-full rounded-xl border border-violet-300 bg-card px-3.5 py-2 text-xs font-semibold text-violet-700 dark:text-violet-300 transition hover:bg-violet-50 dark:hover:bg-violet-500/20"
             >
               Update banking info…
             </button>

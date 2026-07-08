@@ -32,7 +32,7 @@ export function TopCandidates({ candidates }: { candidates: Candidate[] }) {
         action={
           <Link
             href="/admin/recruitment/ats"
-            className="text-xs font-semibold text-brand-600 hover:text-brand-700"
+            className="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300"
           >
             Open Assistant
           </Link>
@@ -82,7 +82,7 @@ export function TopCandidates({ candidates }: { candidates: Candidate[] }) {
       <aside
         aria-hidden={!selected}
         className={cn(
-          "fixed inset-y-0 right-0 z-50 w-full max-w-sm overflow-y-auto bg-white shadow-pop transition-transform duration-300",
+          "fixed inset-y-0 right-0 z-50 w-full max-w-sm overflow-y-auto bg-card shadow-pop transition-transform duration-300",
           selected ? "translate-x-0" : "translate-x-full",
         )}
       >
@@ -107,7 +107,7 @@ export function TopCandidates({ candidates }: { candidates: Candidate[] }) {
 
             <div className="mt-5 grid grid-cols-2 gap-3">
               <div className="rounded-2xl bg-canvas p-4 text-center">
-                <p className="text-3xl font-bold text-brand-600">{selected.matchScore}%</p>
+                <p className="text-3xl font-bold text-brand-600 dark:text-brand-400">{selected.matchScore}%</p>
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
                   AI Match Score
                 </p>
@@ -128,7 +128,7 @@ export function TopCandidates({ candidates }: { candidates: Candidate[] }) {
                 {selected.strengths.length ? (
                   selected.strengths.map((s) => (
                     <li key={s} className="flex items-center gap-2 text-sm text-ink-soft">
-                      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" /> {s}
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500 dark:text-emerald-400" /> {s}
                     </li>
                   ))
                 ) : (
@@ -145,7 +145,7 @@ export function TopCandidates({ candidates }: { candidates: Candidate[] }) {
                 {selected.gaps.length ? (
                   selected.gaps.map((g) => (
                     <li key={g} className="flex items-center gap-2 text-sm text-ink-soft">
-                      <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500" /> {g}
+                      <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500 dark:text-amber-400" /> {g}
                     </li>
                   ))
                 ) : (

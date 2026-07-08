@@ -15,7 +15,7 @@ export default async function InterviewGuidePage() {
     <div>
       <Link
         href="/admin/recruitment"
-        className="mb-2 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700"
+        className="mb-2 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300"
       >
         <ChevronLeft className="h-3.5 w-3.5" /> Back to Requisitions
       </Link>

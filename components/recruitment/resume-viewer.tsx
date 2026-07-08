@@ -37,7 +37,7 @@ export function ResumeViewer({
               "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-semibold transition",
               open
                 ? "bg-brand-500 text-white hover:bg-brand-600"
-                : "bg-brand-50 text-brand-700 hover:bg-brand-100",
+                : "bg-brand-50 text-brand-700 dark:text-brand-400 hover:bg-brand-100",
             )}
           >
             {open ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
@@ -56,7 +56,7 @@ export function ResumeViewer({
         <iframe
           src={inlineUrl}
           title={resume.fileName ?? "Résumé"}
-          className="mt-2.5 h-[560px] w-full rounded-xl border border-line bg-white"
+          className="mt-2.5 h-[560px] w-full rounded-xl border border-line bg-card"
         />
       )}
 

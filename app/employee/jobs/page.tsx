@@ -42,7 +42,7 @@ export default async function InternalJobBoardPage() {
                 <Link
                   href={`/careers/${j.slug}`}
                   target="_blank"
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-700 transition hover:bg-brand-100"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-700 dark:text-brand-400 transition hover:bg-brand-100"
                 >
                   View posting <ExternalLink className="h-3.5 w-3.5" />
                 </Link>

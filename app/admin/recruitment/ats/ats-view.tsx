@@ -118,7 +118,7 @@ export function AtsView({
     <div>
       <Link
         href="/admin/recruitment"
-        className="mb-2 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700"
+        className="mb-2 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300"
       >
         <ChevronLeft className="h-3.5 w-3.5" /> Back to Requisitions
       </Link>
@@ -136,7 +136,7 @@ export function AtsView({
           <select
             value={selectedId ?? ""}
             onChange={(e) => router.push(`/admin/recruitment/ats?req=${e.target.value}`)}
-            className="h-10 rounded-xl border border-line bg-white px-3 text-sm font-semibold text-ink outline-none"
+            className="h-10 rounded-xl border border-line bg-card px-3 text-sm font-semibold text-ink outline-none"
           >
             {requisitions.map((r) => (
               <option key={r.id} value={r.id}>
@@ -144,7 +144,7 @@ export function AtsView({
               </option>
             ))}
           </select>
-        <div className="inline-flex rounded-xl border border-line bg-white p-0.5">
+        <div className="inline-flex rounded-xl border border-line bg-card p-0.5">
           <button
             onClick={() => setView("board")}
             className={cn(
@@ -169,8 +169,8 @@ export function AtsView({
           className={cn(
             "inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition",
             blind
-              ? "border-brand-300 bg-brand-50 text-brand-700"
-              : "border-line bg-white text-ink-soft hover:bg-canvas",
+              ? "border-brand-300 bg-brand-50 text-brand-700 dark:text-brand-400"
+              : "border-line bg-card text-ink-soft hover:bg-canvas",
           )}
         >
           {blind ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -180,13 +180,13 @@ export function AtsView({
       </div>
 
       {moveError && (
-        <div className="mb-4 flex items-start gap-2 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">
+        <div className="mb-4 flex items-start gap-2 rounded-xl bg-red-50 dark:bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-300">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>{moveError}</span>
         </div>
       )}
 
-      <div className="mb-5 flex items-start gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-700">
+      <div className="mb-5 flex items-start gap-2 rounded-xl bg-amber-50 dark:bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
         <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
         <span>
           <span className="font-semibold">Anti-Bias Shield:</span> the AI ranks candidates but
@@ -275,7 +275,7 @@ export function AtsView({
                             </Badge>
                             {gd !== null && gd >= 40 && (
                               <span title={`Interviewed ${gd} days ago`}>
-                                <AlertTriangle className="h-3.5 w-3.5 text-red-500" />
+                                <AlertTriangle className="h-3.5 w-3.5 text-red-500 dark:text-red-400" />
                               </span>
                             )}
                           </div>
@@ -332,7 +332,7 @@ export function AtsView({
       />
       <aside
         className={cn(
-          "fixed inset-y-0 right-0 z-50 w-full max-w-sm overflow-y-auto bg-white shadow-pop transition-transform duration-300",
+          "fixed inset-y-0 right-0 z-50 w-full max-w-sm overflow-y-auto bg-card shadow-pop transition-transform duration-300",
           selected ? "translate-x-0" : "translate-x-full",
         )}
       >
@@ -355,7 +355,7 @@ export function AtsView({
             </div>
 
             <div className="mt-5 rounded-2xl bg-canvas p-4 text-center">
-              <p className="text-3xl font-bold text-brand-600">{selected.matchScore}%</p>
+              <p className="text-3xl font-bold text-brand-600 dark:text-brand-400">{selected.matchScore}%</p>
               <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
                 AI Match Score
               </p>
@@ -366,7 +366,7 @@ export function AtsView({
               <ul className="mt-2 space-y-1.5">
                 {selected.strengths.map((s) => (
                   <li key={s} className="flex items-center gap-2 text-sm text-ink-soft">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-500" /> {s}
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500 dark:text-emerald-400" /> {s}
                   </li>
                 ))}
               </ul>
@@ -378,7 +378,7 @@ export function AtsView({
                 {selected.gaps.length ? (
                   selected.gaps.map((g) => (
                     <li key={g} className="flex items-center gap-2 text-sm text-ink-soft">
-                      <AlertTriangle className="h-4 w-4 text-amber-500" /> {g}
+                      <AlertTriangle className="h-4 w-4 text-amber-500 dark:text-amber-400" /> {g}
                     </li>
                   ))
                 ) : (
@@ -388,8 +388,8 @@ export function AtsView({
             </div>
 
             <div className="mt-5 rounded-xl bg-brand-50 px-3 py-2.5 text-sm">
-              <span className="font-semibold text-brand-700">Recommendation: </span>
-              <span className="text-brand-700">
+              <span className="font-semibold text-brand-700 dark:text-brand-400">Recommendation: </span>
+              <span className="text-brand-700 dark:text-brand-400">
                 {selected.matchScore >= 85 ? "Shortlist" : selected.matchScore >= 70 ? "Consider" : "Review"}
               </span>
             </div>
@@ -398,7 +398,7 @@ export function AtsView({
               Applied {formatDate(selected.appliedDate)}
               {selected.interviewDate && <> · Interviewed {formatDate(selected.interviewDate)}</>}
               {selected.withdrawn && (
-                <span className="ml-2 font-semibold text-red-500">Withdrawn</span>
+                <span className="ml-2 font-semibold text-red-500 dark:text-red-400">Withdrawn</span>
               )}
             </div>
 
@@ -472,15 +472,15 @@ function BrowseView({
               className={cn(
                 "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold transition",
                 active
-                  ? "border-brand-300 bg-brand-50 text-brand-700"
-                  : "border-line bg-white text-ink-soft hover:bg-canvas",
+                  ? "border-brand-300 bg-brand-50 text-brand-700 dark:text-brand-400"
+                  : "border-line bg-card text-ink-soft hover:bg-canvas",
               )}
             >
               {s}
               <span
                 className={cn(
                   "rounded-full px-1.5 text-[11px]",
-                  active ? "bg-brand-100 text-brand-700" : "bg-canvas text-ink-muted",
+                  active ? "bg-brand-100 text-brand-700 dark:text-brand-400" : "bg-canvas text-ink-muted",
                 )}
               >
                 {count}
@@ -500,7 +500,7 @@ function BrowseView({
             onClick={() => setPos((p) => Math.max(0, p - 1))}
             disabled={pos === 0}
             aria-label="Previous candidate"
-            className="hidden shrink-0 rounded-full border border-line bg-white p-2 text-ink-soft transition hover:bg-canvas disabled:opacity-30 sm:block"
+            className="hidden shrink-0 rounded-full border border-line bg-card p-2 text-ink-soft transition hover:bg-canvas disabled:opacity-30 sm:block"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
@@ -517,7 +517,7 @@ function BrowseView({
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-3xl font-bold text-brand-600">{current.matchScore}%</p>
+                <p className="text-3xl font-bold text-brand-600 dark:text-brand-400">{current.matchScore}%</p>
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-faint">
                   AI Match
                 </p>
@@ -533,7 +533,7 @@ function BrowseView({
                   {current.strengths.length ? (
                     current.strengths.map((s) => (
                       <li key={s} className="flex items-center gap-2 text-sm text-ink-soft">
-                        <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" /> {s}
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500 dark:text-emerald-400" /> {s}
                       </li>
                     ))
                   ) : (
@@ -547,7 +547,7 @@ function BrowseView({
                   {current.gaps.length ? (
                     current.gaps.map((g) => (
                       <li key={g} className="flex items-center gap-2 text-sm text-ink-soft">
-                        <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500" /> {g}
+                        <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500 dark:text-amber-400" /> {g}
                       </li>
                     ))
                   ) : (
@@ -565,7 +565,7 @@ function BrowseView({
                 <select
                   value={stage}
                   onChange={(e) => onMove(current.id, e.target.value as Candidate["stage"])}
-                  className="h-9 rounded-lg border border-line bg-white px-2 text-sm font-semibold text-ink outline-none"
+                  className="h-9 rounded-lg border border-line bg-card px-2 text-sm font-semibold text-ink outline-none"
                 >
                   {STAGES.map((s) => (
                     <option key={s} value={s}>
@@ -596,7 +596,7 @@ function BrowseView({
             onClick={() => setPos((p) => Math.min(items.length - 1, p + 1))}
             disabled={pos === items.length - 1}
             aria-label="Next candidate"
-            className="hidden shrink-0 rounded-full border border-line bg-white p-2 text-ink-soft transition hover:bg-canvas disabled:opacity-30 sm:block"
+            className="hidden shrink-0 rounded-full border border-line bg-card p-2 text-ink-soft transition hover:bg-canvas disabled:opacity-30 sm:block"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
@@ -609,7 +609,7 @@ function BrowseView({
           <button
             onClick={() => setPos((p) => Math.max(0, p - 1))}
             disabled={pos === 0}
-            className="rounded-full border border-line bg-white p-2 text-ink-soft disabled:opacity-30"
+            className="rounded-full border border-line bg-card p-2 text-ink-soft disabled:opacity-30"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
@@ -619,7 +619,7 @@ function BrowseView({
           <button
             onClick={() => setPos((p) => Math.min(items.length - 1, p + 1))}
             disabled={pos === items.length - 1}
-            className="rounded-full border border-line bg-white p-2 text-ink-soft disabled:opacity-30"
+            className="rounded-full border border-line bg-card p-2 text-ink-soft disabled:opacity-30"
           >
             <ChevronRight className="h-5 w-5" />
           </button>

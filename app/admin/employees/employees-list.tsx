@@ -131,7 +131,7 @@ export function EmployeesList({ employees }: { employees: Employee[] }) {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search by name, title or email…"
-              className="h-10 w-full rounded-xl border border-line bg-canvas pl-9 pr-3 text-sm outline-none focus:border-brand-300 focus:bg-white"
+              className="h-10 w-full rounded-xl border border-line bg-canvas pl-9 pr-3 text-sm outline-none focus:border-brand-300 focus:bg-card"
             />
           </div>
 
@@ -163,7 +163,7 @@ export function EmployeesList({ employees }: { employees: Employee[] }) {
             type="button"
             onClick={() => downloadCsv(`employees-${filtered.length}.csv`, filtered)}
             disabled={filtered.length === 0}
-            className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line bg-white px-3.5 text-sm font-semibold text-ink-soft transition hover:bg-canvas disabled:opacity-50"
+            className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line bg-card px-3.5 text-sm font-semibold text-ink-soft transition hover:bg-canvas disabled:opacity-50"
           >
             <Download className="h-4 w-4" /> Export to CSV
           </button>
@@ -194,7 +194,7 @@ export function EmployeesList({ employees }: { employees: Employee[] }) {
                       <Link href={`/admin/employees/${e.id}`} className="flex items-center gap-2.5">
                         <Avatar name={e.name} size={30} />
                         <span>
-                          <span className="block font-semibold text-ink group-hover:text-brand-600">
+                          <span className="block font-semibold text-ink group-hover:text-brand-600 dark:group-hover:text-brand-300">
                             {e.name}
                           </span>
                           <span className="block text-xs text-ink-muted">{e.title}</span>
@@ -236,7 +236,7 @@ function FilterSelect({
   children: React.ReactNode;
 }) {
   return (
-    <label className="flex h-10 items-center gap-1.5 rounded-xl border border-line bg-white pl-3 pr-1 text-sm">
+    <label className="flex h-10 items-center gap-1.5 rounded-xl border border-line bg-card pl-3 pr-1 text-sm">
       <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
         {label}
       </span>
@@ -273,7 +273,7 @@ function AddEmployeeButton() {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-30 mt-1.5 w-64 overflow-hidden rounded-xl border border-line bg-white py-1 shadow-lg"
+          className="absolute right-0 z-30 mt-1.5 w-64 overflow-hidden rounded-xl border border-line bg-card py-1 shadow-lg"
         >
           <Link
             href="/admin/recruitment"
@@ -281,7 +281,7 @@ function AddEmployeeButton() {
             onClick={() => setOpen(false)}
             className="flex items-start gap-2.5 px-3 py-2.5 hover:bg-canvas"
           >
-            <UserPlus className="mt-0.5 h-4 w-4 text-brand-500" />
+            <UserPlus className="mt-0.5 h-4 w-4 text-brand-500 dark:text-brand-400" />
             <span>
               <span className="block text-sm font-semibold text-ink">Invite candidate</span>
               <span className="block text-xs text-ink-muted">Open a requisition and start hiring</span>
@@ -293,7 +293,7 @@ function AddEmployeeButton() {
             onClick={() => setOpen(false)}
             className="flex items-start gap-2.5 px-3 py-2.5 hover:bg-canvas"
           >
-            <UserRound className="mt-0.5 h-4 w-4 text-brand-500" />
+            <UserRound className="mt-0.5 h-4 w-4 text-brand-500 dark:text-brand-400" />
             <span>
               <span className="block text-sm font-semibold text-ink">Begin onboarding</span>
               <span className="block text-xs text-ink-muted">Start a new hire&apos;s paperwork</span>
@@ -330,7 +330,7 @@ function RowMenu({ employee }: { employee: Employee }) {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-30 mt-1 w-48 overflow-hidden rounded-xl border border-line bg-white py-1 shadow-lg"
+          className="absolute right-0 z-30 mt-1 w-48 overflow-hidden rounded-xl border border-line bg-card py-1 shadow-lg"
         >
           <Link
             href={`/admin/employees/${employee.id}`}
@@ -361,7 +361,7 @@ function RowMenu({ employee }: { employee: Employee }) {
             <Link
               href={`/admin/offboarding?employee=${name}`}
               role="menuitem"
-              className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/20"
               onClick={() => setOpen(false)}
             >
               <LogOut className="h-3.5 w-3.5" /> Initiate Offboarding

@@ -27,9 +27,9 @@ import { UpcomingMilestones } from "@/components/upcoming-milestones";
 import { MilestoneNudge } from "@/components/milestone-nudge";
 
 const balanceTone: Record<string, { bg: string; bar: "brand" | "sky" | "amber"; text: string }> = {
-  brand: { bg: "bg-brand-50", bar: "brand", text: "text-brand-700" },
-  sky: { bg: "bg-sky-50", bar: "sky", text: "text-sky-700" },
-  amber: { bg: "bg-amber-50", bar: "amber", text: "text-amber-700" },
+  brand: { bg: "bg-brand-50", bar: "brand", text: "text-brand-700 dark:text-brand-400" },
+  sky: { bg: "bg-sky-50 dark:bg-sky-500/10", bar: "sky", text: "text-sky-700 dark:text-sky-300" },
+  amber: { bg: "bg-amber-50 dark:bg-amber-500/10", bar: "amber", text: "text-amber-700 dark:text-amber-300" },
 };
 
 const myTasks = [
@@ -125,7 +125,7 @@ export default async function EmployeeDashboard() {
                 className="flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-canvas"
               >
                 {t.done ? (
-                  <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" />
+                  <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500 dark:text-emerald-400" />
                 ) : (
                   <Circle className="h-5 w-5 shrink-0 text-ink-faint" />
                 )}

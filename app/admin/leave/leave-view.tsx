@@ -113,7 +113,7 @@ export function LeaveView({
       />
 
       {actionError && (
-        <div className="mb-4 flex items-start gap-2 rounded-xl bg-red-50 px-3.5 py-3 text-sm text-red-600">
+        <div className="mb-4 flex items-start gap-2 rounded-xl bg-red-50 dark:bg-red-500/10 px-3.5 py-3 text-sm text-red-600 dark:text-red-300">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>{actionError}</span>
         </div>
@@ -140,7 +140,7 @@ export function LeaveView({
       <Card className="card-pad mb-5">
         <CardHeader
           title="Absence Records"
-          action={<ClipboardList className="h-4 w-4 text-brand-500" />}
+          action={<ClipboardList className="h-4 w-4 text-brand-500 dark:text-brand-400" />}
         />
         <p className="mt-1 text-xs text-ink-muted">
           Full visibility across all departments. Day-to-day approvals live with each
@@ -180,7 +180,7 @@ export function LeaveView({
 
         <div className="mt-3 max-h-[480px] overflow-y-auto overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="sticky top-0 z-10 bg-white">
+            <thead className="sticky top-0 z-10 bg-card">
               <tr className="text-left text-[10px] uppercase tracking-wide text-ink-faint">
                 <th className="pb-2 font-semibold">Employee</th>
                 <th className="pb-2 font-semibold">Department</th>
@@ -270,7 +270,7 @@ export function LeaveView({
         <Card className="card-pad lg:col-span-5">
           <CardHeader
             title="Provincial Policy"
-            action={<ShieldCheck className="h-4 w-4 text-brand-500" />}
+            action={<ShieldCheck className="h-4 w-4 text-brand-500 dark:text-brand-400" />}
           />
           <p className="mt-1 text-xs text-ink-muted">
             The Provincial Policy Factory enforces ESA minimums by <code>province_id</code>.
@@ -314,12 +314,12 @@ export function LeaveView({
             </div>
 
             {policyError ? (
-              <div className="flex items-start gap-2 rounded-xl bg-red-50 px-3 py-2.5 text-[13px] text-red-600">
+              <div className="flex items-start gap-2 rounded-xl bg-red-50 dark:bg-red-500/10 px-3 py-2.5 text-[13px] text-red-600 dark:text-red-300">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                 <span>{policyError}</span>
               </div>
             ) : (
-              <div className="flex items-start gap-2 rounded-xl bg-emerald-50 px-3 py-2.5 text-[13px] text-emerald-700">
+              <div className="flex items-start gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 px-3 py-2.5 text-[13px] text-emerald-700 dark:text-emerald-300">
                 <Check className="mt-0.5 h-4 w-4 shrink-0" />
                 <span>
                   Policy meets the {provinceName(province)} statutory floor (
@@ -348,7 +348,7 @@ export function LeaveView({
         <Card className="card-pad lg:col-span-12">
           <CardHeader
             title="Statutory Leave Locks"
-            action={<Lock className="h-4 w-4 text-violet-500" />}
+            action={<Lock className="h-4 w-4 text-violet-500 dark:text-violet-400" />}
           />
           <p className="mt-1 text-xs text-ink-muted">
             Records on maternity/parental or compassionate care are locked against termination.
@@ -365,7 +365,7 @@ export function LeaveView({
                     <p className="text-xs text-ink-muted">{e.title}</p>
                   </div>
                 </div>
-                <div className="mt-2 flex items-center gap-1.5 text-[12px] text-violet-700">
+                <div className="mt-2 flex items-center gap-1.5 text-[12px] text-violet-700 dark:text-violet-300">
                   <Lock className="h-3.5 w-3.5" />
                   Active — On Statutory Leave
                 </div>
@@ -440,7 +440,7 @@ function RecordMenu({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-20 mt-1 w-44 overflow-hidden rounded-xl border border-line bg-white py-1 shadow-lg"
+          className="absolute right-0 z-20 mt-1 w-44 overflow-hidden rounded-xl border border-line bg-card py-1 shadow-lg"
         >
           {record.status === "Pending" && (
             <>
@@ -450,7 +450,7 @@ function RecordMenu({
                   setOpen(false);
                   onApprove();
                 }}
-                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-emerald-700 hover:bg-emerald-50"
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-500/20"
               >
                 <Check className="h-3.5 w-3.5" /> Approve (override)
               </button>
@@ -460,7 +460,7 @@ function RecordMenu({
                   setOpen(false);
                   onDeny();
                 }}
-                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/20"
               >
                 <X className="h-3.5 w-3.5" /> Deny (override)
               </button>
@@ -581,8 +581,8 @@ function EditRecordModal({
                   className={cn(
                     "rounded-lg border px-2 py-1.5 text-xs font-semibold transition",
                     partial === o.v
-                      ? "border-brand-300 bg-brand-50 text-brand-700"
-                      : "border-line bg-white text-ink-muted hover:bg-canvas",
+                      ? "border-brand-300 bg-brand-50 text-brand-700 dark:text-brand-400"
+                      : "border-line bg-card text-ink-muted hover:bg-canvas",
                   )}
                 >
                   {o.label}

@@ -57,14 +57,14 @@ export function RequisitionsTable({ requisitions }: { requisitions: Requisition[
       </div>
 
       {error && (
-        <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">{error}</p>
+        <p className="mt-2 rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-xs text-red-600 dark:text-red-300">{error}</p>
       )}
 
       {/* Independent scroll container — the table scrolls on its own while the
           Top Candidates sidebar stays sticky in the viewport. */}
       <div className="mt-3 max-h-[540px] overflow-y-auto overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="sticky top-0 z-10 bg-white">
+          <thead className="sticky top-0 z-10 bg-card">
             <tr className="text-left text-[10px] uppercase tracking-wide text-ink-faint">
               <th className="pb-2 font-semibold">Role</th>
               <th className="pb-2 font-semibold">Type</th>
@@ -83,7 +83,7 @@ export function RequisitionsTable({ requisitions }: { requisitions: Requisition[
                 <td className="py-3">
                   <Link
                     href={`/admin/recruitment/${r.id}`}
-                    className="font-semibold text-ink hover:text-brand-600"
+                    className="font-semibold text-ink hover:text-brand-600 dark:hover:text-brand-300"
                   >
                     {r.title}
                   </Link>
@@ -182,7 +182,7 @@ function RowMenu({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-20 mt-1 w-40 overflow-hidden rounded-xl border border-line bg-white py-1 shadow-lg"
+          className="absolute right-0 z-20 mt-1 w-40 overflow-hidden rounded-xl border border-line bg-card py-1 shadow-lg"
         >
           <Link
             href={`/admin/recruitment/${req.id}/edit`}
@@ -214,7 +214,7 @@ function RowMenu({
           <button
             type="button"
             role="menuitem"
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/20"
             onClick={() => {
               setOpen(false);
               if (

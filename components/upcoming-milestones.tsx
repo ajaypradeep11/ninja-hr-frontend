@@ -15,10 +15,10 @@ const categoryIcon: Record<MilestoneCategory, typeof Wallet> = {
 };
 
 const categoryIconTone: Record<MilestoneCategory, string> = {
-  Compliance: "bg-amber-50 text-amber-600",
-  Tenure: "bg-violet-50 text-violet-600",
-  Performance: "bg-sky-50 text-sky-600",
-  Pay: "bg-emerald-50 text-emerald-600",
+  Compliance: "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-300",
+  Tenure: "bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-300",
+  Performance: "bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-300",
+  Pay: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-300",
 };
 
 /** Tabbed "Upcoming" dashboard widget: My Milestones + (managers) Team Milestones. */
@@ -40,7 +40,7 @@ export function UpcomingMilestones({
         action={
           <Link
             href="/employee/milestones"
-            className="text-xs font-semibold text-brand-600 hover:text-brand-700"
+            className="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300"
           >
             View All
           </Link>
@@ -60,7 +60,7 @@ export function UpcomingMilestones({
               onClick={() => setTab(t.key)}
               className={
                 tab === t.key
-                  ? "flex-1 rounded-md bg-white px-2 py-1.5 text-[11px] font-semibold text-ink shadow-sm"
+                  ? "flex-1 rounded-md bg-card px-2 py-1.5 text-[11px] font-semibold text-ink shadow-sm"
                   : "flex-1 rounded-md px-2 py-1.5 text-[11px] font-medium text-ink-muted hover:text-ink"
               }
             >

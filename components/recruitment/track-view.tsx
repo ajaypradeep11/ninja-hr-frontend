@@ -31,7 +31,7 @@ export function TrackView({ initial, token }: { initial: PortalView; token: stri
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-line bg-white p-7">
+      <div className="rounded-2xl border border-line bg-card p-7">
         <p className="text-xs font-semibold uppercase tracking-wide text-ink-faint">
           Application status
         </p>
@@ -44,10 +44,10 @@ export function TrackView({ initial, token }: { initial: PortalView; token: stri
           className={cn(
             "mt-4 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold",
             view.withdrawn
-              ? "bg-gray-100 text-ink-muted"
+              ? "bg-gray-100 dark:bg-gray-500/20 text-ink-muted"
               : view.status === "Process complete"
-                ? "bg-gray-100 text-ink-muted"
-                : "bg-brand-50 text-brand-700",
+                ? "bg-gray-100 dark:bg-gray-500/20 text-ink-muted"
+                : "bg-brand-50 text-brand-700 dark:text-brand-400",
           )}
         >
           {view.status}
@@ -59,7 +59,7 @@ export function TrackView({ initial, token }: { initial: PortalView; token: stri
               <React.Fragment key={s}>
                 <div className="flex flex-col items-center">
                   {i <= timelineIdx ? (
-                    <CheckCircle2 className="h-5 w-5 text-brand-500" />
+                    <CheckCircle2 className="h-5 w-5 text-brand-500 dark:text-brand-400" />
                   ) : (
                     <Circle className="h-5 w-5 text-line" />
                   )}
@@ -83,9 +83,9 @@ export function TrackView({ initial, token }: { initial: PortalView; token: stri
         {!view.withdrawn && !closed && (
           <div className="mt-6 border-t border-line pt-4">
             {confirming ? (
-              <div className="rounded-xl bg-red-50 p-4">
-                <p className="text-sm font-semibold text-red-700">Withdraw your application?</p>
-                <p className="mt-1 text-xs text-red-600">
+              <div className="rounded-xl bg-red-50 dark:bg-red-500/10 p-4">
+                <p className="text-sm font-semibold text-red-700 dark:text-red-300">Withdraw your application?</p>
+                <p className="mt-1 text-xs text-red-600 dark:text-red-300">
                   This tells the hiring team you&apos;re no longer interested. This cannot be undone.
                 </p>
                 <div className="mt-3 flex gap-2">
@@ -98,7 +98,7 @@ export function TrackView({ initial, token }: { initial: PortalView; token: stri
                   </button>
                   <button
                     onClick={() => setConfirming(false)}
-                    className="rounded-lg border border-line px-3 py-1.5 text-xs font-semibold text-ink-soft hover:bg-white"
+                    className="rounded-lg border border-line px-3 py-1.5 text-xs font-semibold text-ink-soft hover:bg-card"
                   >
                     Keep my application
                   </button>
@@ -107,19 +107,19 @@ export function TrackView({ initial, token }: { initial: PortalView; token: stri
             ) : (
               <button
                 onClick={() => setConfirming(true)}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink-muted hover:text-red-600"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink-muted hover:text-red-600 dark:hover:text-red-300"
               >
                 <XCircle className="h-3.5 w-3.5" /> Withdraw my application
               </button>
             )}
-            {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+            {error && <p className="mt-2 text-xs text-red-600 dark:text-red-300">{error}</p>}
           </div>
         )}
       </div>
 
-      <div className="rounded-2xl border border-line bg-white p-7">
+      <div className="rounded-2xl border border-line bg-card p-7">
         <h2 className="flex items-center gap-2 text-sm font-bold text-ink">
-          <Mail className="h-4 w-4 text-brand-500" /> Messages from the hiring team
+          <Mail className="h-4 w-4 text-brand-500 dark:text-brand-400" /> Messages from the hiring team
         </h2>
         <div className="mt-4 space-y-3">
           {view.communications.length === 0 && (

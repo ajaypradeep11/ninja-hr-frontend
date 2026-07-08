@@ -88,7 +88,7 @@ export function AgentsView({ initial }: AgentsViewProps) {
       />
 
       {runError && (
-        <div className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{runError}</div>
+        <div className="mb-4 rounded-xl bg-red-50 dark:bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-300">{runError}</div>
       )}
 
       {/* Command bar */}
@@ -97,7 +97,7 @@ export function AgentsView({ initial }: AgentsViewProps) {
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-500 text-white">
             <Bot className="h-5 w-5" />
           </span>
-          <div className="flex flex-1 items-center gap-2 rounded-xl border border-line bg-white px-3 py-1 focus-within:border-brand-400 focus-within:ring-2 focus-within:ring-brand-100">
+          <div className="flex flex-1 items-center gap-2 rounded-xl border border-line bg-card px-3 py-1 focus-within:border-brand-400 focus-within:ring-2 focus-within:ring-brand-100">
             <input
               value={command}
               onChange={(e) => setCommand(e.target.value)}
@@ -185,7 +185,7 @@ export function AgentsView({ initial }: AgentsViewProps) {
                 const Icon = g.icon;
                 return (
                   <div key={g.title} className="flex items-start gap-3">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:text-brand-400">
                       <Icon className="h-4 w-4" />
                     </span>
                     <div>

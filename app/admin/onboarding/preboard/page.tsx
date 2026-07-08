@@ -76,7 +76,7 @@ export default function PreboardPage() {
 
   return (
     <div>
-      <div className="mb-1 flex items-center gap-2 text-xs font-semibold text-brand-600">
+      <div className="mb-1 flex items-center gap-2 text-xs font-semibold text-brand-600 dark:text-brand-400">
         <Link href="/admin/onboarding" className="hover:underline">
           Onboarding Portal
         </Link>
@@ -93,7 +93,7 @@ export default function PreboardPage() {
           {created ? (
             <div className="py-2">
               <div className="flex flex-col items-center text-center">
-                <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-300">
                   <PartyPopper className="h-7 w-7" />
                 </span>
                 <h2 className="mt-4 text-lg font-bold text-ink">Onboarding launched</h2>
@@ -110,7 +110,7 @@ export default function PreboardPage() {
                   <span className="flex-1 truncate text-sm text-ink-soft">{inviteLink}</span>
                   <button
                     onClick={copy}
-                    className="inline-flex items-center gap-1 rounded-lg bg-white px-2 py-1 text-xs font-semibold text-brand-600 hover:bg-brand-50"
+                    className="inline-flex items-center gap-1 rounded-lg bg-card px-2 py-1 text-xs font-semibold text-brand-600 dark:text-brand-400 hover:bg-brand-50"
                   >
                     {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                     {copied ? "Copied" : "Copy"}
@@ -127,14 +127,14 @@ export default function PreboardPage() {
                 </Link>
                 <Link
                   href={`/admin/onboarding/${created.id}`}
-                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-sm font-semibold text-ink-soft hover:bg-canvas"
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-line bg-card px-4 py-2.5 text-sm font-semibold text-ink-soft hover:bg-canvas"
                 >
                   Track in pipeline
                 </Link>
               </div>
               <button
                 onClick={reset}
-                className="mt-4 w-full text-center text-sm font-semibold text-brand-600 hover:text-brand-700"
+                className="mt-4 w-full text-center text-sm font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300"
               >
                 Start another preboarding
               </button>
@@ -209,17 +209,17 @@ export default function PreboardPage() {
               </div>
 
               {launchError && (
-                <p className="mt-4 rounded-xl bg-red-50 px-3.5 py-2.5 text-xs text-red-600">
+                <p className="mt-4 rounded-xl bg-red-50 dark:bg-red-500/10 px-3.5 py-2.5 text-xs text-red-600 dark:text-red-300">
                   {launchError}
                 </p>
               )}
               <div className="mt-7 flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                   <span className="inline-flex items-center gap-1.5 rounded-lg bg-canvas px-2.5 py-1.5 text-[11px] font-semibold text-ink-soft">
-                    <Cloud className="h-3.5 w-3.5 text-brand-500" /> {BRAND.name}
+                    <Cloud className="h-3.5 w-3.5 text-brand-500 dark:text-brand-400" /> {BRAND.name}
                   </span>
                   <span className="inline-flex items-center gap-1.5 rounded-lg bg-canvas px-2.5 py-1.5 text-[11px] font-semibold text-ink-soft">
-                    <FolderGit2 className="h-3.5 w-3.5 text-sky-500" /> SharePoint
+                    <FolderGit2 className="h-3.5 w-3.5 text-sky-500 dark:text-sky-400" /> SharePoint
                   </span>
                 </div>
                 <button
@@ -238,13 +238,13 @@ export default function PreboardPage() {
         {/* Agentic Logic */}
         <div className="space-y-5">
           <Card className="card-pad sm:p-7">
-            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:text-brand-400">
               <Sparkles className="h-5 w-5" />
             </span>
             <h3 className="mt-4 text-base font-bold text-ink">Agentic Logic</h3>
             <p className="mt-2 text-sm leading-relaxed text-ink-muted">
               The AI will create the profile and send all onboarding forms{" "}
-              <span className="font-semibold text-brand-600">
+              <span className="font-semibold text-brand-600 dark:text-brand-400">
                 (Standard New Hire Form incl. direct deposit, TD1 &amp; TD1ON 2026 tax forms)
               </span>{" "}
               to the employee&apos;s personal email for completion.
@@ -252,7 +252,7 @@ export default function PreboardPage() {
             <ul className="mt-5 space-y-3">
               {agenticPoints.map((p) => (
                 <li key={p} className="flex items-center gap-2.5 text-sm text-ink-soft">
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500 dark:text-emerald-400" />
                   {p}
                 </li>
               ))}

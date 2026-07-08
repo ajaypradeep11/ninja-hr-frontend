@@ -48,7 +48,7 @@ export function ManagerPipeline({
           happens in each applicant&apos;s Interview Guide.
         </p>
         {blind && (
-          <p className="flex items-center gap-1.5 rounded-xl bg-violet-50 px-3 py-2 text-xs font-medium text-violet-700">
+          <p className="flex items-center gap-1.5 rounded-xl bg-violet-50 dark:bg-violet-500/10 px-3 py-2 text-xs font-medium text-violet-700 dark:text-violet-300">
             <EyeOff className="h-3.5 w-3.5 shrink-0" />
             Blind Hiring is on — identities are hidden until HR turns it off.
           </p>
@@ -92,7 +92,7 @@ export function ManagerPipeline({
                         </Badge>
                         {c.withdrawn && (
                           <span title="Candidate withdrew">
-                            <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                            <AlertTriangle className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400" />
                           </span>
                         )}
                       </div>

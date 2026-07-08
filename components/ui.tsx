@@ -44,7 +44,7 @@ const buttonVariants: Record<ButtonVariant, string> = {
   secondary: "bg-canvas text-ink hover:bg-line",
   ghost: "text-ink-soft hover:bg-canvas",
   danger: "bg-red-500 text-white hover:bg-red-600",
-  outline: "border border-line bg-white text-ink-soft hover:bg-canvas",
+  outline: "border border-line bg-card text-ink-soft hover:bg-canvas",
 };
 
 const buttonSizes: Record<ButtonSize, string> = {
@@ -121,13 +121,13 @@ type Tone =
   | "violet";
 
 const toneStyles: Record<Tone, string> = {
-  brand: "bg-brand-50 text-brand-700",
-  green: "bg-emerald-50 text-emerald-700",
-  amber: "bg-amber-50 text-amber-700",
-  red: "bg-red-50 text-red-600",
-  sky: "bg-sky-50 text-sky-700",
+  brand: "bg-brand-50 text-brand-700 dark:text-brand-300",
+  green: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
+  amber: "bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
+  red: "bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-300",
+  sky: "bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300",
   gray: "bg-canvas text-ink-muted",
-  violet: "bg-violet-50 text-violet-700",
+  violet: "bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300",
 };
 
 export function Badge({
@@ -241,13 +241,20 @@ export function Ring({
   return (
     <div className="relative inline-flex items-center justify-center">
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#eceef2" strokeWidth={stroke} />
         <circle
           cx={size / 2}
           cy={size / 2}
           r={r}
           fill="none"
-          stroke="#6d5ce7"
+          stroke="hsl(var(--brand-100))"
+          strokeWidth={stroke}
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke="hsl(var(--primary))"
           strokeWidth={stroke}
           strokeDasharray={c}
           strokeDashoffset={offset}
@@ -258,6 +265,72 @@ export function Ring({
         <span className="text-xl font-bold text-ink">{label ?? `${value}%`}</span>
         {sublabel && (
           <span className="text-[10px] font-medium uppercase tracking-wide text-ink-faint">
+            {sublabel}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Segmented arc gauge — a 240° arc of rounded ticks, filled up to `value`.
+ * The unfilled track uses a lighter step of the brand ramp so state reads
+ * across the whole arc in both themes.
+ */
+export function ArcGauge({
+  value,
+  size = 148,
+  segments = 24,
+  label,
+  sublabel,
+}: {
+  value: number;
+  size?: number;
+  segments?: number;
+  label?: string;
+  sublabel?: string;
+}) {
+  const clamped = Math.min(100, Math.max(0, value));
+  const filled = Math.round((clamped / 100) * segments);
+  const cx = size / 2;
+  const cy = size / 2;
+  const rOuter = size / 2;
+  const rInner = size / 2 - size * 0.135;
+  // 240° sweep, opening at the bottom: 210° → -30° in standard math angles.
+  const startDeg = 210;
+  const sweep = 240;
+  const ticks = Array.from({ length: segments }, (_, i) => {
+    const deg = startDeg - (i / (segments - 1)) * sweep;
+    const rad = (deg * Math.PI) / 180;
+    return {
+      x1: cx + rInner * Math.cos(rad),
+      y1: cy - rInner * Math.sin(rad),
+      x2: cx + rOuter * Math.cos(rad),
+      y2: cy - rOuter * Math.sin(rad),
+      on: i < filled,
+    };
+  });
+  return (
+    <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="overflow-visible">
+        {ticks.map((t, i) => (
+          <line
+            key={i}
+            x1={t.x1}
+            y1={t.y1}
+            x2={t.x2}
+            y2={t.y2}
+            stroke={t.on ? "hsl(var(--primary))" : "hsl(var(--brand-100))"}
+            strokeWidth={size * 0.045}
+            strokeLinecap="round"
+          />
+        ))}
+      </svg>
+      <div className="absolute flex flex-col items-center">
+        <span className="text-3xl font-bold tracking-tight text-ink">{label ?? `${clamped}%`}</span>
+        {sublabel && (
+          <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-faint">
             {sublabel}
           </span>
         )}
@@ -314,6 +387,60 @@ export function Stat({
   );
 }
 
+/** Solid color-block fills for VividStat. White text clears 4.5:1 on all of them. */
+export type VividTone = "pink" | "green" | "blue" | "orange" | "brand";
+
+const vividFills: Record<VividTone, string> = {
+  pink: "bg-pink-600",
+  green: "bg-emerald-700",
+  blue: "bg-blue-600",
+  orange: "bg-orange-700",
+  brand: "bg-brand-600",
+};
+
+/**
+ * Vivid bento stat tile — a solid color block with a big number, in the
+ * style of the reference dashboard. Use in small doses (one row).
+ */
+export function VividStat({
+  label,
+  value,
+  hint,
+  tone = "brand",
+  icon,
+  className,
+}: {
+  label: string;
+  value: React.ReactNode;
+  hint?: React.ReactNode;
+  tone?: VividTone;
+  icon?: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex flex-col justify-between rounded-2xl p-5 text-white shadow-card",
+        vividFills[tone],
+        className,
+      )}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-[13px] font-medium text-white/85">{label}</p>
+        {icon && (
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15">
+            {icon}
+          </span>
+        )}
+      </div>
+      <div className="mt-4">
+        <p className="text-[32px] font-bold leading-none tracking-tight">{value}</p>
+        {hint && <p className="mt-1.5 text-xs font-medium text-white/80">{hint}</p>}
+      </div>
+    </div>
+  );
+}
+
 export function ComplianceBadge({
   children = "Bill 149 Compliant",
   variant = "ok",
@@ -327,7 +454,9 @@ export function ComplianceBadge({
       role="status"
       className={cn(
         "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold",
-        variant === "ok" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-600",
+        variant === "ok"
+          ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+          : "bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-300",
       )}
     >
       <span

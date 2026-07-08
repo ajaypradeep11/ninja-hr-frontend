@@ -167,10 +167,10 @@ export function CommsCenter({
   return (
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
       {/* ------------------------- Mailbox thread ------------------------- */}
-      <div className="rounded-2xl border border-line bg-white p-4 sm:p-5">
+      <div className="rounded-2xl border border-line bg-card p-4 sm:p-5">
         <CardHeader
           title="Candidate mailbox"
-          action={<Inbox className="h-4 w-4 text-brand-500" />}
+          action={<Inbox className="h-4 w-4 text-brand-500 dark:text-brand-400" />}
         />
         <p className="mt-1 text-[11px] text-ink-faint">
           Two-way thread — replies from {candidate.name.split(" ")[0]} arrive here via the
@@ -194,7 +194,7 @@ export function CommsCenter({
                   className={cn(
                     "max-w-[85%] rounded-2xl border px-3.5 py-2.5",
                     inbound
-                      ? "rounded-bl-sm border-line bg-white"
+                      ? "rounded-bl-sm border-line bg-card"
                       : "rounded-br-sm border-brand-100 bg-brand-50/60",
                   )}
                 >
@@ -238,7 +238,7 @@ export function CommsCenter({
               <button
                 disabled={busy !== null || !replyBody.trim()}
                 onClick={simulateReply}
-                className="shrink-0 rounded-xl border border-line bg-white px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:bg-canvas disabled:opacity-50"
+                className="shrink-0 rounded-xl border border-line bg-card px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:bg-canvas disabled:opacity-50"
               >
                 {busy === "reply" ? "…" : "Inject"}
               </button>
@@ -248,17 +248,17 @@ export function CommsCenter({
       </div>
 
       {/* --------------------------- Composer ----------------------------- */}
-      <div className="rounded-2xl border border-line bg-white p-4 sm:p-5">
+      <div className="rounded-2xl border border-line bg-card p-4 sm:p-5">
         <CardHeader
           title="AI assistant & composer"
-          action={<Bot className="h-4 w-4 text-brand-500" />}
+          action={<Bot className="h-4 w-4 text-brand-500 dark:text-brand-400" />}
         />
 
         {isHr ? (
           <div className="mt-3 space-y-3">
             {/* AI drafting — output only populates the editor below. */}
             <div className="rounded-xl border border-brand-200 bg-brand-50/40 p-3">
-              <p className="flex items-center gap-1.5 text-[11px] font-semibold text-brand-700">
+              <p className="flex items-center gap-1.5 text-[11px] font-semibold text-brand-700 dark:text-brand-400">
                 <Sparkles className="h-3.5 w-3.5" /> Draft with AI
               </p>
               <div className="mt-1.5 flex gap-2">
@@ -336,7 +336,7 @@ export function CommsCenter({
                 <button
                   disabled={!subject.trim() || !body.trim()}
                   onClick={() => setSaveAsOpen((o) => !o)}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-white px-3 py-2 text-xs font-semibold text-ink-soft transition hover:bg-canvas disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-card px-3 py-2 text-xs font-semibold text-ink-soft transition hover:bg-canvas disabled:opacity-50"
                 >
                   <Save className="h-3.5 w-3.5" /> Save as new template
                 </button>
@@ -360,7 +360,7 @@ export function CommsCenter({
                 </div>
               )}
               {savedTemplate && (
-                <p className="mt-2 rounded-lg bg-emerald-50 px-3 py-1.5 text-[11px] text-emerald-700">
+                <p className="mt-2 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 text-[11px] text-emerald-700 dark:text-emerald-300">
                   <MailPlus className="mr-1 inline h-3 w-3" />
                   Saved “{savedTemplate}” — it&apos;s now in the template list for every candidate.
                 </p>
@@ -368,7 +368,7 @@ export function CommsCenter({
             </div>
 
             {error && (
-              <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-600">{error}</p>
+              <p className="rounded-xl bg-red-50 dark:bg-red-500/10 px-3.5 py-2.5 text-sm text-red-600 dark:text-red-300">{error}</p>
             )}
           </div>
         ) : (

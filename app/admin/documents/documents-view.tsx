@@ -82,7 +82,7 @@ export function DocumentsView({ initialDocFolders, initialVaultDocuments }: Docu
         title="Document Management"
         subtitle="A secure digital filing cabinet with automated folder routing and Law 25-grade access control."
         action={
-          <div className="flex items-center gap-2 rounded-xl border border-line bg-white px-3 py-1.5">
+          <div className="flex items-center gap-2 rounded-xl border border-line bg-card px-3 py-1.5">
             <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
               Viewing as
             </span>
@@ -118,7 +118,7 @@ export function DocumentsView({ initialDocFolders, initialVaultDocuments }: Docu
                   className={cn(
                     "flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm transition-colors",
                     active
-                      ? "bg-brand-50 text-brand-700"
+                      ? "bg-brand-50 text-brand-700 dark:text-brand-400"
                       : "text-ink-soft hover:bg-canvas",
                   )}
                 >
@@ -136,7 +136,7 @@ export function DocumentsView({ initialDocFolders, initialVaultDocuments }: Docu
             )}
           </div>
 
-          <div className="mt-4 flex items-start gap-2 rounded-xl bg-amber-50 px-3 py-2.5 text-[11px] text-amber-700">
+          <div className="mt-4 flex items-start gap-2 rounded-xl bg-amber-50 dark:bg-amber-500/10 px-3 py-2.5 text-[11px] text-amber-700 dark:text-amber-300">
             <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             <span>
               Managers are blocked from <b>05_Leaves_and_Medical</b>; employees never see{" "}
@@ -147,7 +147,7 @@ export function DocumentsView({ initialDocFolders, initialVaultDocuments }: Docu
 
         {/* Documents + dropzone */}
         <div className="space-y-5">
-          <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-line bg-white py-8 text-center transition-colors hover:border-brand-300">
+          <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-line bg-card py-8 text-center transition-colors hover:border-brand-300">
             <UploadCloud className="h-7 w-7 text-brand-400" />
             <p className="mt-2 text-sm font-semibold text-ink">
               Drop files to upload
@@ -214,7 +214,7 @@ export function DocumentsView({ initialDocFolders, initialVaultDocuments }: Docu
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <Card className="card-pad">
               <div className="flex items-center gap-2 text-sm font-semibold text-ink">
-                <Clock className="h-4 w-4 text-brand-500" /> Law 25 retention
+                <Clock className="h-4 w-4 text-brand-500 dark:text-brand-400" /> Law 25 retention
               </div>
               <p className="mt-2 text-xs text-ink-muted">
                 Rejected-candidate files in <b>01_Recruitment</b> are stamped with a 24-month
@@ -224,7 +224,7 @@ export function DocumentsView({ initialDocFolders, initialVaultDocuments }: Docu
             </Card>
             <Card className="card-pad">
               <div className="flex items-center gap-2 text-sm font-semibold text-ink">
-                <History className="h-4 w-4 text-brand-500" /> Immutable audit trail
+                <History className="h-4 w-4 text-brand-500 dark:text-brand-400" /> Immutable audit trail
               </div>
               <p className="mt-2 text-xs text-ink-muted">
                 Every view, download, update, or deletion writes a row to{" "}
@@ -243,7 +243,7 @@ export function DocumentsView({ initialDocFolders, initialVaultDocuments }: Docu
             className="fixed inset-0 z-40 bg-ink/20"
             onClick={() => setOpenDocId(null)}
           />
-          <aside className="fixed inset-y-0 right-0 z-50 flex w-full max-w-sm flex-col bg-white shadow-pop">
+          <aside className="fixed inset-y-0 right-0 z-50 flex w-full max-w-sm flex-col bg-card shadow-pop">
             <div className="flex items-center justify-between border-b border-line px-5 py-4">
               <p className="text-sm font-semibold text-ink">Document details</p>
               <button
@@ -255,7 +255,7 @@ export function DocumentsView({ initialDocFolders, initialVaultDocuments }: Docu
             </div>
             <div className="space-y-5 p-5">
               <div className="flex items-center gap-3">
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:text-brand-400">
                   <FileText className="h-5 w-5" />
                 </span>
                 <div className="min-w-0">

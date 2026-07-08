@@ -40,9 +40,9 @@ const TEMPLATES = [
 ];
 
 const COLUMNS: { owner: Owner; tone: string }[] = [
-  { owner: "Manager", tone: "text-sky-600" },
-  { owner: "IT / Ops", tone: "text-violet-600" },
-  { owner: "HR / Payroll", tone: "text-emerald-600" },
+  { owner: "Manager", tone: "text-sky-600 dark:text-sky-300" },
+  { owner: "IT / Ops", tone: "text-violet-600 dark:text-violet-300" },
+  { owner: "HR / Payroll", tone: "text-emerald-600 dark:text-emerald-300" },
 ];
 
 /** Which company department typically heads each offboarding track — used to
@@ -124,7 +124,7 @@ export function OffboardingView({
         title="Offboarding"
         subtitle="Role-based separation workflows with IT/Admin termination automation and asset-clearance guardrails."
         action={
-          <div className="flex items-center gap-2 rounded-xl border border-line bg-white px-3 py-1.5">
+          <div className="flex items-center gap-2 rounded-xl border border-line bg-card px-3 py-1.5">
             <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
               Template
             </span>
@@ -142,7 +142,7 @@ export function OffboardingView({
       />
 
       {isCustomSubject && !terminated && (
-        <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
           <Bell className="mt-0.5 h-4 w-4 shrink-0" />
           <span>
             Offboarding initiated for <span className="font-semibold">{subject}</span>. Assign the
@@ -212,7 +212,7 @@ export function OffboardingView({
                       className={cn(
                         "flex w-full items-start gap-2.5 rounded-xl border p-3 text-left transition-colors hover:border-brand-300 disabled:cursor-not-allowed disabled:opacity-60",
                         t.blocking && t.status !== "Completed"
-                          ? "border-red-200 bg-red-50/40"
+                          ? "border-red-200 dark:border-red-500/30 bg-red-50/40 dark:bg-red-500/10"
                           : "border-line",
                       )}
                       title="Click to advance status"
@@ -221,9 +221,9 @@ export function OffboardingView({
                         className={cn(
                           "mt-0.5 h-4 w-4 shrink-0",
                           t.status === "Completed"
-                            ? "text-emerald-500"
+                            ? "text-emerald-500 dark:text-emerald-400"
                             : t.status === "In-Progress"
-                              ? "text-amber-500"
+                              ? "text-amber-500 dark:text-amber-400"
                               : "text-ink-faint",
                         )}
                       />
@@ -249,7 +249,7 @@ export function OffboardingView({
       <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
         <Card className="card-pad">
           <div className="flex items-center gap-2 text-sm font-semibold text-ink">
-            <Power className="h-4 w-4 text-brand-500" /> Access kill switch
+            <Power className="h-4 w-4 text-brand-500 dark:text-brand-400" /> Access kill switch
           </div>
           <p className="mt-2 text-xs text-ink-muted">
             On <b>Terminated</b>, fires <code className="rounded bg-canvas px-1">employee.status.terminated</code>,
@@ -258,7 +258,7 @@ export function OffboardingView({
         </Card>
         <Card className="card-pad">
           <div className="flex items-center gap-2 text-sm font-semibold text-ink">
-            <Bell className="h-4 w-4 text-brand-500" /> Manager handoff reminders
+            <Bell className="h-4 w-4 text-brand-500 dark:text-brand-400" /> Manager handoff reminders
           </div>
           <p className="mt-2 text-xs text-ink-muted">
             Within 48 hours of the last day, uncompleted manager tasks trigger daily
@@ -267,7 +267,7 @@ export function OffboardingView({
         </Card>
         <Card className="card-pad">
           <div className="flex items-center gap-2 text-sm font-semibold text-ink">
-            <ShieldAlert className="h-4 w-4 text-brand-500" /> Blocking task gate
+            <ShieldAlert className="h-4 w-4 text-brand-500 dark:text-brand-400" /> Blocking task gate
           </div>
           <p className="mt-2 text-xs text-ink-muted">
             Tasks like <b>Recover Laptop</b> and <b>Sign Separation Release</b> are flagged{" "}
@@ -278,10 +278,10 @@ export function OffboardingView({
       </div>
 
       {/* Finalize panel */}
-      <Card className="card-pad mt-5 border-red-200 bg-red-50/30">
+      <Card className="card-pad mt-5 border-red-200 dark:border-red-500/30 bg-red-50/30 dark:bg-red-500/10">
         <CardHeader title="System Termination Trigger" />
         {blockers.length > 0 && (
-          <div className="mt-3 flex items-start gap-2 rounded-xl bg-red-50 px-3.5 py-3 text-sm text-red-600">
+          <div className="mt-3 flex items-start gap-2 rounded-xl bg-red-50 dark:bg-red-500/10 px-3.5 py-3 text-sm text-red-600 dark:text-red-300">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             <span>
               Cannot terminate employee in system. Critical blocking tasks are outstanding:{" "}
@@ -294,13 +294,13 @@ export function OffboardingView({
             type="checkbox"
             checked={override}
             onChange={(e) => setOverride(e.target.checked)}
-            className="h-4 w-4 rounded border-line text-brand-500"
+            className="h-4 w-4 rounded border-line text-brand-500 dark:text-brand-400"
           />
           <b>Super Admin override</b> — force termination and log the bypass reason to the
           immutable audit trail.
         </label>
         {actionError && (
-          <div className="mt-3 flex items-start gap-2 rounded-xl bg-red-50 px-3.5 py-3 text-sm text-red-600">
+          <div className="mt-3 flex items-start gap-2 rounded-xl bg-red-50 dark:bg-red-500/10 px-3.5 py-3 text-sm text-red-600 dark:text-red-300">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             <span>{actionError}</span>
           </div>
@@ -323,7 +323,7 @@ export function OffboardingView({
           {terminated ? "Employee Terminated" : "Finalize System Termination"}
         </button>
         {terminated && (
-          <p className="mt-2 text-xs text-red-600">
+          <p className="mt-2 text-xs text-red-600 dark:text-red-300">
             Access revoked across all integrations. ROE schedule and final-pay countdown
             started.
           </p>

@@ -103,7 +103,7 @@ export function EmployeeRecord({
     editing === section ? (
       <div className="space-y-3">
         {children}
-        {error && <p className="text-xs text-red-600">{error}</p>}
+        {error && <p className="text-xs text-red-600 dark:text-red-300">{error}</p>}
         <div className="flex gap-2">
           <button
             onClick={save}
@@ -128,7 +128,7 @@ export function EmployeeRecord({
   const editBtn = (section: string, seed: UpdateEmployeeInput) => (
     <button
       onClick={() => startEdit(section, seed)}
-      className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-600 hover:text-brand-700"
+      className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300"
     >
       <Pencil className="h-3 w-3" /> Edit
     </button>
@@ -393,7 +393,7 @@ export function EmployeeRecord({
                     type="checkbox"
                     checked={!!draft.td1FederalOnFile}
                     onChange={(e) => setDraft((d) => ({ ...d, td1FederalOnFile: e.target.checked }))}
-                    className="h-4 w-4 rounded border-line text-brand-500"
+                    className="h-4 w-4 rounded border-line text-brand-500 dark:text-brand-400"
                   />
                   Federal TD1 on file
                 </label>
@@ -402,7 +402,7 @@ export function EmployeeRecord({
                     type="checkbox"
                     checked={!!draft.td1ProvincialOnFile}
                     onChange={(e) => setDraft((d) => ({ ...d, td1ProvincialOnFile: e.target.checked }))}
-                    className="h-4 w-4 rounded border-line text-brand-500"
+                    className="h-4 w-4 rounded border-line text-brand-500 dark:text-brand-400"
                   />
                   Provincial TD1 on file
                 </label>
@@ -486,7 +486,7 @@ export function EmployeeRecord({
               />
             </div>
           )}
-          <p className="mt-3 flex items-center gap-1 text-[11px] text-emerald-600">
+          <p className="mt-3 flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-300">
             <ShieldCheck className="h-3 w-3" /> SIN and account numbers are masked and HR-only.
           </p>
         </Card>
@@ -497,14 +497,14 @@ export function EmployeeRecord({
 
       {/* Documents */}
       <Card className="card-pad">
-        <CardHeader title="Documents" action={<FileText className="h-4 w-4 text-brand-500" />} />
+        <CardHeader title="Documents" action={<FileText className="h-4 w-4 text-brand-500 dark:text-brand-400" />} />
         <div className="mt-3 space-y-2">
           {emp.documents.length === 0 ? (
             <p className="text-sm text-ink-muted">No documents on file for this employee.</p>
           ) : (
             emp.documents.map((d) => (
               <div key={d.id} className="flex items-center gap-3 rounded-xl border border-line px-3 py-2.5">
-                <FileText className="h-4 w-4 shrink-0 text-brand-500" />
+                <FileText className="h-4 w-4 shrink-0 text-brand-500 dark:text-brand-400" />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium text-ink">{d.name}</span>
                   <span className="block text-[11px] text-ink-muted">
@@ -521,7 +521,7 @@ export function EmployeeRecord({
       <Card className="card-pad">
         <CardHeader
           title="Training record"
-          action={<GraduationCap className="h-4 w-4 text-brand-500" />}
+          action={<GraduationCap className="h-4 w-4 text-brand-500 dark:text-brand-400" />}
         />
         {training.length === 0 ? (
           <p className="mt-3 text-sm text-ink-muted">No training assigned to this employee yet.</p>
@@ -537,7 +537,7 @@ export function EmployeeRecord({
                   key={t.id}
                   className="flex items-center gap-3 rounded-xl border border-line px-3 py-2.5"
                 >
-                  <GraduationCap className="h-4 w-4 shrink-0 text-brand-500" />
+                  <GraduationCap className="h-4 w-4 shrink-0 text-brand-500 dark:text-brand-400" />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="truncate text-sm font-medium text-ink">{t.courseTitle}</span>
@@ -618,7 +618,7 @@ function EmergencyContacts({
         action={
           <button
             onClick={() => setAdding((a) => !a)}
-            className="inline-flex items-center gap-1 rounded-lg bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700 hover:bg-brand-100"
+            className="inline-flex items-center gap-1 rounded-lg bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700 dark:text-brand-400 hover:bg-brand-100"
           >
             {adding ? <X className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />} {adding ? "Cancel" : "Add"}
           </button>
@@ -631,11 +631,11 @@ function EmergencyContacts({
           <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="Phone" className="field-input" />
           <input value={form.altPhone} onChange={(e) => setForm({ ...form, altPhone: e.target.value })} placeholder="Alt phone (optional)" className="field-input" />
           <label className="flex items-center gap-2 text-xs text-ink-soft">
-            <input type="checkbox" checked={form.isPrimary} onChange={(e) => setForm({ ...form, isPrimary: e.target.checked })} className="h-4 w-4 rounded border-line text-brand-500" />
+            <input type="checkbox" checked={form.isPrimary} onChange={(e) => setForm({ ...form, isPrimary: e.target.checked })} className="h-4 w-4 rounded border-line text-brand-500 dark:text-brand-400" />
             Primary contact
           </label>
           <div className="sm:col-span-2">
-            {error && <p className="mb-2 text-xs text-red-600">{error}</p>}
+            {error && <p className="mb-2 text-xs text-red-600 dark:text-red-300">{error}</p>}
             <button onClick={add} disabled={!valid || busy} className="rounded-xl bg-brand-500 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-600 disabled:opacity-50">
               {busy ? "Adding…" : "Add contact"}
             </button>

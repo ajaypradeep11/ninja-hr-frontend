@@ -140,7 +140,7 @@ export function CalculatorView({
       />
 
       {error && (
-        <p className="mb-4 rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-600">{error}</p>
+        <p className="mb-4 rounded-xl bg-red-50 dark:bg-red-500/10 px-3.5 py-2.5 text-sm text-red-600 dark:text-red-300">{error}</p>
       )}
 
       {/* Rules builder */}
@@ -167,7 +167,7 @@ export function CalculatorView({
                 }}
                 className={
                   tab === t.key
-                    ? "-mb-px border-b-2 border-brand-500 px-4 py-2.5 text-sm font-semibold text-brand-600"
+                    ? "-mb-px border-b-2 border-brand-500 px-4 py-2.5 text-sm font-semibold text-brand-600 dark:text-brand-400"
                     : "-mb-px border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-ink-muted hover:text-ink"
                 }
               >
@@ -220,7 +220,7 @@ export function CalculatorView({
                   onClick={() => removeRule(r)}
                   disabled={busy}
                   title="Delete rule"
-                  className="rounded-lg p-1.5 text-ink-faint hover:bg-red-50 hover:text-red-600"
+                  className="rounded-lg p-1.5 text-ink-faint hover:bg-red-50 dark:hover:bg-red-500/20 hover:text-red-600 dark:hover:text-red-300"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -236,7 +236,7 @@ export function CalculatorView({
           {composing ? (
             <div className="flex flex-wrap items-center gap-2 rounded-xl border-2 border-brand-200 bg-brand-50/40 px-3.5 py-3">
               <Badge tone="gray">IF</Badge>
-              <select value={field} onChange={(e) => setField(e.target.value)} className="h-9 rounded-lg border border-line bg-white px-2 text-sm">
+              <select value={field} onChange={(e) => setField(e.target.value)} className="h-9 rounded-lg border border-line bg-card px-2 text-sm">
                 {CALC_FIELDS.map((f) => (
                   <option key={f}>{f}</option>
                 ))}
@@ -244,7 +244,7 @@ export function CalculatorView({
               <select
                 value={operator}
                 onChange={(e) => setOperator(e.target.value as CalcOperator)}
-                className="h-9 rounded-lg border border-line bg-white px-2 text-sm"
+                className="h-9 rounded-lg border border-line bg-card px-2 text-sm"
               >
                 {CALC_OPERATORS.map((o) => (
                   <option key={o.v} value={o.v}>
@@ -256,10 +256,10 @@ export function CalculatorView({
                 type="number"
                 value={threshold}
                 onChange={(e) => setThreshold(e.target.value)}
-                className="h-9 w-24 rounded-lg border border-line bg-white px-2 text-sm"
+                className="h-9 w-24 rounded-lg border border-line bg-card px-2 text-sm"
               />
               <Badge tone="brand">THEN</Badge>
-              <select value={action} onChange={(e) => setAction(e.target.value)} className="h-9 rounded-lg border border-line bg-white px-2 text-sm">
+              <select value={action} onChange={(e) => setAction(e.target.value)} className="h-9 rounded-lg border border-line bg-card px-2 text-sm">
                 {CALC_ACTIONS.map((a) => (
                   <option key={a}>{a}</option>
                 ))}
@@ -270,12 +270,12 @@ export function CalculatorView({
                 step="0.1"
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
-                className="h-9 w-24 rounded-lg border border-line bg-white px-2 text-sm"
+                className="h-9 w-24 rounded-lg border border-line bg-card px-2 text-sm"
               />
               <span className="ml-auto flex gap-2">
                 <button
                   onClick={() => setComposing(false)}
-                  className="rounded-lg p-1.5 text-ink-muted hover:bg-white"
+                  className="rounded-lg p-1.5 text-ink-muted hover:bg-card"
                   aria-label="Cancel"
                 >
                   <X className="h-4 w-4" />
@@ -292,7 +292,7 @@ export function CalculatorView({
           ) : (
             <button
               onClick={() => setComposing(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-line px-3.5 py-2 text-sm font-semibold text-ink-soft transition hover:border-brand-300 hover:bg-brand-50/40 hover:text-brand-600"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-line px-3.5 py-2 text-sm font-semibold text-ink-soft transition hover:border-brand-300 hover:bg-brand-50/40 hover:text-brand-600 dark:hover:text-brand-300"
             >
               <Plus className="h-4 w-4" /> Add Rule
             </button>
@@ -350,7 +350,7 @@ export function CalculatorView({
                     <td className="py-2.5 pr-3 text-right text-ink-muted">
                       {r.regularHours}
                       {r.overtimeHours > 0 && (
-                        <span className="font-semibold text-amber-600">
+                        <span className="font-semibold text-amber-600 dark:text-amber-300">
                           {" "}
                           + {r.overtimeHours} OT
                         </span>

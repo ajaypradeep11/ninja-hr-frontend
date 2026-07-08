@@ -171,7 +171,7 @@ export default function EmployeeAssistant() {
         </div>
 
         <div className="border-t border-line p-3">
-          <div className="flex items-center gap-2 rounded-xl border border-line bg-white px-3 py-1.5 focus-within:border-brand-400 focus-within:ring-2 focus-within:ring-brand-100">
+          <div className="flex items-center gap-2 rounded-xl border border-line bg-card px-3 py-1.5 focus-within:border-brand-400 focus-within:ring-2 focus-within:ring-brand-100">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}

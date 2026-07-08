@@ -39,14 +39,14 @@ export default async function ManagerRecruitmentPage() {
       />
 
       {awaitingMe.length > 0 && (
-        <Card className="card-pad mb-5 border-amber-200 bg-amber-50/30">
-          <CardHeader title={`Awaiting your approval (${awaitingMe.length})`} action={<Send className="h-4 w-4 text-amber-500" />} />
+        <Card className="card-pad mb-5 border-amber-200 dark:border-amber-500/30 bg-amber-50/30 dark:bg-amber-500/10">
+          <CardHeader title={`Awaiting your approval (${awaitingMe.length})`} action={<Send className="h-4 w-4 text-amber-500 dark:text-amber-400" />} />
           <div className="mt-3 space-y-2">
             {awaitingMe.map((d) => (
               <Link
                 key={d.id}
                 href={`/employee/recruitment/${d.id}`}
-                className="flex items-center justify-between rounded-xl border border-amber-200 bg-white px-4 py-3 transition hover:border-amber-300"
+                className="flex items-center justify-between rounded-xl border border-amber-200 dark:border-amber-500/30 bg-card px-4 py-3 transition hover:border-amber-300"
               >
                 <span>
                   <span className="block text-sm font-semibold text-ink">{d.title}</span>
@@ -56,7 +56,7 @@ export default async function ManagerRecruitmentPage() {
                     {d.createdByName && <> · requested by {d.createdByName}</>}
                   </span>
                 </span>
-                <span className="text-xs font-semibold text-amber-600">Review →</span>
+                <span className="text-xs font-semibold text-amber-600 dark:text-amber-300">Review →</span>
               </Link>
             ))}
           </div>

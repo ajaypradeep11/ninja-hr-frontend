@@ -1,7 +1,7 @@
 # TestHR — Agentic HR for the Canadian Market
 
-A Next.js front-end prototype for an agentic HR SaaS targeting Canadian SMBs.
-Built from the product spec in [`Impl.md`](./Impl.md) and the two design mockups
+A Next.js front-end for an agentic HR SaaS targeting Canadian SMBs. Built from
+the product spec in [`Impl.md`](./Impl.md) and the two design mockups
 (`1.png` admin dashboard, `2.png` initiate preboarding).
 
 > **Branding:** `TestHR` is a placeholder. The product name lives in a single
@@ -9,138 +9,146 @@ Built from the product spec in [`Impl.md`](./Impl.md) and the two design mockups
 > once. Naming candidates: _Maple HR, TrueNorth HR, Kinetic HR, Cortex HR,
 > Sentry HR, Aegis HR, Hrbor, Onward._
 
+## Architecture
+
+This app is a **pure frontend** — it owns no database. All data lives in the
+[`ninja-hr-backend`](../ninja-hr-backend) NestJS service, and every read and
+write goes over its HTTP API (`/api/v1`):
+
+- **API client:** `lib/api/client.ts` — a `server-only` wrapper around
+  [`openapi-fetch`](https://openapi-ts.dev/openapi-fetch/), typed against
+  `lib/api/generated/openapi.d.ts` (generated from the backend's Swagger spec
+  via `npm run api:generate`). Auth is an internal key header plus
+  `x-actor-id` / `x-actor-persona` headers identifying the demo user.
+- **Reads:** `lib/queries.ts` (server-only) — one async function per resource,
+  called from Server Components. Pages are dynamic (live per request).
+- **Writes:** `app/actions/*.ts` — Server Actions that call the backend, then
+  `revalidatePath`.
+- **Identity:** `lib/actor.ts` — the current demo user is a cookie
+  (`hr-actor-id`); the topbar's user switcher swaps it. Users come from the
+  backend's `/identity/users`.
+- **Binary proxies:** `app/api/*` routes stream résumé / document downloads
+  from the backend so the internal key never reaches the browser.
+- **Pattern:** client-interactive pages are split into a server `page.tsx`
+  (fetches) + a client `*-view.tsx` (renders + calls actions).
+
+The browser never talks to the backend directly — everything goes through the
+Next.js server — so the backend needs no CORS configuration.
+
 ## Tech stack
 
 - **Next.js 15** (App Router) + **React 19**
 - **TypeScript** (strict)
 - **Tailwind CSS 3** with a custom brand/ink/canvas token set (`tailwind.config.ts`)
 - **lucide-react** icons, **recharts** for charts
-- **Postgres + Prisma 7** (pg driver adapter) — **all modules** read live from the
-  database via Server Components / Server Actions, with Employee as the relational
-  hub (leave→employee, candidates→requisition, reviews→employee). `lib/data.ts`
-  now only holds the seed source + a few demo constants with no table
-  (payroll period, upcoming events, leave balances, compliance score).
+- **openapi-fetch** + **openapi-typescript** for the typed backend client
 
 ## Getting started
 
-Requires Docker Desktop running. Then:
+The backend must be running first (see `../ninja-hr-backend/README.md` —
+Postgres via Docker, migrate, seed, `npm run start:dev`). Then:
 
 ```bash
-npm install        # also generates the Prisma client (postinstall)
-npm run dev        # http://localhost:3000
+npm install
+cp .env.example .env   # defaults point at http://localhost:4000/api/v1
+npm run dev            # http://localhost:3000
 ```
 
-That's it. `npm run dev` is turnkey — a `predev` hook automatically:
-1. starts Postgres in Docker (`db:up`, waits until healthy),
-2. applies migrations (`db:migrate`),
-3. seeds the database **only if it's empty** (`db:ensure-seed`),
+Or run the whole stack (Postgres + backend + frontend) with Docker from the
+repo pair's parent directory: `docker compose up --build`.
 
-then runs Next.js against the local container (`.env.docker`). Re-running `npm
-run dev` won't wipe your data — seeding is skipped once the DB is populated.
-
-Run against **Supabase** instead with `npm run dev:cloud` (reads `.env`; no Docker).
-
-### Docker / database scripts
+### Scripts
 
 | Script | What it does |
 | --- | --- |
-| `npm run dev` | Turnkey: bring up Docker Postgres, migrate, seed-if-empty, run Next |
-| `npm run dev:cloud` | Run Next against Supabase (`.env`); no Docker |
-| `npm run db:up` | Start Postgres in Docker, wait until healthy (idempotent) |
-| `npm run db:down` | Stop & remove the container — **keeps** the data volume |
-| `npm run db:nuke` | Stop & remove the container **and delete the data volume** |
-| `npm run db:fresh` | `db:nuke` → `db:up` → migrate → seed (clean local DB from scratch) |
-| `npm run db:migrate` | Apply migrations to the local Docker DB |
-| `npm run db:ensure-seed` | Seed the local DB only if it's empty |
-| `npm run db:seed:local` | Force-reseed the local DB (wipes + reinserts) |
-| `npm run db:studio:local` | Open Prisma Studio against the local Docker DB |
-| `npm run db:logs` | Tail Postgres logs |
-| `npm run db:psql` | Open a `psql` shell inside the container |
+| `npm run dev` | Run Next.js dev server against the backend in `.env` |
+| `npm run build` / `start` | Production build / serve |
+| `npm run lint` / `format` | ESLint (flat config) / Prettier |
+| `npm run test:e2e` | Playwright browser e2e (`e2e/*.spec.ts`) — boots backend + frontend itself; needs the DB up, migrated and seeded |
+| `npm run test:e2e:headed` | Same, with a visible Chrome window |
+| `npm run test:e2e:slow` | Headed + slow motion (600 ms between actions) — set your own pace with `SLOWMO=<ms>` |
+| `npm run test:e2e:ui` | Playwright's interactive UI runner (step through, time-travel) |
+| `npm run api:generate` | Regenerate `lib/api/generated/openapi.d.ts` from the running backend's Swagger JSON (`http://localhost:4000/api/docs-json`) |
 
-Data persists in the named volume `testhr-pgdata` across `db:down`/restarts; only
-`db:nuke` (or `db:fresh`) deletes it. Local connection settings live in
-`.env.docker` (no secrets, committed); Supabase credentials live in `.env`
-(gitignored). The `db:seed` / `db:reset` / `db:studio` scripts (no `:local`)
-target whatever `.env` points at.
+Environment variables (see `.env.example`): `NINJA_HR_API_URL` (backend base
+URL) and `INTERNAL_API_KEY` (must match the backend's key).
 
-## Database
-
-- **Schema:** `prisma/schema.prisma` — Employee (hub), OnboardingCase (+ ChecklistTask,
-  CaseDocument, ConsentEntry, AuditEntry), LeaveRequest, Requisition, Candidate,
-  PerformanceReview, Pip, TrainingCourse, OffboardingTask, BenefitsCarrier,
-  AgentRun, VaultDocument, SalaryBenchmark.
-- **Reads:** `lib/queries.ts` (server-only) — one async function per entity,
-  returning app-shaped data. Server Components call these; DB-backed pages are
-  `force-dynamic` (live per request).
-- **Writes:** `app/actions/onboarding.ts` + `app/actions/modules.ts` (Server
-  Actions) → `lib/db.ts` (Prisma singleton w/ `@prisma/adapter-pg`). Persisted
-  actions: onboarding lifecycle, leave approve/deny, ATS stage moves, PIP issue,
-  requisition publish.
-- **Enum mapping:** `lib/db-map.ts` bridges DB enums (`IT_OPS`) and the app's
-  display strings (`IT / Ops`) in both directions.
-- **Pattern:** client-interactive pages are split into a server `page.tsx`
-  (fetches) + a client `*-view.tsx` (renders + calls actions).
-
-### Switching to Supabase (production)
-
-1. Create a project at supabase.com — **region `ca-central-1` (Montreal)** for
-   Law 25 / PIPEDA data residency.
-2. Settings → Database → Connection string → **Prisma**. Put the **pooled** URL
-   (port 6543, `?pgbouncer=true`) in `DATABASE_URL` and the **direct** URL
-   (port 5432) in `DIRECT_URL` (see `.env.example`).
-3. `npx prisma migrate deploy && npm run db:seed`.
-
-That's the only change — application code is identical to local Postgres.
+When the backend API changes, run `npm run api:generate` with the backend up —
+the generated types are committed so builds stay hermetic.
 
 ## Layout
 
-Two consoles share one shell (sidebar + topbar + ⌘K AI Co-Pilot drawer). Use the
-**View as Admin / View as Employee** switch in the top bar to move between them.
+Two consoles share one shell (sidebar + topbar + ⌘K AI Co-Pilot drawer). Use
+the **View as Admin / View as Employee** switch in the top bar to move between
+them; the employee console adapts to the selected user (hiring managers and
+interview-panel members get extra recruitment tabs).
 
 ### Admin console (`/admin`)
 
 | Route | Module |
 | --- | --- |
 | `/admin` | Dashboard (mockup 1.png) |
-| `/admin/recruitment` | Requisitions list |
-| `/admin/recruitment/new` | AI Job Description builder + Bill 149 / Law 25 validation |
-| `/admin/recruitment/ats` | ATS Kanban, AI match breakdown, blind-hiring toggle |
-| `/admin/onboarding` | Onboarding pipeline + checklist |
-| `/admin/onboarding/preboard` | Initiate Preboarding (mockup 2.png) |
+| `/admin/employees` | Employee directory + HRIS profiles |
+| `/admin/onboarding` (+`/preboard`, `/[id]`) | Onboarding pipeline, checklist, initiate preboarding (mockup 2.png) |
 | `/admin/leave` | Leave queue, team calendar, provincial ESA policy engine |
-| `/admin/documents` | Document vault, RBAC folder masking, Law 25 retention |
-| `/admin/performance` | Reviews state machine, PIP portal with watertight validation |
+| `/admin/documents` | Document vault |
+| `/admin/performance` | Reviews state machine, PIP portal |
+| `/admin/training` | Course catalog + assignments |
 | `/admin/offboarding` | Task matrix, blocking-task guard, access kill-switch |
-| `/admin/reports` | Compliance scorecard, audit export, AI insights |
-| `/admin/benefits` | Carrier connections, reconciliation, payroll deduction sync |
+| `/admin/recruitment` (+`/new`, `/[id]`, `/ats`, `/candidates`, `/templates`, `/interview-guide`, `/analytics`, `/careers`) | Requisitions, AI JD builder, ATS kanban, candidate CRM, comms templates, hiring analytics |
+| `/admin/reports` | Compliance scorecard, headcount, AI insights |
 | `/admin/tracker` | Training/probation/milestone lifecycle tracking |
-| `/admin/agents` | AI Agent command center, activity ledger, intercept guard |
+| `/admin/agents` | AI Agent command center + activity ledger |
+| `/admin/letter-lab` | HR letter generation from templates |
+| `/admin/calculator` | Termination notice / pay calculator |
 | `/admin/settings` | Company, provinces, RBAC, integrations, branding |
 
 ### Employee portal (`/employee`)
 
-Dashboard, self-service onboarding wizard, leave, training, my growth, my
-documents, and a full-page AI assistant.
+Dashboard, self-service onboarding wizard, leave, training, my growth
+(goals / 1-on-1s / feedback / kudos), my profile + documents, internal job
+board, my interviews (panel members), my requisitions (hiring managers), and a
+full-page AI assistant.
+
+### Public (unauthenticated)
+
+| Route | Purpose |
+| --- | --- |
+| `/careers` (+`/[slug]`) | Public job board + application form |
+| `/track/[token]` | Candidate self-service status portal |
 
 ## The compliance engine
 
-`lib/compliance.ts` encodes the (simplified, illustrative) Canadian rules from
-the spec — provincial ESA vacation accrual, BC paid-sick-day floors, Bill 149 job
-posting checks, Law 25 retention, and the 90-day probation milestone. These power
-the live validation in the Recruitment, Leave, Performance and Offboarding
+`lib/compliance.ts` (+ `lib/holidays.ts`, `lib/leave-balances.ts`,
+`lib/inclusive-language.ts`, `lib/calc.ts`) encodes the simplified,
+illustrative Canadian rules from the spec — provincial ESA vacation accrual,
+BC paid-sick-day floors, Bill 149 job-posting checks, Law 25 retention, the
+90-day probation milestone, and termination notice math. These power live
+validation in the Recruitment, Leave, Performance, Offboarding and Calculator
 modules. **Not legal advice.**
+
+## AI features
+
+AI-labelled features (JD generation, candidate message drafting, the HR
+Co-Pilot) are served by the **backend**, which uses `ANTHROPIC_API_KEY` when
+set and falls back to deterministic templates when not. The frontend needs no
+AI credentials.
 
 ## Project structure
 
 ```
-app/            route groups: /admin/*, /employee/*
+app/            route groups: (public)/*, /admin/*, /employee/*, api/* proxies
+  actions/      Server Actions (all writes → backend HTTP API)
 components/
   ui.tsx        design-system primitives (Card, Button, Badge, Avatar, Ring…)
   layout/       Sidebar, Topbar, AgentDrawer (HR Co-Pilot)
 lib/
+  api/          openapi-fetch client + generated types
+  queries.ts    server-only read layer (one function per resource)
+  actor.ts      demo-user identity (cookie-based switcher)
   brand.ts      single source of truth for product name
   nav.ts        sidebar navigation config
-  data.ts       all mock data + types
   compliance.ts Canadian provincial rule engine
+  data.ts       shared types + a few demo constants
   utils.ts      cn(), formatCAD(), formatDate(), …
 ```

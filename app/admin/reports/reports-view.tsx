@@ -152,7 +152,7 @@ export function ReportsView({ employees, headcountByDept, requisitions }: Report
               <BarChart data={headcountByDept} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
                 <XAxis
                   dataKey="dept"
-                  tick={{ fontSize: 11, fill: "#9ca3af" }}
+                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
                   axisLine={false}
                   tickLine={false}
                   interval={0}
@@ -160,18 +160,25 @@ export function ReportsView({ employees, headcountByDept, requisitions }: Report
                   textAnchor="end"
                   height={48}
                 />
-                <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
+                <YAxis
+                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                  axisLine={false}
+                  tickLine={false}
+                />
                 <Tooltip
-                  cursor={{ fill: "#f6f7f9" }}
+                  cursor={{ fill: "hsl(var(--muted))" }}
                   contentStyle={{
                     borderRadius: 12,
-                    border: "1px solid #eceef2",
+                    border: "1px solid hsl(var(--border))",
+                    backgroundColor: "hsl(var(--card))",
+                    color: "hsl(var(--foreground))",
                     fontSize: 12,
                   }}
+                  labelStyle={{ color: "hsl(var(--foreground))" }}
                 />
                 <Bar dataKey="count" radius={[6, 6, 0, 0]}>
                   {headcountByDept.map((_, i) => (
-                    <Cell key={i} fill="#6d5ce7" />
+                    <Cell key={i} fill="hsl(var(--primary))" />
                   ))}
                 </Bar>
               </BarChart>
@@ -187,7 +194,7 @@ export function ReportsView({ employees, headcountByDept, requisitions }: Report
               <button
                 onClick={() => setAiInsight((v) => !v)}
                 className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors ${
-                  aiInsight ? "bg-brand-500 text-white" : "bg-brand-50 text-brand-700 hover:bg-brand-100"
+                  aiInsight ? "bg-brand-500 text-white" : "bg-brand-50 text-brand-700 dark:text-brand-400 hover:bg-brand-100"
                 }`}
               >
                 <Sparkles className="h-3.5 w-3.5" />
@@ -198,7 +205,7 @@ export function ReportsView({ employees, headcountByDept, requisitions }: Report
 
           {aiInsight && (
             <div className="mt-3 flex items-start gap-2.5 rounded-xl bg-brand-50/60 p-3.5 text-sm text-ink-soft">
-              <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-brand-500" />
+              <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-brand-500 dark:text-brand-400" />
               <p>
                 <span className="font-semibold text-ink">Insight:</span> You have{" "}
                 {nonCompliantJobs} open role(s) in Ontario that may be non-compliant with Bill
@@ -295,11 +302,11 @@ export function ReportsView({ employees, headcountByDept, requisitions }: Report
               return (
                 <Card key={r.title} className="card-pad transition-shadow hover:shadow-card-lg">
                   <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-canvas">
-                    <Icon className="h-5 w-5 text-brand-600" />
+                    <Icon className="h-5 w-5 text-brand-600 dark:text-brand-400" />
                   </span>
                   <p className="mt-3 text-sm font-semibold text-ink">{r.title}</p>
                   <p className="mt-1 text-xs leading-relaxed text-ink-muted">{r.desc}</p>
-                  <button className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700">
+                  <button className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300">
                     <FileSpreadsheet className="h-3.5 w-3.5" />
                     Generate
                   </button>

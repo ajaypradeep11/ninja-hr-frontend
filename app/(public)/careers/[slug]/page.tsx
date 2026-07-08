@@ -20,12 +20,12 @@ export default async function JobPostingPage({
     <div>
       <Link
         href="/careers"
-        className="mb-4 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700"
+        className="mb-4 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300"
       >
         <ChevronLeft className="h-3.5 w-3.5" /> All open positions
       </Link>
 
-      <div className="rounded-2xl border border-line bg-white p-7">
+      <div className="rounded-2xl border border-line bg-card p-7">
         <h1 className="text-2xl font-bold tracking-tight text-ink">{job.title}</h1>
         <p className="mt-2 flex flex-wrap items-center gap-4 text-sm text-ink-muted">
           <span className="inline-flex items-center gap-1.5">
@@ -34,7 +34,7 @@ export default async function JobPostingPage({
           <span className="inline-flex items-center gap-1.5">
             <MapPin className="h-4 w-4" /> {provinceName(job.province)}
           </span>
-          <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700">
+          <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700 dark:text-brand-400">
             {formatCAD(job.salaryMin, { maximumFractionDigits: 0 })} –{" "}
             {formatCAD(job.salaryMax, { maximumFractionDigits: 0 })}
           </span>

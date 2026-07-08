@@ -28,6 +28,18 @@ const FUNNEL_COLORS: Record<string, string> = {
 
 const SOURCE_COLORS = ["#818cf8", "#38bdf8", "#0ea5e9"];
 
+// Chart chrome reads from the theme tokens so both modes work.
+const TICK = { fontSize: 11, fill: "hsl(var(--muted-foreground))" };
+const CURSOR = { fill: "hsl(var(--foreground) / 0.04)" };
+const TOOLTIP_STYLE = {
+  borderRadius: 12,
+  border: "1px solid hsl(var(--border))",
+  backgroundColor: "hsl(var(--card))",
+  color: "hsl(var(--foreground))",
+  fontSize: 12,
+};
+const TOOLTIP_LABEL = { color: "hsl(var(--foreground))" };
+
 export function AnalyticsView({ data }: { data: RecruitmentAnalytics }) {
   const sourceData = data.sources.filter((s) => s.count > 0);
 
@@ -117,9 +129,9 @@ export function AnalyticsView({ data }: { data: RecruitmentAnalytics }) {
           <div className="mt-4 h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.funnel} margin={{ top: 4, right: 8, left: -18, bottom: 0 }}>
-                <XAxis dataKey="stage" tick={{ fontSize: 11 }} interval={0} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
-                <Tooltip cursor={{ fill: "rgba(0,0,0,0.03)" }} />
+                <XAxis dataKey="stage" tick={TICK} interval={0} />
+                <YAxis allowDecimals={false} tick={TICK} />
+                <Tooltip cursor={CURSOR} contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL} />
                 <Bar dataKey="count" radius={[6, 6, 0, 0]}>
                   {data.funnel.map((f) => (
                     <Cell key={f.stage} fill={FUNNEL_COLORS[f.stage] ?? "#94a3b8"} />
@@ -151,7 +163,7 @@ export function AnalyticsView({ data }: { data: RecruitmentAnalytics }) {
                       <Cell key={i} fill={SOURCE_COLORS[i % SOURCE_COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL} />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
@@ -170,9 +182,13 @@ export function AnalyticsView({ data }: { data: RecruitmentAnalytics }) {
             <div className="mt-4 h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data.timeToFill} layout="vertical" margin={{ top: 4, right: 16, left: 24, bottom: 0 }}>
-                  <XAxis type="number" tick={{ fontSize: 11 }} unit="d" />
-                  <YAxis type="category" dataKey="requisition" width={140} tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={(v) => [`${v} days`, "Time to fill"]} />
+                  <XAxis type="number" tick={TICK} unit="d" />
+                  <YAxis type="category" dataKey="requisition" width={140} tick={TICK} />
+                  <Tooltip
+                    formatter={(v) => [`${v} days`, "Time to fill"]}
+                    contentStyle={TOOLTIP_STYLE}
+                    labelStyle={TOOLTIP_LABEL}
+                  />
                   <Bar dataKey="days" fill="#38bdf8" radius={[0, 6, 6, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -186,9 +202,9 @@ export function AnalyticsView({ data }: { data: RecruitmentAnalytics }) {
           <div className="mt-4 h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.byDepartment} margin={{ top: 4, right: 8, left: -18, bottom: 0 }}>
-                <XAxis dataKey="department" tick={{ fontSize: 11 }} interval={0} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
-                <Tooltip cursor={{ fill: "rgba(0,0,0,0.03)" }} />
+                <XAxis dataKey="department" tick={TICK} interval={0} />
+                <YAxis allowDecimals={false} tick={TICK} />
+                <Tooltip cursor={CURSOR} contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL} />
                 <Legend />
                 <Bar dataKey="applicants" name="Applicants" fill="#818cf8" radius={[6, 6, 0, 0]} />
                 <Bar dataKey="hired" name="Hired" fill="#34d399" radius={[6, 6, 0, 0]} />

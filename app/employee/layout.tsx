@@ -34,7 +34,7 @@ export default async function EmployeeLayout({
   const showOnboarding = !!myCase && myCase.status !== "Active";
 
   return (
-    <div className="min-h-screen bg-canvas">
+    <div className="min-h-screen bg-background">
       <Sidebar
         variant="employee"
         consoleLabel={isManager ? "Manager Portal" : BRAND.employeeConsoleLabel}

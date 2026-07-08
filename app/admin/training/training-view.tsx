@@ -51,7 +51,7 @@ export function TrainingView({
         />
       </div>
 
-      {error && <p className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>}
+      {error && <p className="mb-4 rounded-xl bg-red-50 dark:bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-300">{error}</p>}
 
       {creating && (
         <CreateCourse
@@ -100,7 +100,7 @@ export function TrainingView({
                     setError(err instanceof Error ? err.message : "Failed to delete course");
                   }
                 }}
-                className="rounded-lg p-1.5 text-ink-faint hover:bg-red-50 hover:text-red-500"
+                className="rounded-lg p-1.5 text-ink-faint hover:bg-red-50 dark:hover:bg-red-500/20 hover:text-red-500"
               >
                 <Trash2 className="h-4 w-4" />
               </button>
@@ -114,7 +114,7 @@ export function TrainingView({
               </span>
               <button
                 onClick={() => setAssignFor(c)}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700 hover:bg-brand-100"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700 dark:text-brand-400 hover:bg-brand-100"
               >
                 <UserPlus className="h-3.5 w-3.5" /> Assign
               </button>
@@ -213,7 +213,7 @@ function CreateCourse({
           <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className="field-input resize-none" />
         </div>
       </div>
-      {error && <p className="mt-3 text-xs text-red-600">{error}</p>}
+      {error && <p className="mt-3 text-xs text-red-600 dark:text-red-300">{error}</p>}
       <button
         onClick={save}
         disabled={!title.trim() || busy}
@@ -266,7 +266,7 @@ function AssignDialog({
   return (
     <>
       <div className="fixed inset-0 z-40 bg-ink/20" onClick={onClose} />
-      <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col bg-white shadow-pop">
+      <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col bg-card shadow-pop">
         <div className="flex items-center justify-between border-b border-line px-5 py-4">
           <div>
             <p className="text-sm font-bold text-ink">Assign training</p>
@@ -302,7 +302,7 @@ function AssignDialog({
           </div>
         </div>
         <div className="border-t border-line px-5 py-4">
-          {error && <p className="mb-2 text-xs text-red-600">{error}</p>}
+          {error && <p className="mb-2 text-xs text-red-600 dark:text-red-300">{error}</p>}
           <button
             onClick={assign}
             disabled={selected.size === 0 || busy}

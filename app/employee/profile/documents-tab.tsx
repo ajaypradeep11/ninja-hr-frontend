@@ -124,7 +124,7 @@ export function DocumentsTab({ documents }: { documents: VaultDocument[] }) {
                 className={cn(
                   "flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors",
                   active === f.id
-                    ? "bg-brand-50 text-brand-700"
+                    ? "bg-brand-50 text-brand-700 dark:text-brand-400"
                     : "text-ink-muted hover:bg-canvas hover:text-ink",
                 )}
               >
@@ -146,7 +146,7 @@ export function DocumentsTab({ documents }: { documents: VaultDocument[] }) {
             <div className="mt-4 divide-y divide-line">
               {folder.docs.map((d) => (
                 <div key={d.id} className="flex items-center gap-3 py-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-canvas text-brand-500">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-canvas text-brand-500 dark:text-brand-400">
                     <FileText className="h-4 w-4" />
                   </span>
                   <div className="min-w-0 flex-1">
@@ -189,7 +189,7 @@ export function DocumentsTab({ documents }: { documents: VaultDocument[] }) {
           </Card>
 
           <div className="mt-4 flex items-start gap-2.5 rounded-2xl border border-line bg-white/60 p-4 text-xs text-ink-muted">
-            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500 dark:text-emerald-400" />
             <span>
               This document is a record for your personal files. If you believe any information is
               inaccurate, please contact the HR Department. To update a document, submit a new copy

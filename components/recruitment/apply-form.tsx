@@ -76,8 +76,8 @@ export function ApplyForm({ job }: { job: JobPostingDetail }) {
 
   if (portalToken) {
     return (
-      <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-6 text-center">
-        <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-500" />
+      <div className="rounded-2xl border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-500/10 p-6 text-center">
+        <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-500 dark:text-emerald-400" />
         <h3 className="mt-3 text-lg font-bold text-ink">Application received!</h3>
         <p className="mx-auto mt-1 max-w-md text-sm text-ink-muted">
           Thanks {name.split(" ")[0]} — we&apos;ve emailed you a confirmation. Track your
@@ -95,7 +95,7 @@ export function ApplyForm({ job }: { job: JobPostingDetail }) {
   }
 
   return (
-    <div className="rounded-2xl border border-line bg-white p-6">
+    <div className="rounded-2xl border border-line bg-card p-6">
       <h3 className="text-base font-bold text-ink">Apply for this role</h3>
       <div className="mt-4 space-y-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -112,9 +112,9 @@ export function ApplyForm({ job }: { job: JobPostingDetail }) {
           <label className="field-label">Résumé</label>
           {file ? (
             <div className="flex items-center gap-2.5 rounded-xl border border-brand-200 bg-brand-50/40 px-3.5 py-3">
-              <FileText className="h-5 w-5 text-brand-500" />
+              <FileText className="h-5 w-5 text-brand-500 dark:text-brand-400" />
               <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink">{file.name}</span>
-              <span className="inline-flex items-center gap-1 text-[11px] text-brand-600">
+              <span className="inline-flex items-center gap-1 text-[11px] text-brand-600 dark:text-brand-400">
                 <Sparkles className="h-3 w-3" /> Will be auto-parsed
               </span>
               <button onClick={() => setFile(null)} className="text-ink-faint hover:text-red-500">
@@ -128,7 +128,7 @@ export function ApplyForm({ job }: { job: JobPostingDetail }) {
               <input type="file" accept=".pdf,.txt,application/pdf,text/plain" onChange={onFile} className="hidden" />
             </label>
           )}
-          {fileError && <p className="mt-1 text-[11px] text-red-500">{fileError}</p>}
+          {fileError && <p className="mt-1 text-[11px] text-red-500 dark:text-red-400">{fileError}</p>}
         </div>
         <div>
           <label className="field-label">
@@ -152,7 +152,7 @@ export function ApplyForm({ job }: { job: JobPostingDetail }) {
               <div key={q.id}>
                 <label className="field-label">
                   {q.question}
-                  {q.required && <span className="text-red-500"> *</span>}
+                  {q.required && <span className="text-red-500 dark:text-red-400"> *</span>}
                 </label>
                 <textarea
                   value={answers[q.id] ?? ""}
@@ -170,17 +170,17 @@ export function ApplyForm({ job }: { job: JobPostingDetail }) {
             type="checkbox"
             checked={consent}
             onChange={(e) => setConsent(e.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded border-line text-brand-500"
+            className="mt-0.5 h-4 w-4 rounded border-line text-brand-500 dark:text-brand-400"
           />
           <span>
-            <ShieldCheck className="mr-1 inline h-3.5 w-3.5 text-emerald-500" />
+            <ShieldCheck className="mr-1 inline h-3.5 w-3.5 text-emerald-500 dark:text-emerald-400" />
             I consent to the collection and use of my personal information for recruitment
             purposes. Data is retained per Ontario privacy regulations; I can withdraw my
             application at any time via my tracking link, and request deletion of my data.
           </span>
         </label>
 
-        {error && <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-600">{error}</p>}
+        {error && <p className="rounded-xl bg-red-50 dark:bg-red-500/10 px-3.5 py-2.5 text-sm text-red-600 dark:text-red-300">{error}</p>}
 
         <button
           disabled={!valid || submitting}

@@ -31,9 +31,9 @@ export function MilestoneNudge({ nudges }: { nudges: Milestone[] }) {
       {visible.map((m) => (
         <div
           key={m.id}
-          className="flex flex-wrap items-center gap-3 rounded-xl border border-violet-200 bg-violet-50/70 px-4 py-3"
+          className="flex flex-wrap items-center gap-3 rounded-xl border border-violet-200 dark:border-violet-500/30 bg-violet-50/70 dark:bg-violet-500/10 px-4 py-3"
         >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-600">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-500/20 text-violet-600 dark:text-violet-300">
             <Bell className="h-4.5 w-4.5" />
           </span>
           <div className="min-w-0 flex-1">
@@ -54,14 +54,14 @@ export function MilestoneNudge({ nudges }: { nudges: Milestone[] }) {
             </button>
             <Link
               href="/admin/letter-lab"
-              className="rounded-lg border border-violet-200 bg-white px-3 py-1.5 text-xs font-semibold text-violet-700 hover:bg-violet-50"
+              className="rounded-lg border border-violet-200 dark:border-violet-500/30 bg-card px-3 py-1.5 text-xs font-semibold text-violet-700 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-500/20"
             >
               Letter Lab
             </Link>
             <button
               onClick={() => setDismissed((d) => [...d, m.id])}
               aria-label="Dismiss"
-              className="rounded-lg p-1.5 text-ink-faint hover:bg-white hover:text-ink"
+              className="rounded-lg p-1.5 text-ink-faint hover:bg-card hover:text-ink"
             >
               <X className="h-4 w-4" />
             </button>

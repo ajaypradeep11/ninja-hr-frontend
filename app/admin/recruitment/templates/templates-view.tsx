@@ -93,7 +93,7 @@ export function TemplatesView({ initial }: { initial: CommunicationTemplateEntry
       />
 
       {error && (
-        <p className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>
+        <p className="mb-4 rounded-xl bg-red-50 dark:bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-300">{error}</p>
       )}
 
       {draft && (
@@ -139,7 +139,7 @@ export function TemplatesView({ initial }: { initial: CommunicationTemplateEntry
                     <button
                       key={v}
                       onClick={() => setDraft({ ...draft, body: `${draft.body}{{${v}}}` })}
-                      className="rounded-lg bg-canvas px-2 py-1 font-mono text-[11px] text-brand-700 hover:bg-brand-50"
+                      className="rounded-lg bg-canvas px-2 py-1 font-mono text-[11px] text-brand-700 dark:text-brand-400 hover:bg-brand-50"
                     >
                       {"{{" + v + "}}"}
                     </button>
@@ -184,7 +184,7 @@ export function TemplatesView({ initial }: { initial: CommunicationTemplateEntry
           <Card key={t.id} className="card-pad">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2.5">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:text-brand-400">
                   <Mail className="h-4 w-4" />
                 </span>
                 <div>
@@ -207,7 +207,7 @@ export function TemplatesView({ initial }: { initial: CommunicationTemplateEntry
                 </button>
                 <button
                   onClick={() => remove(t.id)}
-                  className="rounded-lg p-1.5 text-ink-faint hover:bg-red-50 hover:text-red-500"
+                  className="rounded-lg p-1.5 text-ink-faint hover:bg-red-50 dark:hover:bg-red-500/20 hover:text-red-500"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>

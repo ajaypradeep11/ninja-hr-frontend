@@ -85,7 +85,7 @@ export default function OnboardingPage() {
         {/* Agentic summary + attention */}
         <div className="space-y-5 lg:col-span-4">
           <Card className="card-pad">
-            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:text-brand-400">
               <Sparkles className="h-5 w-5" />
             </span>
             <h3 className="mt-4 text-base font-bold text-ink">How the agent works</h3>
@@ -94,7 +94,7 @@ export default function OnboardingPage() {
               personal inbox and tracks completion in real time.
             </p>
             <div className="mt-4 flex items-start gap-2.5 text-sm text-ink-soft">
-              <Mail className="mt-0.5 h-4 w-4 shrink-0 text-brand-500" />
+              <Mail className="mt-0.5 h-4 w-4 shrink-0 text-brand-500 dark:text-brand-400" />
               <span>Forms sent for completion</span>
             </div>
             <div className="mt-2 flex flex-wrap gap-1.5">
@@ -118,7 +118,7 @@ export default function OnboardingPage() {
                     href={`/admin/onboarding/${c.id}`}
                     className="flex items-center gap-3 rounded-xl bg-canvas px-3 py-2.5 transition hover:bg-line/50"
                   >
-                    <ShieldCheck className="h-4 w-4 text-brand-500" />
+                    <ShieldCheck className="h-4 w-4 text-brand-500 dark:text-brand-400" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-ink">{c.name}</p>
                       <p className="truncate text-xs text-ink-muted">

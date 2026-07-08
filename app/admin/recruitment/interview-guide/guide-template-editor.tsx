@@ -171,15 +171,15 @@ export function GuideTemplateEditor({ initial }: { initial: GuideSection[] }) {
                     className={cn(
                       "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
                       totalWeight === 100
-                        ? "bg-emerald-50 text-emerald-700"
-                        : "bg-amber-50 text-amber-700",
+                        ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                        : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300",
                     )}
                     title="Section weights should add up to 100"
                   >
                     <Scale className="h-3 w-3" /> {totalWeight}/100
                   </span>
                 )}
-                <NotebookPen className="h-4 w-4 text-brand-500" />
+                <NotebookPen className="h-4 w-4 text-brand-500 dark:text-brand-400" />
               </div>
             }
           />
@@ -254,13 +254,13 @@ export function GuideTemplateEditor({ initial }: { initial: GuideSection[] }) {
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <button
               onClick={add}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-white px-3 py-2 text-xs font-semibold text-ink-soft transition hover:bg-canvas"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-card px-3 py-2 text-xs font-semibold text-ink-soft transition hover:bg-canvas"
             >
               <Plus className="h-3.5 w-3.5" /> Add section
             </button>
             <button
               onClick={resetToStandard}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-white px-3 py-2 text-xs font-semibold text-ink-soft transition hover:bg-canvas"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-card px-3 py-2 text-xs font-semibold text-ink-soft transition hover:bg-canvas"
             >
               <RotateCcw className="h-3.5 w-3.5" /> Reset to standard
             </button>
@@ -274,13 +274,13 @@ export function GuideTemplateEditor({ initial }: { initial: GuideSection[] }) {
             </button>
           </div>
           {savedAt && (
-            <p className="mt-2 rounded-lg bg-emerald-50 px-3 py-1.5 text-[11px] text-emerald-700">
+            <p className="mt-2 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 text-[11px] text-emerald-700 dark:text-emerald-300">
               <CheckCircle2 className="mr-1 inline h-3 w-3" />
               Saved — every requisition created from now on starts with this guide.
             </p>
           )}
           {error && (
-            <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">{error}</p>
+            <p className="mt-2 rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-xs text-red-600 dark:text-red-300">{error}</p>
           )}
         </Card>
 
@@ -288,7 +288,7 @@ export function GuideTemplateEditor({ initial }: { initial: GuideSection[] }) {
         <Card className="card-pad">
           <CardHeader
             title="Import an existing interview"
-            action={<FileUp className="h-4 w-4 text-brand-500" />}
+            action={<FileUp className="h-4 w-4 text-brand-500 dark:text-brand-400" />}
           />
           <p className="mt-1 text-xs text-ink-muted">
             Already have an interview doc? Upload it (.txt / .md) or paste it below — headings
@@ -300,7 +300,7 @@ export function GuideTemplateEditor({ initial }: { initial: GuideSection[] }) {
             <button
               disabled={busy !== null}
               onClick={() => fileRef.current?.click()}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-white px-3 py-2 text-xs font-semibold text-ink-soft transition hover:bg-canvas disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-card px-3 py-2 text-xs font-semibold text-ink-soft transition hover:bg-canvas disabled:opacity-50"
             >
               <FileUp className="h-3.5 w-3.5" /> Upload file
             </button>
@@ -316,12 +316,12 @@ export function GuideTemplateEditor({ initial }: { initial: GuideSection[] }) {
           <button
             disabled={busy !== null || !importText.trim()}
             onClick={() => runImport(importText)}
-            className="mt-2 inline-flex items-center gap-1.5 rounded-xl bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-700 transition hover:bg-brand-100 disabled:opacity-50"
+            className="mt-2 inline-flex items-center gap-1.5 rounded-xl bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-700 dark:text-brand-400 transition hover:bg-brand-100 disabled:opacity-50"
           >
             <Sparkles className="h-3.5 w-3.5" /> {busy === "import" ? "Importing…" : "Import into editor"}
           </button>
           {importNote && (
-            <p className="mt-2 rounded-lg bg-sky-50 px-3 py-2 text-[11px] text-sky-700">{importNote}</p>
+            <p className="mt-2 rounded-lg bg-sky-50 dark:bg-sky-500/10 px-3 py-2 text-[11px] text-sky-700 dark:text-sky-300">{importNote}</p>
           )}
         </Card>
       </div>
@@ -331,7 +331,7 @@ export function GuideTemplateEditor({ initial }: { initial: GuideSection[] }) {
         <Card className="card-pad">
           <CardHeader
             title="Interviewer preview"
-            action={<Eye className="h-4 w-4 text-brand-500" />}
+            action={<Eye className="h-4 w-4 text-brand-500 dark:text-brand-400" />}
           />
           <p className="mt-1 text-xs text-ink-muted">
             Live preview of what every panel member sees in their Interview Guide.
@@ -352,7 +352,7 @@ export function GuideTemplateEditor({ initial }: { initial: GuideSection[] }) {
                       {[1, 2, 3, 4, 5].map((n) => (
                         <span
                           key={n}
-                          className="flex h-6 w-6 items-center justify-center rounded-lg border border-line bg-white text-[10px] font-bold text-ink-faint"
+                          className="flex h-6 w-6 items-center justify-center rounded-lg border border-line bg-card text-[10px] font-bold text-ink-faint"
                         >
                           {n}
                         </span>

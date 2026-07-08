@@ -17,8 +17,8 @@ export interface SwitcherUser {
 }
 
 const roleTone: Record<SwitcherUser["roleCode"], string> = {
-  HR_ADMIN: "bg-brand-50 text-brand-700",
-  MANAGER: "bg-violet-50 text-violet-700",
+  HR_ADMIN: "bg-brand-50 text-brand-700 dark:text-brand-400",
+  MANAGER: "bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-300",
   EMPLOYEE: "bg-canvas text-ink-muted",
 };
 
@@ -70,7 +70,7 @@ export function UserSwitcher({ users, current }: { users: SwitcherUser[]; curren
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-2xl border border-line bg-white p-2 shadow-pop">
+        <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-2xl border border-line bg-card p-2 shadow-pop">
           <p className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-ink-faint">
             <UserRound className="h-3 w-3" /> Sign in as (demo)
           </p>

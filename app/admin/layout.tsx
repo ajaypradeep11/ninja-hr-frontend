@@ -14,7 +14,7 @@ export default async function AdminLayout({
   if (actor.roleCode !== "HR_ADMIN") redirect("/employee");
 
   return (
-    <div className="min-h-screen bg-canvas">
+    <div className="min-h-screen bg-background">
       <Sidebar
         variant="admin"
         consoleLabel={BRAND.adminConsoleLabel}

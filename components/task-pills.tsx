@@ -5,8 +5,8 @@ import { cn } from "@/lib/utils";
 // solid green = Completed, amber = In-Progress, subdued gray = Pending.
 const STATUS_PILL: Record<string, string> = {
   Completed: "bg-emerald-500 text-white",
-  "In-Progress": "bg-amber-100 text-amber-700",
-  Pending: "bg-slate-100 text-slate-500",
+  "In-Progress": "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300",
+  Pending: "bg-slate-100 dark:bg-slate-500/20 text-slate-500 dark:text-slate-400",
 };
 
 export function TaskStatusPill({ status }: { status: string }) {
@@ -14,7 +14,7 @@ export function TaskStatusPill({ status }: { status: string }) {
     <span
       className={cn(
         "inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
-        STATUS_PILL[status] ?? "bg-slate-100 text-slate-500",
+        STATUS_PILL[status] ?? "bg-slate-100 dark:bg-slate-500/20 text-slate-500 dark:text-slate-400",
       )}
     >
       {status}

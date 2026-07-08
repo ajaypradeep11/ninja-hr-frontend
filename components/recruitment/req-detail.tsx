@@ -129,7 +129,7 @@ export function ReqDetail({
           {canEdit && (
             <Link
               href={`${basePath}/${req.id}/edit`}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-white px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:bg-canvas"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-card px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:bg-canvas"
             >
               <Pencil className="h-3.5 w-3.5" /> Edit
             </Link>
@@ -145,7 +145,7 @@ export function ReqDetail({
             <React.Fragment key={s}>
               <div className="flex flex-col items-center">
                 {i <= stageIdx ? (
-                  <CheckCircle2 className="h-5 w-5 text-brand-500" />
+                  <CheckCircle2 className="h-5 w-5 text-brand-500 dark:text-brand-400" />
                 ) : (
                   <Circle className="h-5 w-5 text-line" />
                 )}
@@ -162,14 +162,14 @@ export function ReqDetail({
       </Card>
 
       {error && (
-        <div className="flex items-start gap-2 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">
+        <div className="flex items-start gap-2 rounded-xl bg-red-50 dark:bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-300">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {req.status === "Draft" && req.rejectionFeedback && (
-        <div className="flex items-start gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-700">
+        <div className="flex items-start gap-2 rounded-xl bg-amber-50 dark:bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
           <Info className="mt-0.5 h-4 w-4 shrink-0" />
           <span>
             <b>Returned with feedback:</b> {req.rejectionFeedback}
@@ -276,26 +276,26 @@ export function ReqDetail({
         <Card className="card-pad border-brand-200">
           <CardHeader
             title={req.status === "Published" ? "Published posting" : "Publish (HR)"}
-            action={<ShieldCheck className="h-4 w-4 text-brand-500" />}
+            action={<ShieldCheck className="h-4 w-4 text-brand-500 dark:text-brand-400" />}
           />
           {req.status === "Published" ? (
             <div className="mt-3 space-y-2 text-sm">
               <p className="flex items-center gap-2 text-ink-soft">
-                <Globe className="h-4 w-4 text-brand-500" />
+                <Globe className="h-4 w-4 text-brand-500 dark:text-brand-400" />
                 Careers page:{" "}
-                <Link href={`/careers/${req.slug}`} className="font-semibold text-brand-600 hover:underline" target="_blank">
+                <Link href={`/careers/${req.slug}`} className="font-semibold text-brand-600 dark:text-brand-400 hover:underline" target="_blank">
                   /careers/{req.slug}
                 </Link>
               </p>
               {req.indeedUrl && (
                 <p className="flex items-center gap-2 text-ink-soft">
-                  <ExternalLink className="h-4 w-4 text-sky-500" /> Indeed:{" "}
+                  <ExternalLink className="h-4 w-4 text-sky-500 dark:text-sky-400" /> Indeed:{" "}
                   <span className="truncate font-mono text-xs text-ink-muted">{req.indeedUrl}</span>
                 </p>
               )}
               {req.linkedinUrl && (
                 <p className="flex items-center gap-2 text-ink-soft">
-                  <Linkedin className="h-4 w-4 text-sky-600" /> LinkedIn:{" "}
+                  <Linkedin className="h-4 w-4 text-sky-600 dark:text-sky-300" /> LinkedIn:{" "}
                   <span className="truncate font-mono text-xs text-ink-muted">{req.linkedinUrl}</span>
                 </p>
               )}
@@ -334,7 +334,7 @@ export function ReqDetail({
                       }
                     }}
                     disabled={generatingJd}
-                    className="mb-1.5 inline-flex items-center gap-1.5 rounded-lg bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700 hover:bg-brand-100 disabled:opacity-50"
+                    className="mb-1.5 inline-flex items-center gap-1.5 rounded-lg bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700 dark:text-brand-400 hover:bg-brand-100 disabled:opacity-50"
                   >
                     <Wand2 className="h-3.5 w-3.5" /> {generatingJd ? "Generating…" : "Generate with AI"}
                   </button>
@@ -343,7 +343,7 @@ export function ReqDetail({
                   value={jd}
                   onChange={(e) => setJd(e.target.value)}
                   rows={14}
-                  className="w-full rounded-xl border border-line bg-canvas/40 p-3 font-mono text-[12px] leading-relaxed text-ink-soft outline-none focus:border-brand-300 focus:bg-white"
+                  className="w-full rounded-xl border border-line bg-canvas/40 p-3 font-mono text-[12px] leading-relaxed text-ink-soft outline-none focus:border-brand-300 focus:bg-card"
                   placeholder="Paste or write the JD here…"
                 />
                 <div className="mt-2 space-y-1.5">
@@ -352,7 +352,7 @@ export function ReqDetail({
                       key={i}
                       className={cn(
                         "flex items-start gap-2 rounded-lg px-2.5 py-1.5 text-xs",
-                        iss.level === "error" ? "bg-red-50 text-red-600" : iss.level === "warning" ? "bg-amber-50 text-amber-700" : "bg-sky-50 text-sky-700",
+                        iss.level === "error" ? "bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-300" : iss.level === "warning" ? "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300" : "bg-sky-50 dark:bg-sky-500/10 text-sky-700 dark:text-sky-300",
                       )}
                     >
                       <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
@@ -360,7 +360,7 @@ export function ReqDetail({
                     </div>
                   ))}
                   {issues.length === 0 && jd && (
-                    <div className="flex items-center gap-2 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs text-emerald-700">
+                    <div className="flex items-center gap-2 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1.5 text-xs text-emerald-700 dark:text-emerald-300">
                       <CheckCircle2 className="h-3.5 w-3.5" /> No compliance issues for {req.province}.
                     </div>
                   )}
@@ -381,7 +381,7 @@ export function ReqDetail({
                             onChange={() =>
                               setQuestions((prev) => prev.map((x, j) => (j === i ? { ...x, required: !x.required } : x)))
                             }
-                            className="h-3.5 w-3.5 rounded border-line text-brand-500"
+                            className="h-3.5 w-3.5 rounded border-line text-brand-500 dark:text-brand-400"
                           />
                           Required
                         </label>
@@ -425,15 +425,15 @@ export function ReqDetail({
                   <div className="space-y-2">
                     <label className="flex items-center justify-between rounded-xl border border-line px-3 py-2.5 text-sm text-ink-soft">
                       <span className="flex items-center gap-2">
-                        <ExternalLink className="h-4 w-4 text-sky-500" /> Indeed (deep-link to posting)
+                        <ExternalLink className="h-4 w-4 text-sky-500 dark:text-sky-400" /> Indeed (deep-link to posting)
                       </span>
-                      <input type="checkbox" checked={indeed} onChange={(e) => setIndeed(e.target.checked)} className="h-4 w-4 rounded border-line text-brand-500" />
+                      <input type="checkbox" checked={indeed} onChange={(e) => setIndeed(e.target.checked)} className="h-4 w-4 rounded border-line text-brand-500 dark:text-brand-400" />
                     </label>
                     <label className="flex items-center justify-between rounded-xl border border-line px-3 py-2.5 text-sm text-ink-soft">
                       <span className="flex items-center gap-2">
-                        <Linkedin className="h-4 w-4 text-sky-600" /> LinkedIn (deep-link to posting)
+                        <Linkedin className="h-4 w-4 text-sky-600 dark:text-sky-300" /> LinkedIn (deep-link to posting)
                       </span>
-                      <input type="checkbox" checked={linkedin} onChange={(e) => setLinkedin(e.target.checked)} className="h-4 w-4 rounded border-line text-brand-500" />
+                      <input type="checkbox" checked={linkedin} onChange={(e) => setLinkedin(e.target.checked)} className="h-4 w-4 rounded border-line text-brand-500 dark:text-brand-400" />
                     </label>
                   </div>
                   <p className="mt-1.5 text-[11px] text-ink-faint">
@@ -444,15 +444,15 @@ export function ReqDetail({
 
                 <div>
                   <label className="field-label">Bias controls</label>
-                  <label className="flex items-center justify-between rounded-xl border border-violet-200 bg-violet-50/30 px-3 py-2.5 text-sm text-ink-soft">
+                  <label className="flex items-center justify-between rounded-xl border border-violet-200 dark:border-violet-500/30 bg-violet-50/30 dark:bg-violet-500/10 px-3 py-2.5 text-sm text-ink-soft">
                     <span className="flex items-center gap-2">
-                      <EyeOff className="h-4 w-4 text-violet-500" /> Blind Hiring for the panel
+                      <EyeOff className="h-4 w-4 text-violet-500 dark:text-violet-400" /> Blind Hiring for the panel
                     </span>
                     <input
                       type="checkbox"
                       checked={blind}
                       onChange={(e) => setBlind(e.target.checked)}
-                      className="h-4 w-4 rounded border-line text-violet-500"
+                      className="h-4 w-4 rounded border-line text-violet-500 dark:text-violet-400"
                     />
                   </label>
                   <p className="mt-1.5 text-[11px] text-ink-faint">
@@ -476,7 +476,7 @@ export function ReqDetail({
                         }),
                       )
                     }
-                    className="flex-1 rounded-xl border border-line bg-white px-3 py-2.5 text-sm font-semibold text-ink transition hover:bg-canvas disabled:opacity-50"
+                    className="flex-1 rounded-xl border border-line bg-card px-3 py-2.5 text-sm font-semibold text-ink transition hover:bg-canvas disabled:opacity-50"
                   >
                     Save details
                   </button>
@@ -500,7 +500,7 @@ export function ReqDetail({
                   </button>
                 </div>
                 {hasComplianceError && (
-                  <p className="text-center text-[11px] font-semibold text-red-500">
+                  <p className="text-center text-[11px] font-semibold text-red-500 dark:text-red-400">
                     {!req.salaryMin || !req.salaryMax
                       ? "Cannot publish: Bill 149 requires a posted salary range."
                       : "Resolve compliance errors before publishing."}
@@ -515,7 +515,7 @@ export function ReqDetail({
       {!isHr && req.status === "Approved" && (
         <Card className="card-pad">
           <p className="text-sm text-ink-muted">
-            <ShieldCheck className="mr-1.5 inline h-4 w-4 text-emerald-500" />
+            <ShieldCheck className="mr-1.5 inline h-4 w-4 text-emerald-500 dark:text-emerald-400" />
             All approvals received — HR is preparing the job description and posting details.
           </p>
         </Card>
@@ -575,7 +575,7 @@ function CostField({
         <button
           disabled={busy}
           onClick={save}
-          className="rounded-xl border border-line bg-white px-3 text-xs font-semibold text-ink hover:bg-canvas disabled:opacity-50"
+          className="rounded-xl border border-line bg-card px-3 text-xs font-semibold text-ink hover:bg-canvas disabled:opacity-50"
         >
           {busy ? "Saving…" : saved ? "Saved ✓" : "Save"}
         </button>
@@ -704,20 +704,20 @@ function CriteriaEditor({
           <Plus className="h-4 w-4" />
         </button>
       </div>
-      {error && <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">{error}</p>}
+      {error && <p className="mt-2 rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-xs text-red-600 dark:text-red-300">{error}</p>}
       <div className="mt-3 flex gap-2">
         <button
           disabled={busy}
           onClick={loadStandard}
           title="Replace these criteria with the company's current Standard Interview Guide"
-          className="rounded-xl border border-line bg-white px-3 py-2 text-xs font-semibold text-ink-soft transition hover:bg-canvas disabled:opacity-50"
+          className="rounded-xl border border-line bg-card px-3 py-2 text-xs font-semibold text-ink-soft transition hover:bg-canvas disabled:opacity-50"
         >
           Load standard guide
         </button>
         <button
           disabled={busy}
           onClick={save}
-          className="rounded-xl border border-line bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-canvas disabled:opacity-50"
+          className="rounded-xl border border-line bg-card px-4 py-2 text-sm font-semibold text-ink transition hover:bg-canvas disabled:opacity-50"
         >
           {busy ? "Saving…" : saved ? "Saved ✓" : "Save criteria"}
         </button>

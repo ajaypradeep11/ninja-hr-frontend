@@ -25,9 +25,9 @@ import { ontarioStatutoryHolidays } from "@/lib/holidays";
 import { computeLeaveBalances } from "@/lib/leave-balances";
 
 const balanceTone: Record<string, { bg: string; bar: "brand" | "sky" | "amber"; text: string }> = {
-  brand: { bg: "bg-brand-50", bar: "brand", text: "text-brand-700" },
-  sky: { bg: "bg-sky-50", bar: "sky", text: "text-sky-700" },
-  amber: { bg: "bg-amber-50", bar: "amber", text: "text-amber-700" },
+  brand: { bg: "bg-brand-50", bar: "brand", text: "text-brand-700 dark:text-brand-400" },
+  sky: { bg: "bg-sky-50 dark:bg-sky-500/10", bar: "sky", text: "text-sky-700 dark:text-sky-300" },
+  amber: { bg: "bg-amber-50 dark:bg-amber-500/10", bar: "amber", text: "text-amber-700 dark:text-amber-300" },
 };
 
 const LEAVE_TYPES = [
@@ -186,12 +186,12 @@ export default function LeaveView({ actorName, isManager, initialRequests }: Pro
       </div>
 
       {error && (
-        <p className="mb-4 rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-600">{error}</p>
+        <p className="mb-4 rounded-xl bg-red-50 dark:bg-red-500/10 px-3.5 py-2.5 text-sm text-red-600 dark:text-red-300">{error}</p>
       )}
 
       {/* Manager approval queue — leave requests route HERE, not to HR. */}
       {isManager && (
-        <Card className="card-pad mb-5 border-amber-200 bg-amber-50/30">
+        <Card className="card-pad mb-5 border-amber-200 dark:border-amber-500/30 bg-amber-50/30 dark:bg-amber-500/10">
           <CardHeader title={`Team requests awaiting your approval (${teamPending.length})`} />
           <div className="mt-3 space-y-2">
             {teamPending.length === 0 && (
@@ -200,7 +200,7 @@ export default function LeaveView({ actorName, isManager, initialRequests }: Pro
               </p>
             )}
             {teamPending.map((r) => (
-              <div key={r.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-amber-200 bg-white px-3.5 py-2.5">
+              <div key={r.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-amber-200 dark:border-amber-500/30 bg-card px-3.5 py-2.5">
                 <Avatar name={r.employee} size={30} />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-ink">{r.employee}</p>
@@ -211,13 +211,13 @@ export default function LeaveView({ actorName, isManager, initialRequests }: Pro
                 </div>
                 <button
                   onClick={() => mutate(() => setLeaveStatus(r.id, "Approved"))}
-                  className="inline-flex h-7 items-center gap-1 rounded-lg bg-emerald-50 px-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-100"
+                  className="inline-flex h-7 items-center gap-1 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 px-2 text-xs font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-500/20"
                 >
                   <Check className="h-3.5 w-3.5" /> Approve
                 </button>
                 <button
                   onClick={() => mutate(() => setLeaveStatus(r.id, "Denied"))}
-                  className="inline-flex h-7 items-center gap-1 rounded-lg bg-red-50 px-2 text-xs font-semibold text-red-600 hover:bg-red-100"
+                  className="inline-flex h-7 items-center gap-1 rounded-lg bg-red-50 dark:bg-red-500/10 px-2 text-xs font-semibold text-red-600 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-500/20"
                 >
                   <X className="h-3.5 w-3.5" /> Deny
                 </button>
@@ -249,7 +249,7 @@ export default function LeaveView({ actorName, isManager, initialRequests }: Pro
               {/* Pending indicator — how the balance is actually committed */}
               {hasPending && (
                 <p
-                  className="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700"
+                  className="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:text-amber-300"
                   title="Awaiting your manager's approval — not yet deducted from your balance"
                 >
                   <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
@@ -382,8 +382,8 @@ export default function LeaveView({ actorName, isManager, initialRequests }: Pro
                           className={cn(
                             "rounded-lg border px-2 py-2 text-xs font-semibold transition",
                             partial === o.v
-                              ? "border-brand-300 bg-brand-50 text-brand-700"
-                              : "border-line bg-white text-ink-muted hover:bg-canvas",
+                              ? "border-brand-300 bg-brand-50 text-brand-700 dark:text-brand-400"
+                              : "border-line bg-card text-ink-muted hover:bg-canvas",
                           )}
                         >
                           {o.label}
@@ -435,7 +435,7 @@ export default function LeaveView({ actorName, isManager, initialRequests }: Pro
               </div>
             </div>
             {submitError && (
-              <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-xs text-red-600">{submitError}</p>
+              <p className="mt-3 rounded-xl bg-red-50 dark:bg-red-500/10 px-3 py-2 text-xs text-red-600 dark:text-red-300">{submitError}</p>
             )}
             <div className="mt-6 flex justify-end gap-2">
               <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
@@ -485,7 +485,7 @@ function RequestMenu({ onEdit, onCancel }: { onEdit: () => void; onCancel: () =>
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-20 mt-1 w-36 overflow-hidden rounded-xl border border-line bg-white py-1 shadow-lg"
+          className="absolute right-0 z-20 mt-1 w-36 overflow-hidden rounded-xl border border-line bg-card py-1 shadow-lg"
         >
           <button
             role="menuitem"
@@ -503,7 +503,7 @@ function RequestMenu({ onEdit, onCancel }: { onEdit: () => void; onCancel: () =>
               setOpen(false);
               onCancel();
             }}
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/20"
           >
             <Trash2 className="h-3.5 w-3.5" /> Cancel request
           </button>
@@ -616,7 +616,7 @@ function LeaveCalendar({
                   ? "bg-amber-400 font-bold text-white"
                   : dense
                     ? "text-ink-muted hover:bg-brand-50"
-                    : "bg-white text-ink-soft hover:bg-brand-50",
+                    : "bg-card text-ink-soft hover:bg-brand-50",
         )}
         style={{ height: dense ? "18px" : "56px" }}
       >
@@ -666,7 +666,7 @@ function LeaveCalendar({
         action={
           <div className="flex items-center gap-2">
             {/* Year / Month view toggle */}
-            <div className="inline-flex rounded-lg border border-line bg-white p-0.5">
+            <div className="inline-flex rounded-lg border border-line bg-card p-0.5">
               {(["year", "month"] as const).map((m) => (
                 <button
                   key={m}
@@ -742,7 +742,7 @@ function LeaveCalendar({
                   setMonth(m);
                   setMode("month");
                 }}
-                className="mb-1.5 w-full text-center text-[11px] font-bold uppercase tracking-wide text-ink-soft hover:text-brand-600"
+                className="mb-1.5 w-full text-center text-[11px] font-bold uppercase tracking-wide text-ink-soft hover:text-brand-600 dark:hover:text-brand-300"
                 title={`Open ${MONTHS_FULL[m]} in month view`}
               >
                 {label}
@@ -763,7 +763,7 @@ function LeaveCalendar({
         <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1">
           {ontarioStatutoryHolidays(year).map((h) => (
             <span key={h.date} className="text-[11px] text-ink-muted">
-              <span className="font-semibold text-violet-600">{formatDate(h.date, { year: undefined })}</span>{" "}
+              <span className="font-semibold text-violet-600 dark:text-violet-300">{formatDate(h.date, { year: undefined })}</span>{" "}
               {h.name}
             </span>
           ))}

@@ -48,7 +48,7 @@ function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
     >
       <span
         className={cn(
-          "absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform",
+          "absolute top-0.5 h-4 w-4 rounded-full bg-card shadow transition-transform",
           on ? "translate-x-4" : "translate-x-0.5",
         )}
       />
@@ -101,7 +101,7 @@ export function SettingsView({ initial }: { initial: CompanySettings }) {
         action={
           <div className="flex items-center gap-3">
             {saved && (
-              <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600">
+              <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-300">
                 <Check className="h-3.5 w-3.5" /> Saved
               </span>
             )}
@@ -115,7 +115,7 @@ export function SettingsView({ initial }: { initial: CompanySettings }) {
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {/* Company profile */}
         <Card className="card-pad">
-          <CardHeader title={<span className="flex items-center gap-2"><Building2 className="h-4 w-4 text-brand-600" /> Company Profile</span>} />
+          <CardHeader title={<span className="flex items-center gap-2"><Building2 className="h-4 w-4 text-brand-600 dark:text-brand-400" /> Company Profile</span>} />
           <div className="mt-4 space-y-4">
             <div>
               <label className="field-label">Legal entity name</label>
@@ -143,7 +143,7 @@ export function SettingsView({ initial }: { initial: CompanySettings }) {
 
         {/* Provinces of operation */}
         <Card className="card-pad">
-          <CardHeader title={<span className="flex items-center gap-2"><MapPin className="h-4 w-4 text-brand-600" /> Provinces of Operation</span>} />
+          <CardHeader title={<span className="flex items-center gap-2"><MapPin className="h-4 w-4 text-brand-600 dark:text-brand-400" /> Provinces of Operation</span>} />
           <p className="mt-1 text-xs text-ink-muted">
             Determines which ESA rules, training, and policies the engine enforces.
           </p>
@@ -156,7 +156,7 @@ export function SettingsView({ initial }: { initial: CompanySettings }) {
                   onClick={() => toggleProvince(p.code)}
                   className={cn(
                     "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
-                    on ? "border-brand-300 bg-brand-50 text-brand-700" : "border-line text-ink-muted hover:bg-canvas",
+                    on ? "border-brand-300 bg-brand-50 text-brand-700 dark:text-brand-400" : "border-line text-ink-muted hover:bg-canvas",
                   )}
                 >
                   {on && <Check className="h-3 w-3" />}
@@ -169,7 +169,7 @@ export function SettingsView({ initial }: { initial: CompanySettings }) {
 
         {/* RBAC */}
         <Card className="card-pad lg:col-span-2">
-          <CardHeader title={<span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-brand-600" /> Roles &amp; Permissions</span>} />
+          <CardHeader title={<span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-brand-600 dark:text-brand-400" /> Roles &amp; Permissions</span>} />
           <div className="mt-4 overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -187,7 +187,7 @@ export function SettingsView({ initial }: { initial: CompanySettings }) {
                     {roles.map((r) => (
                       <td key={r} className="py-2.5 text-center">
                         {rbac[m]?.includes(r) ? (
-                          <CircleCheckBig className="mx-auto h-4 w-4 text-emerald-500" />
+                          <CircleCheckBig className="mx-auto h-4 w-4 text-emerald-500 dark:text-emerald-400" />
                         ) : (
                           <span className="text-ink-faint">—</span>
                         )}
@@ -206,7 +206,7 @@ export function SettingsView({ initial }: { initial: CompanySettings }) {
 
         {/* Compliance feed */}
         <Card className="card-pad">
-          <CardHeader title={<span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-brand-600" /> Compliance Feed</span>} />
+          <CardHeader title={<span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-brand-600 dark:text-brand-400" /> Compliance Feed</span>} />
           <div className="mt-4 flex items-center justify-between rounded-2xl bg-canvas p-4">
             <div>
               <p className="text-sm font-semibold text-ink">Compliance Works</p>
@@ -227,7 +227,7 @@ export function SettingsView({ initial }: { initial: CompanySettings }) {
 
         {/* Branding */}
         <Card className="card-pad">
-          <CardHeader title={<span className="flex items-center gap-2"><Palette className="h-4 w-4 text-brand-600" /> Branding</span>} />
+          <CardHeader title={<span className="flex items-center gap-2"><Palette className="h-4 w-4 text-brand-600 dark:text-brand-400" /> Branding</span>} />
           <div className="mt-4">
             <label className="field-label">Product name</label>
             <input
@@ -247,7 +247,7 @@ export function SettingsView({ initial }: { initial: CompanySettings }) {
 
         {/* Integrations */}
         <Card className="card-pad lg:col-span-2">
-          <CardHeader title={<span className="flex items-center gap-2"><Plug className="h-4 w-4 text-brand-600" /> Integrations</span>} />
+          <CardHeader title={<span className="flex items-center gap-2"><Plug className="h-4 w-4 text-brand-600 dark:text-brand-400" /> Integrations</span>} />
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {INTEGRATION_FIELDS.map((it) => (
               <div key={it.key} className="flex items-center justify-between rounded-2xl border border-line p-3.5">

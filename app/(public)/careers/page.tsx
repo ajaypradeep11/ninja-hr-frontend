@@ -18,7 +18,7 @@ export default async function CareersPage() {
 
       <div className="mt-8 space-y-3">
         {jobs.length === 0 && (
-          <p className="rounded-2xl border border-line bg-white p-8 text-center text-sm text-ink-muted">
+          <p className="rounded-2xl border border-line bg-card p-8 text-center text-sm text-ink-muted">
             No open positions right now — check back soon!
           </p>
         )}
@@ -26,7 +26,7 @@ export default async function CareersPage() {
           <Link
             key={j.slug}
             href={`/careers/${j.slug}`}
-            className="block rounded-2xl border border-line bg-white p-5 transition hover:border-brand-300 hover:shadow-card-lg"
+            className="block rounded-2xl border border-line bg-card p-5 transition hover:border-brand-300 hover:shadow-card-lg"
           >
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -40,7 +40,7 @@ export default async function CareersPage() {
                   </span>
                 </p>
               </div>
-              <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700">
+              <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700 dark:text-brand-400">
                 {formatCAD(j.salaryMin, { maximumFractionDigits: 0 })} –{" "}
                 {formatCAD(j.salaryMax, { maximumFractionDigits: 0 })}
               </span>

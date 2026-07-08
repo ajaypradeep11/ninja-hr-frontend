@@ -40,7 +40,7 @@ export function ManagerRequisitionsList({ requisitions }: { requisitions: Requis
             <div className="min-w-0">
               <Link
                 href={`/employee/recruitment/${r.id}`}
-                className="block truncate text-sm font-bold text-ink hover:text-brand-600"
+                className="block truncate text-sm font-bold text-ink hover:text-brand-600 dark:hover:text-brand-300"
               >
                 {r.title}
               </Link>
@@ -52,12 +52,12 @@ export function ManagerRequisitionsList({ requisitions }: { requisitions: Requis
           {/* The viewer's relationship to this requisition */}
           <div className="mt-2 flex flex-wrap gap-1">
             {r.viewerIsHiringManager && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-semibold text-brand-700">
+              <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-semibold text-brand-700 dark:text-brand-400">
                 <Crown className="h-3 w-3" /> Hiring Manager
               </span>
             )}
             {r.viewerIsPanelMember ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-700">
+              <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 dark:bg-violet-500/10 px-2 py-0.5 text-[10px] font-semibold text-violet-700 dark:text-violet-300">
                 <ClipboardCheck className="h-3 w-3" /> Panel Member
               </span>
             ) : (
@@ -68,7 +68,7 @@ export function ManagerRequisitionsList({ requisitions }: { requisitions: Requis
               )
             )}
             {r.blindHiring && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-700">
+              <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 dark:bg-violet-500/10 px-2 py-0.5 text-[10px] font-semibold text-violet-700 dark:text-violet-300">
                 <EyeOff className="h-3 w-3" /> Blind
               </span>
             )}
@@ -99,7 +99,7 @@ export function ManagerRequisitionsList({ requisitions }: { requisitions: Requis
             </Link>
             <Link
               href={`/employee/recruitment/${r.id}`}
-              className="flex-1 rounded-xl border border-line bg-white px-3 py-2 text-center text-xs font-semibold text-ink-soft transition hover:bg-canvas"
+              className="flex-1 rounded-xl border border-line bg-card px-3 py-2 text-center text-xs font-semibold text-ink-soft transition hover:bg-canvas"
             >
               Details
             </Link>

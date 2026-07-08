@@ -51,7 +51,7 @@ export function CandidatesList({ candidates }: { candidates: RequisitionCandidat
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search by name or role…"
-              className="h-10 w-full rounded-xl border border-line bg-canvas pl-9 pr-3 text-sm outline-none focus:border-brand-300 focus:bg-white"
+              className="h-10 w-full rounded-xl border border-line bg-canvas pl-9 pr-3 text-sm outline-none focus:border-brand-300 focus:bg-card"
             />
           </div>
           <div className="flex flex-wrap gap-1.5">
@@ -88,7 +88,7 @@ export function CandidatesList({ candidates }: { candidates: RequisitionCandidat
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-ink">
                     {c.name}
-                    {c.withdrawn && <span className="ml-2 text-[11px] font-normal text-red-500">Withdrawn</span>}
+                    {c.withdrawn && <span className="ml-2 text-[11px] font-normal text-red-500 dark:text-red-400">Withdrawn</span>}
                   </p>
                   <p className="truncate text-xs text-ink-muted">
                     {c.role} · applied {formatDate(c.appliedDate)} · via {c.source}

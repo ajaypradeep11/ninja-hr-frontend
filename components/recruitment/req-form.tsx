@@ -257,7 +257,7 @@ export function ReqForm({
 
         {showJdBuilder && (
           <Card className="card-pad sm:p-6">
-            <CardHeader title="Job description (optional at draft)" action={<Wand2 className="h-4 w-4 text-brand-500" />} />
+            <CardHeader title="Job description (optional at draft)" action={<Wand2 className="h-4 w-4 text-brand-500 dark:text-brand-400" />} />
             <div className="mt-3 space-y-3">
               <textarea
                 value={reqs}
@@ -269,7 +269,7 @@ export function ReqForm({
               <button
                 onClick={runGenerate}
                 disabled={generating}
-                className="inline-flex items-center gap-2 rounded-xl bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-700 hover:bg-brand-100 disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-xl bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-700 dark:text-brand-400 hover:bg-brand-100 disabled:opacity-50"
               >
                 <Wand2 className="h-3.5 w-3.5" /> {generating ? "Generating…" : "Generate with AI"}
               </button>
@@ -279,7 +279,7 @@ export function ReqForm({
                     value={jd}
                     onChange={(e) => setJd(e.target.value)}
                     rows={10}
-                    className="w-full rounded-xl border border-line bg-canvas/40 p-3 font-mono text-[12px] leading-relaxed text-ink-soft outline-none focus:border-brand-300 focus:bg-white"
+                    className="w-full rounded-xl border border-line bg-canvas/40 p-3 font-mono text-[12px] leading-relaxed text-ink-soft outline-none focus:border-brand-300 focus:bg-card"
                   />
                   <InclusiveFlags flags={inclusiveFlags} />
                 </>
@@ -300,7 +300,7 @@ export function ReqForm({
       {/* Approvers + hiring team */}
       <div className="space-y-5">
         <Card className="card-pad sm:p-6">
-          <CardHeader title="Approvers" action={<Send className="h-4 w-4 text-brand-500" />} />
+          <CardHeader title="Approvers" action={<Send className="h-4 w-4 text-brand-500 dark:text-brand-400" />} />
           <p className="mt-1 text-xs text-ink-muted">
             {lockApprovers
               ? "Approvers are locked once the requisition has been submitted for approval."
@@ -329,7 +329,7 @@ export function ReqForm({
                       {p.title} · {p.department}
                     </span>
                   </span>
-                  {on && <CheckCircle2 className="h-4 w-4 text-brand-500" />}
+                  {on && <CheckCircle2 className="h-4 w-4 text-brand-500 dark:text-brand-400" />}
                 </button>
               );
             })}
@@ -337,7 +337,7 @@ export function ReqForm({
         </Card>
 
         <Card className="card-pad sm:p-6">
-          <CardHeader title="Hiring team" action={<Users className="h-4 w-4 text-brand-500" />} />
+          <CardHeader title="Hiring team" action={<Users className="h-4 w-4 text-brand-500 dark:text-brand-400" />} />
           <p className="mt-1 text-xs text-ink-muted">
             Team members can view candidate applications. Panel members also submit interview
             scorecards.
@@ -364,7 +364,7 @@ export function ReqForm({
                           {p.title} · {p.department}
                         </span>
                       </span>
-                      {on && <CheckCircle2 className="h-4 w-4 shrink-0 text-brand-500" />}
+                      {on && <CheckCircle2 className="h-4 w-4 shrink-0 text-brand-500 dark:text-brand-400" />}
                     </button>
                     {on && (
                       <label className="flex shrink-0 items-center gap-1.5 text-[11px] font-medium text-ink-soft">
@@ -372,7 +372,7 @@ export function ReqForm({
                           type="checkbox"
                           checked={entry?.panel ?? false}
                           onChange={() => togglePanel(p.employeeId)}
-                          className="h-3.5 w-3.5 rounded border-line text-brand-500"
+                          className="h-3.5 w-3.5 rounded border-line text-brand-500 dark:text-brand-400"
                         />
                         Interview panel
                       </label>
@@ -384,7 +384,7 @@ export function ReqForm({
         </Card>
 
         {error && (
-          <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-600">{error}</p>
+          <p className="rounded-xl bg-red-50 dark:bg-red-500/10 px-3.5 py-2.5 text-sm text-red-600 dark:text-red-300">{error}</p>
         )}
 
         {isEdit ? (
@@ -400,7 +400,7 @@ export function ReqForm({
             <button
               disabled={!valid || saving !== null}
               onClick={() => save(false)}
-              className="flex-1 rounded-xl border border-line bg-white px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex-1 rounded-xl border border-line bg-card px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-50"
             >
               {saving === "draft" ? "Saving…" : "Save as Draft"}
             </button>

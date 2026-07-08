@@ -3,14 +3,59 @@
 @tailwind utilities;
 
 :root {
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
-    Roboto, Helvetica, Arial, sans-serif;
+  --font-sans: var(--font-inter), "Inter", ui-sans-serif, system-ui,
+    -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  /* Semantic tokens (shadcn convention, HSL triplets) — light theme. */
+  --background: 220 20% 97%;
+  --foreground: 228 25% 14%;
+  --foreground-soft: 227 17% 27%;
+  --foreground-faint: 220 9% 65%;
+  --card: 0 0% 100%;
+  --card-foreground: 228 25% 14%;
+  --muted: 220 14% 95%;
+  --muted-foreground: 220 9% 46%;
+  --border: 225 19% 94%;
+  --input: 225 19% 94%;
+  --primary: 248 73% 63%;
+  --primary-foreground: 0 0% 100%;
+  --ring: 244 84% 81%;
+
+  /* Subtle end of the brand scale flips per theme (chip/hover backgrounds).
+     Saturated shades (300+) are static in tailwind.config. */
+  --brand-50: 246 87% 97%;
+  --brand-100: 245 87% 94%;
+  --brand-200: 244 86% 89%;
+
+  color-scheme: light;
+}
+
+.dark {
+  --background: 232 22% 7%;
+  --foreground: 228 30% 93%;
+  --foreground-soft: 228 15% 78%;
+  --foreground-faint: 228 8% 48%;
+  --card: 231 18% 11%;
+  --card-foreground: 228 30% 93%;
+  --muted: 230 16% 15%;
+  --muted-foreground: 227 10% 65%;
+  --border: 230 14% 18%;
+  --input: 230 14% 20%;
+  --primary: 247 75% 66%;
+  --primary-foreground: 0 0% 100%;
+  --ring: 247 55% 55%;
+
+  --brand-50: 248 34% 21%;
+  --brand-100: 248 34% 27%;
+  --brand-200: 248 32% 33%;
+
+  color-scheme: dark;
 }
 
 html,
 body {
-  background-color: #f6f7f9;
-  color: #1e2230;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -21,7 +66,7 @@ body {
 
 @layer components {
   .card {
-    @apply rounded-2xl border border-line bg-white shadow-card;
+    @apply rounded-2xl border border-line bg-card shadow-card;
   }
   .card-pad {
     @apply p-5;
@@ -30,13 +75,13 @@ body {
     @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-ink-muted transition-colors hover:bg-canvas hover:text-ink;
   }
   .nav-link-active {
-    @apply bg-brand-50 text-brand-700 hover:bg-brand-50 hover:text-brand-700;
+    @apply bg-brand-50 text-brand-700 hover:bg-brand-50 hover:text-brand-700 dark:text-brand-300 dark:hover:text-brand-300;
   }
   .field-label {
     @apply mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-ink-faint;
   }
   .field-input {
-    @apply w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition placeholder:text-ink-faint focus:border-brand-400 focus:ring-2 focus:ring-brand-100;
+    @apply w-full rounded-xl border border-line bg-card px-3.5 py-2.5 text-sm text-ink outline-none transition placeholder:text-ink-faint focus:border-brand-400 focus:ring-2 focus:ring-brand-100;
   }
 }
 
@@ -46,12 +91,12 @@ body {
   height: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #d8dbe2;
+  background: hsl(var(--foreground) / 0.16);
   border-radius: 999px;
   border: 3px solid transparent;
   background-clip: content-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #c2c6d0;
+  background: hsl(var(--foreground) / 0.28);
   background-clip: content-box;
 }

@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { BRAND } from "@/lib/brand";
 import { OnboardingProvider } from "@/components/onboarding-store";
+import { ThemeProvider } from "@/components/theme";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
   title: `${BRAND.name} · ${BRAND.tagline}`,
@@ -14,9 +18,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    // suppressHydrationWarning: next-themes stamps the theme class on <html>
+    // before hydration, which React would otherwise flag as a mismatch.
+    <html lang="en" suppressHydrationWarning className={inter.variable}>
       <body className="font-sans antialiased">
-        <OnboardingProvider>{children}</OnboardingProvider>
+        <ThemeProvider>
+          <OnboardingProvider>{children}</OnboardingProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

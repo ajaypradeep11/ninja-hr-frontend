@@ -20,7 +20,7 @@ export default async function ManagerRequisitionDetailPage({
     <div>
       <Link
         href="/employee/recruitment"
-        className="mb-3 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700"
+        className="mb-3 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300"
       >
         <ChevronLeft className="h-3.5 w-3.5" /> Back to Recruitment
       </Link>

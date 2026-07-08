@@ -34,3 +34,10 @@ yarn-error.log*
 !/lib/api/generated
 /lib/api/generated/*
 !/lib/api/generated/openapi.d.ts
+
+# playwright
+/test-results/
+/playwright-report/
+
+# Claude Code agent worktrees
+.claude/worktrees/

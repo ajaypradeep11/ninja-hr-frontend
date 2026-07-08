@@ -54,7 +54,7 @@ export default async function CareerPageAdmin() {
                     <Link
                       href={`/careers/${r.slug}`}
                       target="_blank"
-                      className="inline-flex items-center gap-1 rounded-lg bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700 hover:bg-brand-100"
+                      className="inline-flex items-center gap-1 rounded-lg bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700 dark:text-brand-400 hover:bg-brand-100"
                     >
                       View posting <ExternalLink className="h-3 w-3" />
                     </Link>
@@ -80,15 +80,15 @@ export default async function CareerPageAdmin() {
         </p>
         <div className="mt-3 flex flex-wrap gap-3 text-sm">
           <span className="inline-flex items-center gap-2 rounded-xl border border-line px-3 py-2 text-ink-soft">
-            <Globe className="h-4 w-4 text-brand-500" /> Careers site
+            <Globe className="h-4 w-4 text-brand-500 dark:text-brand-400" /> Careers site
             <Badge tone="green">Active</Badge>
           </span>
           <span className="inline-flex items-center gap-2 rounded-xl border border-line px-3 py-2 text-ink-soft">
-            <ExternalLink className="h-4 w-4 text-sky-500" /> Indeed
+            <ExternalLink className="h-4 w-4 text-sky-500 dark:text-sky-400" /> Indeed
             <span className="text-[11px] text-ink-faint">per posting</span>
           </span>
           <span className="inline-flex items-center gap-2 rounded-xl border border-line px-3 py-2 text-ink-soft">
-            <Linkedin className="h-4 w-4 text-sky-600" /> LinkedIn
+            <Linkedin className="h-4 w-4 text-sky-600 dark:text-sky-300" /> LinkedIn
             <span className="text-[11px] text-ink-faint">per posting</span>
           </span>
         </div>

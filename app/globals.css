@@ -17,15 +17,15 @@
   --muted-foreground: 220 9% 46%;
   --border: 225 19% 94%;
   --input: 225 19% 94%;
-  --primary: 248 73% 63%;
+  --primary: 203 90% 44%;
   --primary-foreground: 0 0% 100%;
-  --ring: 244 84% 81%;
+  --ring: 203 90% 70%;
 
   /* Subtle end of the brand scale flips per theme (chip/hover backgrounds).
      Saturated shades (300+) are static in tailwind.config. */
-  --brand-50: 246 87% 97%;
-  --brand-100: 245 87% 94%;
-  --brand-200: 244 86% 89%;
+  --brand-50: 204 100% 97%;
+  --brand-100: 204 94% 93%;
+  --brand-200: 202 92% 87%;
 
   color-scheme: light;
 }
@@ -41,13 +41,13 @@
   --muted-foreground: 227 10% 65%;
   --border: 230 14% 18%;
   --input: 230 14% 20%;
-  --primary: 247 75% 66%;
+  --primary: 203 90% 44%;
   --primary-foreground: 0 0% 100%;
-  --ring: 247 55% 55%;
+  --ring: 203 70% 45%;
 
-  --brand-50: 248 34% 21%;
-  --brand-100: 248 34% 27%;
-  --brand-200: 248 32% 33%;
+  --brand-50: 205 50% 17%;
+  --brand-100: 205 50% 23%;
+  --brand-200: 205 45% 30%;
 
   color-scheme: dark;
 }

@@ -45,7 +45,7 @@ export function initials(name: string) {
 /** Deterministic avatar background color from a string seed. */
 export function avatarColor(seed: string) {
   const palette = [
-    "#6d5ce7",
+    "#0b88d5",
     "#0ea5e9",
     "#10b981",
     "#f59e0b",

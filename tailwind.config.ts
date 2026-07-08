@@ -27,20 +27,20 @@ const config: Config = {
         },
         input: "hsl(var(--input) / <alpha-value>)",
         ring: "hsl(var(--ring) / <alpha-value>)",
-        // Brand palette (vivid indigo/violet). The subtle end (50–200) is
-        // var-backed so chip/hover backgrounds flip in dark mode; the
-        // saturated end stays static (buttons, gradients, focus borders).
+        // Brand palette (vivid blue, seeded on #0b88d5). The subtle end
+        // (50–200) is var-backed so chip/hover backgrounds flip in dark mode;
+        // the saturated end stays static (buttons, gradients, focus borders).
         brand: {
           50: "hsl(var(--brand-50) / <alpha-value>)",
           100: "hsl(var(--brand-100) / <alpha-value>)",
           200: "hsl(var(--brand-200) / <alpha-value>)",
-          300: "#aaa4f7",
-          400: "#8b7ff1",
-          500: "#6d5ce7", // primary buttons / active nav
-          600: "#5b46d6",
-          700: "#4d39b8",
-          800: "#402f96",
-          900: "#362a78",
+          300: "#6cc4f8",
+          400: "#2ea8ef",
+          500: "#0b88d5", // primary buttons / active nav
+          600: "#0973b6",
+          700: "#085d93",
+          800: "#0a4e78",
+          900: "#0d415f",
         },
         // Legacy names kept as aliases of the semantic tokens so existing
         // classes (text-ink, bg-canvas, border-line) theme automatically.

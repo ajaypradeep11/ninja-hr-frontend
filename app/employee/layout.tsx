@@ -13,6 +13,9 @@ export default async function EmployeeLayout({
   const [actor, users] = await Promise.all([getActor(), getUsers()]);
   const isHr = actor.roleCode === "HR_ADMIN";
   const isManager = actor.roleCode === "MANAGER";
+  // Gate the impersonation switcher on the *real* signed-in user, not the
+  // (possibly impersonated) actor — only HR admins may switch identities.
+  const realIsAdmin = users.find((u) => u.id === actor.realUserId)?.roleCode === "HR_ADMIN";
   // Show "My Interviews" to anyone staffed on a hiring team (incl. plain employees).
   const assigned = await getAssignedCandidates().catch(() => []);
   const showInterviews = assigned.length > 0;
@@ -50,6 +53,7 @@ export default async function EmployeeLayout({
           switchLabel={isHr ? "View as Admin" : undefined}
           users={users}
           actor={actor}
+          realIsAdmin={realIsAdmin}
         />
         <main className="mx-auto max-w-[1500px] px-6 py-7">{children}</main>
       </div>

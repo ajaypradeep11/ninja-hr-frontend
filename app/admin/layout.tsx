@@ -12,6 +12,9 @@ export default async function AdminLayout({
   const [actor, users] = await Promise.all([getActor(), getUsers()]);
   // The admin console is HR-only; managers and employees use /employee.
   if (actor.roleCode !== "HR_ADMIN") redirect("/employee");
+  // Gate the impersonation switcher on the *real* signed-in user, not the
+  // (possibly impersonated) actor — only HR admins may switch identities.
+  const realIsAdmin = users.find((u) => u.id === actor.realUserId)?.roleCode === "HR_ADMIN";
 
   return (
     <div className="min-h-screen bg-background">
@@ -29,6 +32,7 @@ export default async function AdminLayout({
           switchLabel="View as Employee"
           users={users}
           actor={actor}
+          realIsAdmin={realIsAdmin}
         />
         <main className="mx-auto max-w-[1500px] px-6 py-7">{children}</main>
       </div>

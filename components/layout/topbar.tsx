@@ -2,12 +2,62 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Search, Bell, HelpCircle, Sparkles, ArrowLeftRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Search, Bell, HelpCircle, Sparkles, ArrowLeftRight, LogOut, UserX } from "lucide-react";
 import { Avatar } from "@/components/ui";
 import { ThemeToggle } from "@/components/theme";
 import { AgentDrawer } from "./agent-drawer";
 import { currentUser } from "@/lib/data";
+import { clearActor } from "@/app/actions/identity";
+import { signOutSession } from "@/app/actions/auth";
 import { UserSwitcher, type SwitcherUser } from "./user-switcher";
+import { cn } from "@/lib/utils";
+
+/** Avatar wrapped in a small dropdown — currently just houses "Sign out". */
+function AvatarMenu({ name }: { name: string }) {
+  const [open, setOpen] = React.useState(false);
+  const [busy, setBusy] = React.useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
+
+  async function signOut() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await signOutSession();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div ref={ref} className="relative">
+      <button onClick={() => setOpen((o) => !o)} className="block rounded-full" title={name}>
+        <Avatar name={name} size={32} />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full z-50 mt-2 w-44 rounded-2xl border border-line bg-card p-2 shadow-pop">
+          <button
+            onClick={signOut}
+            disabled={busy}
+            className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-sm font-medium text-ink transition-colors hover:bg-canvas disabled:opacity-50"
+          >
+            <LogOut className="h-3.5 w-3.5 text-ink-faint" />
+            Sign out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function Topbar({
   searchPlaceholder,
@@ -15,14 +65,32 @@ export function Topbar({
   switchLabel,
   users,
   actor,
+  realIsAdmin,
 }: {
   searchPlaceholder: string;
   switchHref?: string;
   switchLabel?: string;
   users?: SwitcherUser[];
   actor?: SwitcherUser;
+  /** Whether the *real* signed-in user (ignoring impersonation) is HR_ADMIN — gates the switcher. */
+  realIsAdmin?: boolean;
 }) {
+  const router = useRouter();
   const [agentOpen, setAgentOpen] = React.useState(false);
+  const [stopping, setStopping] = React.useState(false);
+  const impersonating = !!actor && actor.realUserId != null && actor.realUserId !== actor.id;
+
+  async function stopImpersonating() {
+    if (stopping) return;
+    setStopping(true);
+    try {
+      await clearActor();
+      router.push("/admin");
+      router.refresh();
+    } finally {
+      setStopping(false);
+    }
+  }
   // Question handed in from elsewhere (e.g. the dashboard quick-ask input) —
   // the nonce lets the same question be re-asked and still retrigger.
   const [ask, setAsk] = React.useState<{ q: string; nonce: number } | null>(null);
@@ -91,11 +159,25 @@ export function Topbar({
           </button>
 
           <div className="ml-1 flex items-center gap-2">
-            {users && actor ? (
-              <UserSwitcher users={users} current={actor} />
-            ) : (
-              <Avatar name={currentUser.name} size={32} />
+            {impersonating && (
+              <button
+                onClick={stopImpersonating}
+                disabled={stopping}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-50 dark:bg-amber-500/10 dark:text-amber-300 dark:hover:bg-amber-500/20",
+                )}
+                title="Return to your own account"
+              >
+                <UserX className="h-3.5 w-3.5" />
+                Viewing as {actor?.name} — Stop
+              </button>
             )}
+
+            {users && actor && realIsAdmin ? (
+              <UserSwitcher users={users} current={actor} />
+            ) : null}
+
+            {actor ? <AvatarMenu name={actor.name} /> : <Avatar name={currentUser.name} size={32} />}
           </div>
         </div>
       </header>

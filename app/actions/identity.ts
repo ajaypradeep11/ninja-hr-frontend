@@ -19,3 +19,9 @@ export async function setActor(userId: string): Promise<void> {
   });
   revalidatePath("/", "layout");
 }
+
+/** Stop impersonating — clears the `hr-actor-id` cookie and returns to the real signed-in user. */
+export async function clearActor(): Promise<void> {
+  (await cookies()).delete(ACTOR_COOKIE);
+  revalidatePath("/", "layout");
+}

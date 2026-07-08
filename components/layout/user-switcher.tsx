@@ -14,6 +14,7 @@ export interface SwitcherUser {
   department: string;
   role: string;
   roleCode: "HR_ADMIN" | "MANAGER" | "EMPLOYEE";
+  realUserId: string | null;
 }
 
 const roleTone: Record<SwitcherUser["roleCode"], string> = {

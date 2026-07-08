@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { apiClient } from "@/lib/api/client";
+import { authedApi } from "@/lib/api/client";
 import { ACTOR_COOKIE } from "@/lib/actor";
 import type {
   CandidateDetail,
@@ -20,7 +20,7 @@ import type {
 /** API client that forwards the switched user so the backend enforces roles. */
 async function client() {
   const store = await cookies();
-  return apiClient("admin", store.get(ACTOR_COOKIE)?.value);
+  return authedApi("admin", store.get(ACTOR_COOKIE)?.value);
 }
 
 async function unwrap<T>(

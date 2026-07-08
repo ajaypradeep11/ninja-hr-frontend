@@ -1,5 +1,5 @@
 import "server-only";
-import { apiClient } from "@/lib/api/client";
+import { authedApi } from "@/lib/api/client";
 import type {
   Employee,
   LeaveRequest,
@@ -14,7 +14,7 @@ import type {
   SalaryBenchmark,
 } from "@/lib/data";
 
-const api = () => apiClient("admin");
+const api = () => authedApi("admin");
 
 /**
  * Unwraps an openapi-fetch result, throwing on HTTP errors instead of
@@ -35,12 +35,12 @@ async function unwrap<T>(
 /* ------------------------------- Employees ------------------------------- */
 
 export async function getEmployees(): Promise<Employee[]> {
-  return unwrap<Employee[]>(api().GET("/api/v1/people/employees"), []);
+  return unwrap<Employee[]>((await api()).GET("/api/v1/people/employees"), []);
 }
 
 export async function getEmployeeByName(name: string): Promise<Employee | null> {
   return unwrap<Employee | null>(
-    api().GET("/api/v1/people/employees/by-name/{name}", { params: { path: { name } } }),
+    (await api()).GET("/api/v1/people/employees/by-name/{name}", { params: { path: { name } } }),
     null,
   );
 }
@@ -48,14 +48,14 @@ export async function getEmployeeByName(name: string): Promise<Employee | null> 
 /* -------------------------------- Leave ---------------------------------- */
 
 export async function getLeaveRequests(): Promise<LeaveRequest[]> {
-  return unwrap<LeaveRequest[]>(api().GET("/api/v1/timeoff/leave-requests"), []);
+  return unwrap<LeaveRequest[]>((await api()).GET("/api/v1/timeoff/leave-requests"), []);
 }
 
 /* ----------------------------- Recruitment ------------------------------- */
 
 export async function getRequisitions(includeArchived = false): Promise<Requisition[]> {
   return unwrap<Requisition[]>(
-    api().GET("/api/v1/recruitment/requisitions", {
+    (await api()).GET("/api/v1/recruitment/requisitions", {
       params: { query: { includeArchived: includeArchived ? "true" : "false" } },
     }),
     [],
@@ -63,47 +63,47 @@ export async function getRequisitions(includeArchived = false): Promise<Requisit
 }
 
 export async function getCandidates(): Promise<Candidate[]> {
-  return unwrap<Candidate[]>(api().GET("/api/v1/recruitment/candidates"), []);
+  return unwrap<Candidate[]>((await api()).GET("/api/v1/recruitment/candidates"), []);
 }
 
 /* ----------------------------- Performance ------------------------------- */
 
 export async function getPerformanceReviews(): Promise<PerformanceReview[]> {
-  return unwrap<PerformanceReview[]>(api().GET("/api/v1/performance/reviews"), []);
+  return unwrap<PerformanceReview[]>((await api()).GET("/api/v1/performance/reviews"), []);
 }
 
 export async function getPips(): Promise<Pip[]> {
-  return unwrap<Pip[]>(api().GET("/api/v1/performance/pips"), []);
+  return unwrap<Pip[]>((await api()).GET("/api/v1/performance/pips"), []);
 }
 
 /* ------------------------------- Training -------------------------------- */
 
 export async function getTrainingCourses(): Promise<TrainingCourse[]> {
-  return unwrap<TrainingCourse[]>(api().GET("/api/v1/workplace/training-courses"), []);
+  return unwrap<TrainingCourse[]>((await api()).GET("/api/v1/workplace/training-courses"), []);
 }
 
 /* ------------------------------ Offboarding ------------------------------ */
 
 export async function getOffboardingTasks(): Promise<OffboardingTask[]> {
-  return unwrap<OffboardingTask[]>(api().GET("/api/v1/offboarding/tasks"), []);
+  return unwrap<OffboardingTask[]>((await api()).GET("/api/v1/offboarding/tasks"), []);
 }
 
 /* -------------------------------- Agents --------------------------------- */
 
 export async function getAgentRuns(): Promise<AgentRun[]> {
-  return unwrap<AgentRun[]>(api().GET("/api/v1/platform/agent-runs"), []);
+  return unwrap<AgentRun[]>((await api()).GET("/api/v1/platform/agent-runs"), []);
 }
 
 /* ------------------------------- Documents ------------------------------- */
 
 export async function getVaultDocuments(): Promise<VaultDocument[]> {
-  return unwrap<VaultDocument[]>(api().GET("/api/v1/workplace/documents"), []);
+  return unwrap<VaultDocument[]>((await api()).GET("/api/v1/workplace/documents"), []);
 }
 
 /* ------------------------------ Benchmarks ------------------------------- */
 
 export async function getSalaryBenchmarks(): Promise<SalaryBenchmark[]> {
-  return unwrap<SalaryBenchmark[]>(api().GET("/api/v1/people/salary-benchmarks"), []);
+  return unwrap<SalaryBenchmark[]>((await api()).GET("/api/v1/people/salary-benchmarks"), []);
 }
 
 /* ------------------------------ Aggregates ------------------------------- */
@@ -111,11 +111,11 @@ export async function getSalaryBenchmarks(): Promise<SalaryBenchmark[]> {
 export async function getOnboardingPipeline(): Promise<
   { id: string; name: string; title: string; startsInDays: number; progress: number }[]
 > {
-  return unwrap(apiClient("admin").GET("/api/v1/onboarding/pipeline"), []);
+  return unwrap((await api()).GET("/api/v1/onboarding/pipeline"), []);
 }
 
 export async function getHeadcountByDept(): Promise<{ dept: string; count: number }[]> {
-  return unwrap(api().GET("/api/v1/people/headcount"), []);
+  return unwrap((await api()).GET("/api/v1/people/headcount"), []);
 }
 
 /* ------------------------------- Settings -------------------------------- */
@@ -151,5 +151,5 @@ const DEFAULT_SETTINGS: CompanySettings = {
 };
 
 export async function getSettings(): Promise<CompanySettings> {
-  return unwrap<CompanySettings>(api().GET("/api/v1/platform/settings"), DEFAULT_SETTINGS);
+  return unwrap<CompanySettings>((await api()).GET("/api/v1/platform/settings"), DEFAULT_SETTINGS);
 }

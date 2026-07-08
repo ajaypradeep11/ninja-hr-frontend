@@ -1,6 +1,6 @@
 "use server";
 
-import { apiClient } from "@/lib/api/client";
+import { authedApi } from "@/lib/api/client";
 import type {
   OnboardingCase,
   ChecklistTask,
@@ -12,7 +12,7 @@ import type {
 } from "@/lib/onboarding";
 import type { ProvinceCode } from "@/lib/compliance";
 
-const api = () => apiClient("admin");
+const api = () => authedApi("admin");
 
 export interface NewCaseInput {
   name: string;
@@ -42,16 +42,16 @@ async function unwrap<T>(
 }
 
 export async function listCases(): Promise<OnboardingCase[]> {
-  return (await unwrap<OnboardingCase[] | null>(api().GET("/api/v1/onboarding/cases"))) ?? [];
+  return (await unwrap<OnboardingCase[] | null>((await api()).GET("/api/v1/onboarding/cases"))) ?? [];
 }
 
 export async function createCase(input: NewCaseInput): Promise<OnboardingCase> {
-  return unwrap<OnboardingCase>(api().POST("/api/v1/onboarding/cases", { body: input as never }));
+  return unwrap<OnboardingCase>((await api()).POST("/api/v1/onboarding/cases", { body: input as never }));
 }
 
 export async function markForm(token: string, key: keyof FormFlags): Promise<OnboardingCase | null> {
   return unwrap<OnboardingCase | null>(
-    api().POST("/api/v1/onboarding/cases/by-token/{token}/forms/{key}", {
+    (await api()).POST("/api/v1/onboarding/cases/by-token/{token}/forms/{key}", {
       params: { path: { token, key: key as string } },
     }),
   );
@@ -62,7 +62,7 @@ export async function submitNewHireProfile(
   input: NewHireProfileInput,
 ): Promise<OnboardingCase | null> {
   return unwrap<OnboardingCase | null>(
-    api().POST("/api/v1/onboarding/cases/by-token/{token}/profile", {
+    (await api()).POST("/api/v1/onboarding/cases/by-token/{token}/profile", {
       params: { path: { token } },
       body: input as never,
     }),
@@ -74,7 +74,7 @@ export async function uploadCaseDocument(
   input: { kind: UploadKind; fileName: string; mimeType: string; dataBase64: string },
 ): Promise<OnboardingCase | null> {
   return unwrap<OnboardingCase | null>(
-    api().POST("/api/v1/onboarding/cases/by-token/{token}/documents", {
+    (await api()).POST("/api/v1/onboarding/cases/by-token/{token}/documents", {
       params: { path: { token } },
       body: input as never,
     }),
@@ -83,7 +83,7 @@ export async function uploadCaseDocument(
 
 export async function addConsent(token: string, policy: string): Promise<OnboardingCase | null> {
   return unwrap<OnboardingCase | null>(
-    api().POST("/api/v1/onboarding/cases/by-token/{token}/consent", {
+    (await api()).POST("/api/v1/onboarding/cases/by-token/{token}/consent", {
       params: { path: { token } },
       body: { policy },
     }),
@@ -92,7 +92,7 @@ export async function addConsent(token: string, policy: string): Promise<Onboard
 
 export async function finalizeSubmission(token: string): Promise<OnboardingCase | null> {
   return unwrap<OnboardingCase | null>(
-    api().POST("/api/v1/onboarding/cases/by-token/{token}/finalize", {
+    (await api()).POST("/api/v1/onboarding/cases/by-token/{token}/finalize", {
       params: { path: { token } },
     }),
   );
@@ -100,7 +100,7 @@ export async function finalizeSubmission(token: string): Promise<OnboardingCase 
 
 export async function setChecklist(id: string, tasks: ChecklistTask[]): Promise<OnboardingCase | null> {
   return unwrap<OnboardingCase | null>(
-    api().PUT("/api/v1/onboarding/cases/{id}/checklist", {
+    (await api()).PUT("/api/v1/onboarding/cases/{id}/checklist", {
       params: { path: { id } },
       body: { tasks: tasks as never },
     }),
@@ -109,7 +109,7 @@ export async function setChecklist(id: string, tasks: ChecklistTask[]): Promise<
 
 export async function setTaskStatus(id: string, taskId: string, status: TaskStatus): Promise<OnboardingCase | null> {
   return unwrap<OnboardingCase | null>(
-    api().PATCH("/api/v1/onboarding/cases/{id}/tasks/{taskId}", {
+    (await api()).PATCH("/api/v1/onboarding/cases/{id}/tasks/{taskId}", {
       params: { path: { id, taskId } },
       body: { status: status as never },
     }),
@@ -123,7 +123,7 @@ export async function setTaskAssignee(
   employeeName: string | null,
 ): Promise<OnboardingCase | null> {
   return unwrap<OnboardingCase | null>(
-    api().PATCH("/api/v1/onboarding/cases/{id}/assignees", {
+    (await api()).PATCH("/api/v1/onboarding/cases/{id}/assignees", {
       params: { path: { id } },
       body: { owner, employeeName } as never,
     }),
@@ -135,14 +135,14 @@ export async function listEmployeeDirectory(): Promise<
   { name: string; department: string; title: string }[]
 > {
   const rows = await unwrap<{ name: string; department: string; title: string }[]>(
-    api().GET("/api/v1/people/employees"),
+    (await api()).GET("/api/v1/people/employees"),
   );
   return (rows ?? []).map((e) => ({ name: e.name, department: e.department, title: e.title }));
 }
 
 export async function verifyDocument(id: string, docId: string): Promise<OnboardingCase | null> {
   return unwrap<OnboardingCase | null>(
-    api().POST("/api/v1/onboarding/cases/{id}/documents/{docId}/verify", {
+    (await api()).POST("/api/v1/onboarding/cases/{id}/documents/{docId}/verify", {
       params: { path: { id, docId } },
     }),
   );
@@ -150,7 +150,7 @@ export async function verifyDocument(id: string, docId: string): Promise<Onboard
 
 export async function togglePolicy(id: string, policy: string): Promise<OnboardingCase | null> {
   return unwrap<OnboardingCase | null>(
-    api().POST("/api/v1/onboarding/cases/{id}/policies/toggle", {
+    (await api()).POST("/api/v1/onboarding/cases/{id}/policies/toggle", {
       params: { path: { id } },
       body: { policy },
     }),
@@ -159,7 +159,7 @@ export async function togglePolicy(id: string, policy: string): Promise<Onboardi
 
 export async function activate(id: string): Promise<OnboardingCase | null> {
   return unwrap<OnboardingCase | null>(
-    api().POST("/api/v1/onboarding/cases/{id}/activate", {
+    (await api()).POST("/api/v1/onboarding/cases/{id}/activate", {
       params: { path: { id } },
     }),
   );

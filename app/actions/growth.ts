@@ -1,7 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { apiClient } from "@/lib/api/client";
+import { authedApi } from "@/lib/api/client";
 import { ACTOR_COOKIE } from "@/lib/actor";
 import type {
   Colleague,
@@ -14,7 +14,7 @@ import type {
 
 async function client() {
   const store = await cookies();
-  return apiClient("admin", store.get(ACTOR_COOKIE)?.value);
+  return authedApi("admin", store.get(ACTOR_COOKIE)?.value);
 }
 
 async function unwrap<T>(

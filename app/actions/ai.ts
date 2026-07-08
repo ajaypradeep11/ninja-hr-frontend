@@ -1,6 +1,6 @@
 "use server";
 
-import { apiClient } from "@/lib/api/client";
+import { authedApi } from "@/lib/api/client";
 import type { Persona } from "@/lib/api/client";
 
 export interface CoPilotResult {
@@ -18,7 +18,8 @@ export async function askCoPilot(
   persona: "admin" | "employee",
 ): Promise<CoPilotResult> {
   try {
-    const { data } = await apiClient(persona as Persona).POST("/api/v1/platform/copilot/ask", {
+    const client = await authedApi(persona as Persona);
+    const { data } = await client.POST("/api/v1/platform/copilot/ask", {
       body: { question },
     });
     const result = data as unknown as { text: string; live: boolean } | undefined;

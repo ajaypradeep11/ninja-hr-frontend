@@ -1,7 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { apiClient } from "@/lib/api/client";
+import { authedApi } from "@/lib/api/client";
 import { ACTOR_COOKIE, getActor } from "@/lib/actor";
 import { computeLeaveBalances } from "@/lib/leave-balances";
 import type {
@@ -14,12 +14,12 @@ import type {
 } from "@/lib/data";
 import type { CompanySettings } from "@/lib/queries";
 
-const api = () => apiClient("admin");
+const api = () => authedApi("admin");
 
 /** Actor-aware client — required wherever the backend routes by role/department. */
 async function actorApi() {
   const store = await cookies();
-  return apiClient("admin", store.get(ACTOR_COOKIE)?.value);
+  return authedApi("admin", store.get(ACTOR_COOKIE)?.value);
 }
 
 /**
@@ -108,7 +108,7 @@ export interface NewPipInput {
 export async function issuePip(input: NewPipInput): Promise<Pip[]> {
   if (!input.employee.trim()) throw new Error("PIP employee name is required");
   return unwrap<Pip[]>(
-    api().POST("/api/v1/performance/pips", {
+    (await api()).POST("/api/v1/performance/pips", {
       body: { employee: input.employee, manager: input.manager, durationDays: input.durationDays },
     }),
   );
@@ -149,7 +149,7 @@ export async function setOffboardingTaskStatus(
   status: OffboardingTask["status"],
 ): Promise<OffboardingTask[]> {
   return unwrap<OffboardingTask[]>(
-    api().PATCH("/api/v1/offboarding/tasks/{id}/status", {
+    (await api()).PATCH("/api/v1/offboarding/tasks/{id}/status", {
       params: { path: { id } },
       body: { status } as never,
     }),
@@ -162,7 +162,7 @@ export async function setOffboardingAssignee(
   assignee: string | null,
 ): Promise<OffboardingTask[]> {
   return unwrap<OffboardingTask[]>(
-    api().PATCH("/api/v1/offboarding/assignees", {
+    (await api()).PATCH("/api/v1/offboarding/assignees", {
       body: { owner, assignee } as never,
     }),
   );
@@ -171,7 +171,7 @@ export async function setOffboardingAssignee(
 /** Finalize termination — sets the employee's status to TERMINATED (kill switch). */
 export async function finalizeTermination(employeeName: string, override = false): Promise<void> {
   await unwrap(
-    api().POST("/api/v1/offboarding/terminate", {
+    (await api()).POST("/api/v1/offboarding/terminate", {
       body: { employeeName, override } as never,
     }),
     null,
@@ -182,7 +182,7 @@ export async function finalizeTermination(employeeName: string, override = false
 
 export async function advanceReviewState(id: string): Promise<PerformanceReview[]> {
   return unwrap<PerformanceReview[]>(
-    api().POST("/api/v1/performance/reviews/{id}/advance", {
+    (await api()).POST("/api/v1/performance/reviews/{id}/advance", {
       params: { path: { id } },
     }),
   );
@@ -192,7 +192,7 @@ export async function advanceReviewState(id: string): Promise<PerformanceReview[
 
 export async function createAgentRun(intent: string): Promise<AgentRun[]> {
   return unwrap<AgentRun[]>(
-    api().POST("/api/v1/platform/agent-runs", {
+    (await api()).POST("/api/v1/platform/agent-runs", {
       body: { intent },
     }),
   );
@@ -203,7 +203,7 @@ export async function setAgentRunStatus(
   status: AgentRun["status"],
 ): Promise<AgentRun[]> {
   return unwrap<AgentRun[]>(
-    api().PATCH("/api/v1/platform/agent-runs/{id}/status", {
+    (await api()).PATCH("/api/v1/platform/agent-runs/{id}/status", {
       params: { path: { id } },
       body: { status } as never,
     }),
@@ -214,7 +214,7 @@ export async function setAgentRunStatus(
 
 export async function saveSettings(settings: CompanySettings): Promise<CompanySettings> {
   return unwrap<CompanySettings>(
-    api().PUT("/api/v1/platform/settings", {
+    (await api()).PUT("/api/v1/platform/settings", {
       body: settings as never,
     }),
     settings,

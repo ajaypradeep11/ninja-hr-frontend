@@ -84,6 +84,8 @@ export interface NewHireProfile {
   legalLastName: string;
   preferredName?: string;
   dateOfBirth: string;
+  /** Keep my birthday private — off team calendars/dashboards/announcements. */
+  birthdayPrivate?: boolean;
   sin: string;
   phone: string;
   addressStreet: string;

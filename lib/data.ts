@@ -19,7 +19,9 @@ export interface Employee {
   province: ProvinceCode;
   email: string;
   hireDate: string; // ISO
-  birthDate: string; // ISO (year-agnostic for milestones)
+  /** ISO — blank when the employee keeps their birthday private (non-HR views). */
+  birthDate: string;
+  birthdayPrivate?: boolean;
   manager?: string;
   status: EmployeeStatus;
   salary: number;

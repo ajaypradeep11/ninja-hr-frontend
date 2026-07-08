@@ -1528,6 +1528,7 @@ export interface components {
             preferredName?: string;
             /** @description ISO date YYYY-MM-DD */
             dateOfBirth: string;
+            birthdayPrivate?: boolean;
             /** @description 9 digits, no spaces */
             sin: string;
             phone: string;
@@ -1585,6 +1586,7 @@ export interface components {
             status: "Pending" | "In-Progress" | "Completed";
         };
         UpdateEmployeeDto: {
+            birthdayPrivate?: boolean;
             title?: string;
             department?: string;
             manager?: string;

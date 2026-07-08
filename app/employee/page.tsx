@@ -1,13 +1,9 @@
 export const dynamic = "force-dynamic";
 import {
-  CalendarClock,
   CalendarDays,
   CheckCircle2,
   Circle,
   GraduationCap,
-  PartyPopper,
-
-  Wallet,
 } from "lucide-react";
 import {
   Card,
@@ -18,8 +14,17 @@ import {
 import { getActor } from "@/lib/actor";
 import { getMyLeaveBalances } from "@/app/actions/modules";
 import { getMyTraining } from "@/app/actions/training";
+import { getEmployees, getPerformanceReviews } from "@/lib/queries";
+import {
+  directReports,
+  employeeMilestones,
+  probationNudges,
+  teamMilestones,
+} from "@/lib/milestones";
 import { cn, formatDate } from "@/lib/utils";
 import { CopilotQuickAsk } from "@/components/copilot-quick-ask";
+import { UpcomingMilestones } from "@/components/upcoming-milestones";
+import { MilestoneNudge } from "@/components/milestone-nudge";
 
 const balanceTone: Record<string, { bg: string; bar: "brand" | "sky" | "amber"; text: string }> = {
   brand: { bg: "bg-brand-50", bar: "brand", text: "text-brand-700" },
@@ -34,21 +39,24 @@ const myTasks = [
   { id: "tk4", label: "Review Q2 goals with manager", done: false, due: "2026-07-05" },
 ];
 
-const upcoming = [
-  { id: "up1", icon: CalendarClock, title: "90-Day Probationary Review", sub: "with Michael Scott", date: "2026-06-25" },
-  { id: "up2", icon: Wallet, title: "Next payday", sub: "Bi-weekly deposit", date: "2026-06-26" },
-  { id: "up3", icon: PartyPopper, title: "Work anniversary", sub: "3 years at the company", date: "2026-09-01" },
-];
-
 export default async function EmployeeDashboard() {
   // Live data: balances derive from the actor's actual approved requests, so
   // this card, the Leave page and the assistant all quote the same numbers.
-  const [actor, myTraining, leaveBalances] = await Promise.all([
+  const [actor, myTraining, leaveBalances, employees, reviews] = await Promise.all([
     getActor(),
     getMyTraining(),
     getMyLeaveBalances(),
+    getEmployees(),
+    getPerformanceReviews().catch(() => []),
   ]);
   const active = myTraining.filter((a) => a.status !== "Completed");
+
+  // Milestones — all derived from live HRIS + review data.
+  const me = employees.find((e) => e.id === actor.employeeId);
+  const myMilestones = me ? employeeMilestones(me, reviews, { includePayday: true }) : [];
+  const reports = directReports(employees, actor.name);
+  const team = teamMilestones(reports, reviews);
+  const nudges = probationNudges(reports);
 
   return (
     <div>
@@ -60,6 +68,9 @@ export default async function EmployeeDashboard() {
           Here&apos;s your day at a glance — tasks, time off, and growth.
         </p>
       </div>
+
+      {/* AI nudges — reports whose probation window is closing (managers only). */}
+      <MilestoneNudge nudges={nudges} />
 
       {/* Leave balances */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
@@ -134,29 +145,10 @@ export default async function EmployeeDashboard() {
           </div>
         </Card>
 
-        {/* Upcoming */}
-        <Card className="card-pad lg:col-span-4">
-          <CardHeader title="Upcoming" />
-          <div className="mt-4 space-y-4">
-            {upcoming.map((u) => {
-              const Icon = u.icon;
-              return (
-                <div key={u.id} className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-canvas text-ink-soft">
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-ink">{u.title}</p>
-                    <p className="truncate text-xs text-ink-muted">{u.sub}</p>
-                  </div>
-                  <span className="text-[11px] font-medium text-ink-faint">
-                    {formatDate(u.date, { year: undefined })}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </Card>
+        {/* Upcoming — live milestones, tabbed for managers */}
+        <div className="lg:col-span-4">
+          <UpcomingMilestones mine={myMilestones} team={team} />
+        </div>
 
         {/* Ask AI — one-line entry to the single global Co-Pilot panel. */}
         <Card className="card-pad lg:col-span-3 flex flex-col justify-between bg-gradient-to-br from-brand-500 to-brand-700 text-white">

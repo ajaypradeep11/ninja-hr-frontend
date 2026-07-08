@@ -57,6 +57,7 @@ export function ProfileView({
     addressStreet: initial.addressStreet ?? "",
     addressCity: initial.addressCity ?? "",
     addressPostal: initial.addressPostal ?? "",
+    birthdayPrivate: initial.birthdayPrivate ?? false,
   });
   const set = (patch: Partial<typeof form>) => {
     setForm((prev) => ({ ...prev, ...patch }));
@@ -93,9 +94,16 @@ export function ProfileView({
           addressStreet: form.addressStreet.trim() || undefined,
           addressCity: form.addressCity.trim() || undefined,
           addressPostal: form.addressPostal.trim() || undefined,
+          birthdayPrivate: form.birthdayPrivate,
         }),
       "contact",
     );
+  }
+
+  /** Privacy toggle saves immediately — no separate Save click needed. */
+  function toggleBirthdayPrivate(next: boolean) {
+    setForm((prev) => ({ ...prev, birthdayPrivate: next }));
+    void run(() => updateEmployee(emp.id, { birthdayPrivate: next }), "privacy");
   }
 
   function addContact() {
@@ -202,6 +210,30 @@ export function ProfileView({
                 <input className="field-input" value={form.pronouns} onChange={(e) => set({ pronouns: e.target.value })} placeholder="Optional" />
               </div>
             </div>
+            <label className="mt-3 flex cursor-pointer items-start gap-2 rounded-xl border border-line px-3 py-2.5">
+              <input
+                type="checkbox"
+                checked={form.birthdayPrivate}
+                disabled={busy}
+                onChange={(e) => toggleBirthdayPrivate(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded accent-brand-500"
+              />
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-2 text-xs font-semibold text-ink">
+                  Keep my birthday private
+                  {savedAt === "privacy" && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600">
+                      <Check className="h-3 w-3" /> Saved
+                    </span>
+                  )}
+                </span>
+                <span className="block text-[11px] leading-snug text-ink-faint">
+                  Your date of birth is required for payroll and benefits, but checking this box
+                  ensures it will not be shared on team calendars, manager dashboards, or company
+                  announcements.
+                </span>
+              </span>
+            </label>
             <p className="mt-2 text-[11px] text-ink-faint">
               Legal name and date of birth changes require HR (identity documents).
             </p>

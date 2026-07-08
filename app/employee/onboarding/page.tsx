@@ -169,6 +169,7 @@ const EMPTY_PROFILE: NewHireProfileInput = {
   legalLastName: "",
   preferredName: "",
   dateOfBirth: "",
+  birthdayPrivate: false,
   sin: "",
   phone: "",
   addressStreet: "",
@@ -451,6 +452,24 @@ function Wizard() {
                     <div>
                       <label className="field-label">Date of birth *</label>
                       <input type="date" className="field-input" value={p.dateOfBirth} onChange={(e) => set({ dateOfBirth: e.target.value })} />
+                      <label className="mt-2 flex cursor-pointer items-start gap-2">
+                        <input
+                          type="checkbox"
+                          checked={p.birthdayPrivate ?? false}
+                          onChange={(e) => set({ birthdayPrivate: e.target.checked })}
+                          className="mt-0.5 h-4 w-4 rounded accent-brand-500"
+                        />
+                        <span>
+                          <span className="block text-xs font-semibold text-ink">
+                            Keep my birthday private
+                          </span>
+                          <span className="block text-[11px] leading-snug text-ink-faint">
+                            Your date of birth is required for payroll and benefits, but checking
+                            this box ensures it will not be shared on team calendars, manager
+                            dashboards, or company announcements.
+                          </span>
+                        </span>
+                      </label>
                     </div>
                     <div>
                       <label className="field-label">Social Insurance Number *</label>

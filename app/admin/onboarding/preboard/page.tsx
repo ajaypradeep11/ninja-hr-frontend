@@ -41,7 +41,7 @@ export default function PreboardPage() {
   const [submitting, setSubmitting] = React.useState(false);
 
   const valid = name.trim() && start && email.includes("@");
-  const inviteLink = created ? `${siteOrigin()}/employee/onboarding?case=${created.token}` : "";
+  const inviteLink = created ? `${siteOrigin()}/welcome/${created.token}` : "";
 
   const [launchError, setLaunchError] = React.useState<string | null>(null);
 

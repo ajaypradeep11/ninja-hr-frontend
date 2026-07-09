@@ -6,6 +6,21 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
+# NEXT_PUBLIC_* vars are inlined into the client bundle at `next build` time,
+# so (unlike NINJA_HR_API_URL/INTERNAL_API_KEY) they must arrive as build args
+# — setting them only as compose `environment:` at container run time would
+# be invisible to the already-built browser bundle. Values come from
+# docker-compose.yml's `frontend.build.args`.
+ARG NEXT_PUBLIC_FIREBASE_API_KEY
+ARG NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+ARG NEXT_PUBLIC_FIREBASE_PROJECT_ID
+ARG NEXT_PUBLIC_FIREBASE_APP_ID
+ARG NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST
+ENV NEXT_PUBLIC_FIREBASE_API_KEY=$NEXT_PUBLIC_FIREBASE_API_KEY \
+    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=$NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN \
+    NEXT_PUBLIC_FIREBASE_PROJECT_ID=$NEXT_PUBLIC_FIREBASE_PROJECT_ID \
+    NEXT_PUBLIC_FIREBASE_APP_ID=$NEXT_PUBLIC_FIREBASE_APP_ID \
+    NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST=$NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST
 RUN npm run build
 
 FROM node:22-bookworm-slim AS runtime

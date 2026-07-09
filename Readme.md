@@ -54,8 +54,14 @@ cp .env.example .env   # defaults point at http://localhost:4000/api/v1
 npm run dev            # http://localhost:3000
 ```
 
-Or run the whole stack (Postgres + backend + frontend) with Docker from the
-repo pair's parent directory: `docker compose up --build`.
+Or run the whole stack (Postgres + Firebase Auth emulator + backend +
+frontend) with Docker from the repo pair's parent directory:
+`docker compose up --build`. That wires a real Firebase Auth emulator (not a
+disabled/bypassed auth check) and seeds it to match the demo data —
+**sign in at http://localhost:3000/login with any seeded work email
+(e.g. `sarah.mitchell@company.ca`) / `demo-password`**. A new hire accepts an
+onboarding invite (HR generates the link in Preboard) at `/welcome/<token>`,
+setting their own password or continuing with Google.
 
 ### Scripts
 

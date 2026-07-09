@@ -49,6 +49,20 @@ export async function createCase(input: NewCaseInput): Promise<OnboardingCase> {
   return unwrap<OnboardingCase>((await api()).POST("/api/v1/onboarding/cases", { body: input as never }));
 }
 
+/**
+ * Looks up a case by its invite token — backs `/welcome/:token`. The new hire
+ * has no session yet, so this rides the internal-key lane like the other
+ * by-token routes; returns null for an unknown/expired token instead of
+ * throwing (the caller decides how to present that).
+ */
+export async function getCaseByToken(token: string): Promise<OnboardingCase | null> {
+  return unwrap<OnboardingCase | null>(
+    (await api()).GET("/api/v1/onboarding/cases/by-token/{token}", {
+      params: { path: { token } },
+    }),
+  );
+}
+
 export async function markForm(token: string, key: keyof FormFlags): Promise<OnboardingCase | null> {
   return unwrap<OnboardingCase | null>(
     (await api()).POST("/api/v1/onboarding/cases/by-token/{token}/forms/{key}", {

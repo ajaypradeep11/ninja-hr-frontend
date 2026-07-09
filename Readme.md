@@ -158,3 +158,29 @@ lib/
   data.ts       shared types + a few demo constants
   utils.ts      cn(), formatCAD(), formatDate(), …
 ```
+
+## Deployment
+
+This app deploys to **Firebase App Hosting** — a Next.js-native host with a
+GitHub integration (push to the tracked branch → build → roll out):
+
+```bash
+firebase init apphosting        # one-time: pick the Firebase project + GitHub repo/branch
+firebase deploy --only apphosting
+```
+
+Config lives in [`apphosting.yaml`](./apphosting.yaml) (build/run resources +
+env var names) — it's committed with placeholder (`YOUR_...`) values only.
+Set the real ones in the Firebase console (App Hosting → Settings →
+Environment) or via secrets:
+
+```bash
+firebase apphosting:secrets:set internal-api-key
+firebase apphosting:secrets:set firebase-client-email
+firebase apphosting:secrets:set firebase-private-key
+```
+
+`NINJA_HR_API_URL` must point at the deployed backend (see
+`../ninja-hr-backend/Readme.md`'s Deployment section) — **App Hosting cannot
+host the NestJS backend**; it's a frontend-only (Next.js) hosting product.
+Cloud Run is the pairing for the backend.

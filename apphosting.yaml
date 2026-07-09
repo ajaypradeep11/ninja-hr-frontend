@@ -1,24 +1,40 @@
-# Firebase App Hosting config (frontend). Set real values in the console:
-# App Hosting → Settings → Environment, or via `firebase apphosting:secrets:set`.
+# Firebase App Hosting config (frontend). Set real values in the Firebase
+# console (App Hosting -> Settings -> Environment) or override per environment
+# with apphosting.<env>.yaml. NEXT_PUBLIC_* values must be available at build
+# time because Next.js inlines them into the browser bundle.
 runConfig:
   cpu: 1
   memoryMiB: 512
 env:
   - variable: NINJA_HR_API_URL
     value: https://YOUR_CLOUD_RUN_BACKEND_URL/api/v1
+    availability:
+      - RUNTIME
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
     value: YOUR_FIREBASE_API_KEY
+    availability:
+      - BUILD
+      - RUNTIME
   - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
     value: YOUR_PROJECT.firebaseapp.com
+    availability:
+      - BUILD
+      - RUNTIME
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
     value: YOUR_PROJECT_ID
+    availability:
+      - BUILD
+      - RUNTIME
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
     value: YOUR_FIREBASE_APP_ID
+    availability:
+      - BUILD
+      - RUNTIME
   - variable: FIREBASE_PROJECT_ID
     value: YOUR_PROJECT_ID
+    availability:
+      - RUNTIME
   - variable: INTERNAL_API_KEY
     secret: internal-api-key
-  - variable: FIREBASE_CLIENT_EMAIL
-    secret: firebase-client-email
-  - variable: FIREBASE_PRIVATE_KEY
-    secret: firebase-private-key
+    availability:
+      - RUNTIME

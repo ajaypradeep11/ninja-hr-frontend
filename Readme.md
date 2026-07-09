@@ -176,11 +176,12 @@ Environment) or via secrets:
 
 ```bash
 firebase apphosting:secrets:set internal-api-key
-firebase apphosting:secrets:set firebase-client-email
-firebase apphosting:secrets:set firebase-private-key
 ```
 
 `NINJA_HR_API_URL` must point at the deployed backend (see
-`../ninja-hr-backend/Readme.md`'s Deployment section) — **App Hosting cannot
+`../ninja-hr-backend/README.md`'s Deployment section) — **App Hosting cannot
 host the NestJS backend**; it's a frontend-only (Next.js) hosting product.
 Cloud Run is the pairing for the backend.
+
+For the full frontend/backend deployment sequence, see
+[`../DEPLOYMENT.md`](../DEPLOYMENT.md).

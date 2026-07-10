@@ -1,9 +1,8 @@
 /**
  * Single source of truth for product branding.
- * Swap `name` here to rebrand the whole app (TestHR -> final name).
  */
 export const BRAND = {
-  name: "TestHR",
+  name: "NinjaHR",
   tagline: "Agentic HR for the Canadian market",
   adminConsoleLabel: "ADMIN CONSOLE",
   employeeConsoleLabel: "EMPLOYEE PORTAL",

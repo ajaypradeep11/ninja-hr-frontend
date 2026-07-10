@@ -7,31 +7,36 @@ runConfig:
   memoryMiB: 512
 env:
   - variable: NINJA_HR_API_URL
-    value: https://YOUR_CLOUD_RUN_BACKEND_URL/api/v1
+    value: https://ninja-hr-api-inmzp33doq-uc.a.run.app/api/v1
     availability:
       - RUNTIME
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
-    value: YOUR_FIREBASE_API_KEY
+    # Firebase web API key. Public by design (Next.js inlines NEXT_PUBLIC_* into
+    # the browser bundle), but kept out of source control so secret scanners
+    # don't flag it. Create + grant the secret before deploying:
+    #   firebase apphosting:secrets:set firebase-web-api-key
+    # and restrict the key in Google Cloud Console (HTTP-referrer + API allow-list).
+    secret: firebase-web-api-key
     availability:
       - BUILD
       - RUNTIME
   - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-    value: YOUR_PROJECT.firebaseapp.com
+    value: ninjahr.firebaseapp.com
     availability:
       - BUILD
       - RUNTIME
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
-    value: YOUR_PROJECT_ID
+    value: ninjahr
     availability:
       - BUILD
       - RUNTIME
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
-    value: YOUR_FIREBASE_APP_ID
+    value: 1:1004736454481:web:59964583a291475e14fd70
     availability:
       - BUILD
       - RUNTIME
   - variable: FIREBASE_PROJECT_ID
-    value: YOUR_PROJECT_ID
+    value: ninjahr
     availability:
       - RUNTIME
   - variable: INTERNAL_API_KEY

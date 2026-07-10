@@ -3,9 +3,9 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown, Plus, Sparkles, LifeBuoy } from "lucide-react";
+import { ChevronDown, Plus, LifeBuoy } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { BRAND } from "@/lib/brand";
+import { BrandMark } from "@/components/brand-mark";
 import {
   adminNav,
   employeeNav,
@@ -57,15 +57,7 @@ export function Sidebar({
   return (
     <aside className="fixed inset-y-0 left-0 z-30 flex w-60 flex-col border-r border-line bg-card">
       <Link href={homeHref} className="flex items-center gap-2.5 px-5 pb-4 pt-5">
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500 text-white shadow-sm">
-          <Sparkles className="h-5 w-5" />
-        </span>
-        <span className="leading-tight">
-          <span className="block text-[15px] font-bold text-brand-700 dark:text-brand-400">{BRAND.name}</span>
-          <span className="block text-[10px] font-semibold uppercase tracking-wider text-ink-faint">
-            {consoleLabel}
-          </span>
-        </span>
+        <BrandMark consoleLabel={consoleLabel} />
       </Link>
 
       <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-2">

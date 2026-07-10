@@ -1,13 +1,12 @@
-# TestHR — Agentic HR for the Canadian Market
+# NinjaHR — Agentic HR for the Canadian Market
 
 A Next.js front-end for an agentic HR SaaS targeting Canadian SMBs. Built from
 the product spec in [`Impl.md`](./Impl.md) and the two design mockups
 (`1.png` admin dashboard, `2.png` initiate preboarding).
 
-> **Branding:** `TestHR` is a placeholder. The product name lives in a single
-> place — [`lib/brand.ts`](./lib/brand.ts) — so it can be swapped everywhere at
-> once. Naming candidates: _Maple HR, TrueNorth HR, Kinetic HR, Cortex HR,
-> Sentry HR, Aegis HR, Hrbor, Onward._
+> **Branding:** The product name lives in a single place —
+> [`lib/brand.ts`](./lib/brand.ts). The app logo is served from
+> [`public/LOGO.png`](./public/LOGO.png).
 
 ## Architecture
 

@@ -1,25 +1,22 @@
-import { cookies } from "next/headers";
-import { ACTOR_COOKIE } from "@/lib/actor";
+import { buildProxyAuthHeaders } from "@/lib/api/proxy-headers";
 
-// Proxies an uploaded preboarding document from the backend for HR
-// verification, attaching the internal key + actor cookie. The browser never
-// sees the internal key; the binary passes straight through.
+// Proxies an uploaded preboarding document (SIN/banking PII) from the backend
+// for HR verification on the verified-session bearer lane, so the backend
+// enforces RBAC against the REAL signed-in user. The browser never sees the
+// internal key; the binary passes straight through. Unauthenticated callers
+// get 401 (see buildProxyAuthHeaders).
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ caseId: string; docId: string }> },
 ) {
   const { caseId, docId } = await params;
-  const store = await cookies();
-  const actorId = store.get(ACTOR_COOKIE)?.value;
+  const authHeaders = await buildProxyAuthHeaders();
+  if (!authHeaders) return new Response("Unauthorized", { status: 401 });
   const rawBase = process.env.NINJA_HR_API_URL ?? "";
   const baseUrl = rawBase.replace(/\/api\/v1\/?$/, "");
 
   const res = await fetch(`${baseUrl}/api/v1/onboarding/cases/${caseId}/documents/${docId}/file`, {
-    headers: {
-      "x-internal-key": process.env.INTERNAL_API_KEY ?? "",
-      "x-actor-persona": "admin",
-      ...(actorId ? { "x-actor-id": actorId } : {}),
-    },
+    headers: authHeaders,
     cache: "no-store",
   });
 

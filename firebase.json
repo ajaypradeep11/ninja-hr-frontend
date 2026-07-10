@@ -1,0 +1,7 @@
+{
+  "apphosting": {
+    "backendId": "ninja-hr-frontend",
+    "rootDir": ".",
+    "alwaysDeployFromSource": true
+  }
+}

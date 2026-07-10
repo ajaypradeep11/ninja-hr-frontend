@@ -1,5 +1,7 @@
-import { Sparkles, ShieldAlert } from "lucide-react";
+import { ShieldAlert } from "lucide-react";
+import Link from "next/link";
 import { BRAND } from "@/lib/brand";
+import { BrandMark } from "@/components/brand-mark";
 import { LoginForm } from "./login-form";
 
 export const metadata = { title: `Sign in · ${BRAND.name}` };
@@ -15,12 +17,11 @@ export default async function LoginPage({
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm">
-        <div className="mb-6 flex items-center justify-center gap-2.5">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500 text-white shadow-sm">
-            <Sparkles className="h-5 w-5" />
-          </span>
-          <span className="text-xl font-bold text-ink">{BRAND.name}</span>
-        </div>
+        <BrandMark
+          className="mb-6 justify-center"
+          logoClassName="h-10 w-10"
+          nameClassName="text-xl font-bold text-ink"
+        />
         {unprovisioned && (
           <div className="mb-4 flex items-start gap-2 rounded-xl bg-amber-50 dark:bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
             <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
@@ -29,7 +30,11 @@ export default async function LoginPage({
         )}
         <LoginForm />
         <p className="mt-6 text-center text-xs text-ink-muted">
-          Accounts are created by your HR team. No account? Ask your administrator.
+          New company?{" "}
+          <Link className="font-semibold text-brand-600 hover:underline dark:text-brand-300" href="/signup">
+            Create your workspace
+          </Link>
+          . Employees are invited by HR after setup.
         </p>
       </div>
     </div>

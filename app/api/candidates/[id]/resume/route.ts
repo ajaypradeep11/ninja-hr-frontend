@@ -1,16 +1,16 @@
-import { cookies } from "next/headers";
-import { ACTOR_COOKIE } from "@/lib/actor";
+import { buildProxyAuthHeaders } from "@/lib/api/proxy-headers";
 
-// Proxies the résumé download from the backend, attaching the internal key +
-// actor cookie so RBAC (HR / hiring team) is enforced. The browser never sees
-// the internal key. Binary passes straight through.
+// Proxies the résumé download from the backend on the verified-session bearer
+// lane so the backend enforces RBAC (HR / hiring team) against the REAL
+// signed-in user. The browser never sees the internal key. Binary passes
+// straight through. Unauthenticated callers get 401 (see buildProxyAuthHeaders).
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const store = await cookies();
-  const actorId = store.get(ACTOR_COOKIE)?.value;
+  const authHeaders = await buildProxyAuthHeaders();
+  if (!authHeaders) return new Response("Unauthorized", { status: 401 });
   const rawBase = process.env.NINJA_HR_API_URL ?? "";
   const baseUrl = rawBase.replace(/\/api\/v1\/?$/, "");
   // `?inline=true` → in-app viewer (Content-Disposition: inline); default downloads.
@@ -19,11 +19,7 @@ export async function GET(
   const res = await fetch(
     `${baseUrl}/api/v1/recruitment/candidates/${id}/resume${inline ? "?inline=true" : ""}`,
     {
-      headers: {
-        "x-internal-key": process.env.INTERNAL_API_KEY ?? "",
-        "x-actor-persona": "admin",
-        ...(actorId ? { "x-actor-id": actorId } : {}),
-      },
+      headers: authHeaders,
       cache: "no-store",
     },
   );

@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
 import { BRAND } from "@/lib/brand";
 import { ThemeToggle } from "@/components/theme";
+import { BrandMark } from "@/components/brand-mark";
 
 /** Minimal branded shell for the public careers site + candidate portal. */
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
@@ -10,15 +10,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       <header className="border-b border-line bg-card">
         <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-6">
           <Link href="/careers" className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500 text-white shadow-sm">
-              <Sparkles className="h-5 w-5" />
-            </span>
-            <span className="leading-tight">
-              <span className="block text-[15px] font-bold text-brand-700 dark:text-brand-400">{BRAND.name}</span>
-              <span className="block text-[10px] font-semibold uppercase tracking-wider text-ink-faint">
-                Careers
-              </span>
-            </span>
+            <BrandMark consoleLabel="Careers" />
           </Link>
           <div className="flex items-center gap-1">
             <Link

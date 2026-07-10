@@ -10,6 +10,10 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 export const metadata: Metadata = {
   title: `${BRAND.name} · ${BRAND.tagline}`,
   description: BRAND.tagline,
+  icons: {
+    icon: "/LOGO.png",
+    apple: "/LOGO.png",
+  },
 };
 
 export default function RootLayout({

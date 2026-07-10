@@ -471,7 +471,7 @@ function GenerateModal({
             <div className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-line bg-canvas p-4">
               <div className="mx-auto max-w-lg rounded-md bg-card p-8 shadow-md">
                 <p className="text-xs font-bold uppercase tracking-widest text-brand-600 dark:text-brand-400">
-                  TestHR Inc.
+                  NinjaHR
                 </p>
                 <div className="mb-5 mt-1 h-px bg-line" />
                 <pre className="whitespace-pre-wrap font-serif text-[13px] leading-relaxed text-ink">

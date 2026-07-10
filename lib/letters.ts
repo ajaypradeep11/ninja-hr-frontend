@@ -47,7 +47,7 @@ export function renderLetter(
     manager?: string;
     employeeNumber?: string;
   },
-  company = "TestHR Inc.",
+  company = "NinjaHR",
 ): string {
   const today = new Date().toLocaleDateString("en-CA", {
     year: "numeric",

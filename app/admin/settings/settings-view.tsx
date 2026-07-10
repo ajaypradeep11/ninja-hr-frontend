@@ -239,7 +239,7 @@ export function SettingsView({ initial }: { initial: CompanySettings }) {
               }}
             />
             <p className="mt-2 text-[11px] text-ink-faint">
-              Display name persists to the database. The hard-coded sidebar brand stays in{" "}
+              Company display name persists to the database. Product branding stays in{" "}
               <code className="rounded bg-canvas px-1">lib/brand.ts</code> (currently {BRAND.name}).
             </p>
           </div>

@@ -2,13 +2,16 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { ExternalLink, Globe, Linkedin } from "lucide-react";
 import { listRequisitions } from "@/app/actions/recruitment";
+import { getActor } from "@/lib/actor";
 import { Badge, Card, CardHeader, LinkButton, PageHeader, Stat } from "@/components/ui";
 import { formatDate } from "@/lib/utils";
 import { provinceName } from "@/lib/compliance";
 
 export default async function CareerPageAdmin() {
-  const reqs = await listRequisitions();
+  const [reqs, actor] = await Promise.all([listRequisitions(), getActor()]);
   const published = reqs.filter((r) => r.status === "Published");
+  // The company's public careers URL is tenant-scoped now (/careers/<slug>).
+  const careersPath = actor.companySlug ? `/careers/${actor.companySlug}` : "/careers";
 
   return (
     <div>
@@ -16,20 +19,20 @@ export default async function CareerPageAdmin() {
         title="Career Page"
         subtitle="What candidates see on your public careers site."
         action={
-          <LinkButton href="/careers" variant="outline">
+          <LinkButton href={careersPath} variant="outline">
             <Globe className="h-4 w-4" /> View public site
           </LinkButton>
         }
       />
 
       <div className="mb-5 grid grid-cols-2 gap-4 lg:grid-cols-3">
-        <Stat label="Live postings" value={published.length} hint="Visible on /careers" tone="green" />
+        <Stat label="Live postings" value={published.length} hint={`Visible on ${careersPath}`} tone="green" />
         <Stat
           label="Total applicants"
           value={published.reduce((s, r) => s + r.applicants, 0)}
           hint="Across live roles"
         />
-        <Stat label="Public URL" value="/careers" hint="Shareable careers site" tone="sky" />
+        <Stat label="Public URL" value={careersPath} hint="Shareable careers site" tone="sky" />
       </div>
 
       <Card className="card-pad">
@@ -50,9 +53,9 @@ export default async function CareerPageAdmin() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  {r.slug && (
+                  {r.slug && actor.companySlug && (
                     <Link
-                      href={`/careers/${r.slug}`}
+                      href={`/careers/${actor.companySlug}/${r.slug}`}
                       target="_blank"
                       className="inline-flex items-center gap-1 rounded-lg bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700 dark:text-brand-400 hover:bg-brand-100"
                     >

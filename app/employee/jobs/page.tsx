@@ -2,12 +2,14 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { Briefcase, ExternalLink, MapPin } from "lucide-react";
 import { listJobs } from "@/app/actions/careers";
+import { getActor } from "@/lib/actor";
 import { Card, PageHeader } from "@/components/ui";
 import { provinceName } from "@/lib/compliance";
 import { formatCAD } from "@/lib/utils";
 
 export default async function InternalJobBoardPage() {
-  const jobs = await listJobs();
+  const actor = await getActor();
+  const jobs = await listJobs(actor.companySlug ?? undefined);
 
   return (
     <div>
@@ -39,13 +41,15 @@ export default async function InternalJobBoardPage() {
                     </span>
                   </p>
                 </div>
-                <Link
-                  href={`/careers/${j.slug}`}
-                  target="_blank"
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-700 dark:text-brand-400 transition hover:bg-brand-100"
-                >
-                  View posting <ExternalLink className="h-3.5 w-3.5" />
-                </Link>
+                {actor.companySlug && (
+                  <Link
+                    href={`/careers/${actor.companySlug}/${j.slug}`}
+                    target="_blank"
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-700 dark:text-brand-400 transition hover:bg-brand-100"
+                  >
+                    View posting <ExternalLink className="h-3.5 w-3.5" />
+                  </Link>
+                )}
               </div>
             </Card>
           ))}

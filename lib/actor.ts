@@ -24,10 +24,12 @@ export interface ActorUser {
    * stays the real caller.
    */
   realUserId: string | null;
+  /** The caller's tenant slug — backs public careers links (/careers/<slug>). */
+  companySlug: string | null;
 }
 
-/** Shape of a single row from `/identity/users` — no impersonation concept there. */
-type UserAccount = Omit<ActorUser, "realUserId">;
+/** Shape of a single row from `/identity/users` — no impersonation/tenant concept there. */
+type UserAccount = Omit<ActorUser, "realUserId" | "companySlug">;
 
 async function unwrap<T>(
   promise: Promise<{ data?: unknown; error?: unknown; response: Response }>,
@@ -43,7 +45,7 @@ async function unwrap<T>(
 export const getUsers = cache(async (): Promise<ActorUser[]> => {
   const client = await authedApi("admin");
   const rows = await unwrap<UserAccount[]>(client.GET("/api/v1/identity/users"));
-  return rows.map((u) => ({ ...u, realUserId: u.id }));
+  return rows.map((u) => ({ ...u, realUserId: u.id, companySlug: null }));
 });
 
 /**

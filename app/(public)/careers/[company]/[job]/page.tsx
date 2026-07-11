@@ -10,16 +10,16 @@ import { formatCAD } from "@/lib/utils";
 export default async function JobPostingPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ company: string; job: string }>;
 }) {
-  const { slug } = await params;
-  const job = await getJob(slug);
+  const { company, job: jobSlug } = await params;
+  const job = await getJob(jobSlug);
   if (!job) notFound();
 
   return (
     <div>
       <Link
-        href="/careers"
+        href={`/careers/${company}`}
         className="mb-4 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300"
       >
         <ChevronLeft className="h-3.5 w-3.5" /> All open positions

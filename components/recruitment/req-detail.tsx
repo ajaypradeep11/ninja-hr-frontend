@@ -49,11 +49,14 @@ export function ReqDetail({
   actorEmployeeId,
   isHr,
   basePath,
+  companySlug,
 }: {
   initial: RequisitionDetail;
   actorEmployeeId: string;
   isHr: boolean;
   basePath: string;
+  /** The tenant's careers slug — the public posting lives at /careers/<slug>/<req.slug>. */
+  companySlug: string | null;
 }) {
   const [req, setReq] = React.useState(initial);
   const [error, setError] = React.useState<string | null>(null);
@@ -280,13 +283,15 @@ export function ReqDetail({
           />
           {req.status === "Published" ? (
             <div className="mt-3 space-y-2 text-sm">
-              <p className="flex items-center gap-2 text-ink-soft">
-                <Globe className="h-4 w-4 text-brand-500 dark:text-brand-400" />
-                Careers page:{" "}
-                <Link href={`/careers/${req.slug}`} className="font-semibold text-brand-600 dark:text-brand-400 hover:underline" target="_blank">
-                  /careers/{req.slug}
-                </Link>
-              </p>
+              {companySlug && (
+                <p className="flex items-center gap-2 text-ink-soft">
+                  <Globe className="h-4 w-4 text-brand-500 dark:text-brand-400" />
+                  Careers page:{" "}
+                  <Link href={`/careers/${companySlug}/${req.slug}`} className="font-semibold text-brand-600 dark:text-brand-400 hover:underline" target="_blank">
+                    /careers/{companySlug}/{req.slug}
+                  </Link>
+                </p>
+              )}
               {req.indeedUrl && (
                 <p className="flex items-center gap-2 text-ink-soft">
                   <ExternalLink className="h-4 w-4 text-sky-500 dark:text-sky-400" /> Indeed:{" "}

@@ -21,8 +21,14 @@ async function unwrap<T>(
   return data as T;
 }
 
-export async function listJobs(): Promise<JobPosting[]> {
-  return unwrap<JobPosting[]>(api().GET("/api/v1/recruitment/jobs"));
+// Careers is per-company now. Public careers pages pass the company slug from the
+// URL to scope the board; authenticated internal views (the employee job board)
+// omit it and the backend scopes to the caller's own company via the session.
+// (The `company` query param is newer than the checked-in OpenAPI types, hence
+// the cast — regenerating the types needs a running backend.)
+export async function listJobs(companySlug?: string): Promise<JobPosting[]> {
+  const options = companySlug ? ({ params: { query: { company: companySlug } } } as never) : undefined;
+  return unwrap<JobPosting[]>(api().GET("/api/v1/recruitment/jobs", options));
 }
 
 export async function getJob(slug: string): Promise<JobPostingDetail | null> {

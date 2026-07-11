@@ -102,7 +102,7 @@ export function Sidebar({
             {ctaLabel}
           </Link>
         )}
-        <Link href="#" className="nav-link">
+        <Link href="/help" target="_blank" rel="noopener" className="nav-link">
           <LifeBuoy className="h-[18px] w-[18px]" />
           Support
         </Link>

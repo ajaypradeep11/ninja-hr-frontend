@@ -36,6 +36,16 @@ export default async function LoginPage({
           </Link>
           . Employees are invited by HR after setup.
         </p>
+        <p className="mt-2 text-center text-xs text-ink-muted">
+          New to {BRAND.name}?{" "}
+          <Link className="font-semibold text-brand-600 hover:underline dark:text-brand-300" href="/">
+            See what it does
+          </Link>{" "}
+          ·{" "}
+          <Link className="font-semibold text-brand-600 hover:underline dark:text-brand-300" href="/help">
+            How it works
+          </Link>
+        </p>
       </div>
     </div>
   );

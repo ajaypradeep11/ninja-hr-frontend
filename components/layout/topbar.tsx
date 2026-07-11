@@ -154,9 +154,15 @@ export function Topbar({
             <Bell className="h-[18px] w-[18px]" />
             <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-red-500" />
           </button>
-          <button className="rounded-lg p-2 text-ink-muted hover:bg-canvas">
+          <Link
+            href="/help"
+            target="_blank"
+            rel="noopener"
+            title="Help Center"
+            className="rounded-lg p-2 text-ink-muted hover:bg-canvas"
+          >
             <HelpCircle className="h-[18px] w-[18px]" />
-          </button>
+          </Link>
 
           <div className="ml-1 flex items-center gap-2">
             {impersonating && (

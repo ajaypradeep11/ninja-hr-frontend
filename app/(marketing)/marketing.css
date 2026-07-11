@@ -19,7 +19,7 @@
   --mkt-container: 1120px;
   --mkt-gutter: clamp(1.25rem, 4vw, 2rem);
   --mkt-section-y: clamp(64px, 10vw, 110px);
-  --mkt-header-h: 72px;
+  --mkt-header-h: 92px;
 
   min-height: 100vh;
   display: flex;
@@ -153,6 +153,12 @@
   color: var(--mkt-text-hi);
   letter-spacing: -0.02em;
 }
+.mkt-brand-logo {
+  width: 68px;
+  height: 68px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
 .mkt-brand-accent {
   color: var(--mkt-accent);
 }
@@ -243,22 +249,31 @@
   }
 }
 
-/* ---------- mascot (transparent PNG — the ring is part of the artwork) ---------- */
-.mkt-hero-art .mkt-mascot {
-  filter: drop-shadow(0 18px 45px rgba(11, 136, 213, 0.35));
-  animation: mkt-float 7s ease-in-out infinite;
+/* ---------- mascot ---------- */
+.mkt-mascot {
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 1px rgba(77, 163, 255, 0.35),
+    0 24px 70px rgba(11, 136, 213, 0.25);
 }
-@keyframes mkt-float {
+.mkt-mascot .mkt-mascot-eyes {
+  transform-box: view-box;
+  transform-origin: 50% 48%;
+  animation: mkt-squint 6s ease-in-out infinite;
+}
+@keyframes mkt-squint {
   0%,
+  92%,
   100% {
-    transform: translateY(0);
+    transform: scaleY(1);
   }
-  50% {
-    transform: translateY(-14px);
+  95%,
+  97% {
+    transform: scaleY(0.35);
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .mkt-hero-art .mkt-mascot {
+  .mkt-mascot .mkt-mascot-eyes {
     animation: none;
   }
 }

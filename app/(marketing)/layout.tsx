@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { Sora } from "next/font/google";
 import { BRAND } from "@/lib/brand";
-import { Mascot } from "@/components/marketing/mascot";
 import "./marketing.css";
 
 // Display face for the marketing pages only — the app itself stays on Inter.
@@ -20,7 +20,14 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
       <header className="mkt-header">
         <div className="mkt-container mkt-nav-inner">
           <Link href="/" className="mkt-brand" aria-label={`${BRAND.name} home`}>
-            <Mascot size={36} />
+            <Image
+              src="/logo-ring.png"
+              alt=""
+              width={2000}
+              height={2000}
+              priority
+              className="mkt-brand-logo"
+            />
             <span>
               Ninja<span className="mkt-brand-accent">HR</span>
             </span>

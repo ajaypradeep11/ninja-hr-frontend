@@ -1,53 +1,25 @@
-export const dynamic = "force-dynamic";
 import Link from "next/link";
-import { MapPin, Briefcase } from "lucide-react";
-import { listJobs } from "@/app/actions/careers";
-import { provinceName } from "@/lib/compliance";
-import { formatCAD } from "@/lib/utils";
+import { Building2 } from "lucide-react";
 
-export default async function CareersPage() {
-  const jobs = await listJobs();
-
+// Careers are per-company now (/careers/<company-slug>). There is no global,
+// cross-company job board, so the bare /careers root is just a friendly signpost
+// rather than a listing of every tenant's openings.
+export default function CareersIndexPage() {
   return (
-    <div>
-      <h1 className="text-3xl font-bold tracking-tight text-ink">Join our team</h1>
-      <p className="mt-2 max-w-2xl text-sm text-ink-muted">
-        We&apos;re building agentic HR software for the Canadian market. Every posting shows the
-        real salary range — as it should.
+    <div className="mx-auto max-w-lg text-center">
+      <Building2 className="mx-auto h-10 w-10 text-brand-500 dark:text-brand-400" />
+      <h1 className="mt-4 text-2xl font-bold tracking-tight text-ink">Company careers</h1>
+      <p className="mt-2 text-sm text-ink-muted">
+        Each company on NinjaHR has its own careers page at{" "}
+        <span className="font-mono text-ink-soft">/careers/&lt;company&gt;</span>. Open the link
+        your recruiter shared to see their open roles.
       </p>
-
-      <div className="mt-8 space-y-3">
-        {jobs.length === 0 && (
-          <p className="rounded-2xl border border-line bg-card p-8 text-center text-sm text-ink-muted">
-            No open positions right now — check back soon!
-          </p>
-        )}
-        {jobs.map((j) => (
-          <Link
-            key={j.slug}
-            href={`/careers/${j.slug}`}
-            className="block rounded-2xl border border-line bg-card p-5 transition hover:border-brand-300 hover:shadow-card-lg"
-          >
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="text-base font-bold text-ink">{j.title}</h2>
-                <p className="mt-1 flex flex-wrap items-center gap-3 text-xs text-ink-muted">
-                  <span className="inline-flex items-center gap-1">
-                    <Briefcase className="h-3.5 w-3.5" /> {j.department} · {j.type}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <MapPin className="h-3.5 w-3.5" /> {provinceName(j.province)}
-                  </span>
-                </p>
-              </div>
-              <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700 dark:text-brand-400">
-                {formatCAD(j.salaryMin, { maximumFractionDigits: 0 })} –{" "}
-                {formatCAD(j.salaryMax, { maximumFractionDigits: 0 })}
-              </span>
-            </div>
-          </Link>
-        ))}
-      </div>
+      <Link
+        href="/signup"
+        className="mt-6 inline-block rounded-xl bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-600"
+      >
+        Hiring? Create your workspace
+      </Link>
     </div>
   );
 }

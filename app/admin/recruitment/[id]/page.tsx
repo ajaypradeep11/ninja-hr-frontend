@@ -26,6 +26,7 @@ export default async function AdminRequisitionDetailPage({
         actorEmployeeId={actor.employeeId}
         isHr={actor.roleCode === "HR_ADMIN"}
         basePath="/admin/recruitment"
+        companySlug={actor.companySlug}
       />
     </div>
   );

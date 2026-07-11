@@ -243,31 +243,22 @@
   }
 }
 
-/* ---------- mascot ---------- */
-.mkt-mascot {
-  border-radius: 50%;
-  box-shadow:
-    0 0 0 1px rgba(77, 163, 255, 0.35),
-    0 24px 70px rgba(11, 136, 213, 0.25);
+/* ---------- mascot (transparent PNG — the ring is part of the artwork) ---------- */
+.mkt-hero-art .mkt-mascot {
+  filter: drop-shadow(0 18px 45px rgba(11, 136, 213, 0.35));
+  animation: mkt-float 7s ease-in-out infinite;
 }
-.mkt-mascot .mkt-mascot-eyes {
-  transform-box: view-box;
-  transform-origin: 50% 48%;
-  animation: mkt-squint 6s ease-in-out infinite;
-}
-@keyframes mkt-squint {
+@keyframes mkt-float {
   0%,
-  92%,
   100% {
-    transform: scaleY(1);
+    transform: translateY(0);
   }
-  95%,
-  97% {
-    transform: scaleY(0.35);
+  50% {
+    transform: translateY(-14px);
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .mkt-mascot .mkt-mascot-eyes {
+  .mkt-hero-art .mkt-mascot {
     animation: none;
   }
 }

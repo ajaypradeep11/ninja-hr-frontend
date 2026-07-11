@@ -11,8 +11,8 @@ export const metadata: Metadata = {
   title: `${BRAND.name} · ${BRAND.tagline}`,
   description: BRAND.tagline,
   icons: {
-    icon: "/LOGO.png",
-    apple: "/LOGO.png",
+    icon: "/logo-ring.png",
+    apple: "/logo-ring.png",
   },
 };
 

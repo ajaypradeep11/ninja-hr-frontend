@@ -25,7 +25,7 @@ export function BrandMark({
   return (
     <span className={cn("flex items-center gap-2.5", className)}>
       <Image
-        src="/LOGO.png"
+        src="/logo-ring.png"
         alt={`${BRAND.name} logo`}
         width={500}
         height={500}

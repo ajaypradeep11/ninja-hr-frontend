@@ -13,20 +13,21 @@ import {
   Users,
 } from "lucide-react";
 import {
-  ArcGauge,
   Avatar,
-  Badge,
   Card,
   CardHeader,
-  ComplianceBadge,
   ProgressBar,
   VividStat,
 } from "@/components/ui";
+import { Bill149Badge } from "@/components/dashboard/bill149-badge";
+import { TeamHealthCard } from "@/components/dashboard/team-health-card";
+import { LeaveRequestsCard } from "@/components/dashboard/leave-requests-card";
+import { OffboardingCard } from "@/components/dashboard/offboarding-card";
 import {
-  currentUser,
   offboardingEmployee,
   upcomingEvents,
 } from "@/lib/data";
+import { getActor } from "@/lib/actor";
 import {
   getSalaryBenchmarks,
   getLeaveRequests,
@@ -34,8 +35,10 @@ import {
   getOffboardingTasks,
   getOnboardingPipeline,
   getEmployees,
+  getPerformanceReviews,
+  getRequisitions,
 } from "@/lib/queries";
-import { formatCAD, formatDate } from "@/lib/utils";
+import { formatCAD } from "@/lib/utils";
 
 const eventIcon = {
   probation: CalendarClock,
@@ -53,15 +56,26 @@ const eventRail = {
 };
 
 export default async function AdminDashboard() {
-  const [salaryBenchmarks, leaveRequests, trainingCourses, offboardingTasks, onboardingPipeline, employees] =
-    await Promise.all([
-      getSalaryBenchmarks(),
-      getLeaveRequests(),
-      getTrainingCourses(),
-      getOffboardingTasks(),
-      getOnboardingPipeline(),
-      getEmployees(),
-    ]);
+  const actor = await getActor();
+  const [
+    salaryBenchmarks,
+    leaveRequests,
+    trainingCourses,
+    offboardingTasks,
+    onboardingPipeline,
+    employees,
+    performanceReviews,
+    requisitions,
+  ] = await Promise.all([
+    getSalaryBenchmarks(),
+    getLeaveRequests(),
+    getTrainingCourses(),
+    getOffboardingTasks(),
+    getOnboardingPipeline(),
+    getEmployees(),
+    getPerformanceReviews(),
+    getRequisitions(),
+  ]);
 
   // Guard the empty case — Math.max() of nothing is -Infinity, which breaks bar widths.
   const maxSalary = salaryBenchmarks.length ? Math.max(...salaryBenchmarks.map((b) => b.high)) : 1;
@@ -72,13 +86,13 @@ export default async function AdminDashboard() {
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-[26px] font-bold tracking-tight text-ink">
-            Good morning, {currentUser.firstName}
+            Good morning, {actor.name.split(" ")[0]}
           </h1>
           <p className="mt-1 text-sm text-ink-muted">
             Here&apos;s what&apos;s happening across your workforce today.
           </p>
         </div>
-        <ComplianceBadge />
+        <Bill149Badge requisitions={requisitions} />
       </div>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
@@ -147,68 +161,10 @@ export default async function AdminDashboard() {
         </Card>
 
         {/* Team Health */}
-        <Card className="card-pad lg:col-span-4">
-          <CardHeader title="Team Health" />
-          <div className="flex flex-col items-center justify-center py-3">
-            <ArcGauge value={88} sublabel="Performance" />
-            <p className="mt-1 text-center text-xs text-ink-muted">
-              Overall performance across 45 active reviews
-            </p>
-          </div>
-        </Card>
+        <TeamHealthCard reviews={performanceReviews} />
 
         {/* Leave Requests */}
-        <Card className="card-pad lg:col-span-5">
-          <CardHeader
-            title="Leave Requests"
-            action={
-              <Link
-                href="/admin/leave"
-                className="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300"
-              >
-                Open queue
-              </Link>
-            }
-          />
-          <div className="mt-2 overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-[10px] uppercase tracking-wide text-ink-faint">
-                  <th className="pb-2 font-semibold">Employee</th>
-                  <th className="pb-2 font-semibold">Type</th>
-                  <th className="pb-2 font-semibold">Dates</th>
-                  <th className="pb-2 text-right font-semibold">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pendingLeave.map((l) => (
-                  <tr key={l.id} className="border-t border-line">
-                    <td className="py-2.5">
-                      <div className="flex items-center gap-2">
-                        <Avatar name={l.employee} size={28} />
-                        <span className="font-medium text-ink">{l.employee}</span>
-                      </div>
-                    </td>
-                    <td className="py-2.5 text-ink-muted">{l.type}</td>
-                    <td className="py-2.5 text-ink-muted">
-                      {formatDate(l.start, { year: undefined })} –{" "}
-                      {formatDate(l.end, { year: undefined })}
-                    </td>
-                    <td className="py-2.5 text-right">
-                      {/* Approval happens on the Leave page — a bare button here did nothing. */}
-                      <Link
-                        href="/admin/leave"
-                        className="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300"
-                      >
-                        Review
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+        <LeaveRequestsCard pending={pendingLeave} />
 
         {/* Salary Benchmarks */}
         <Card className="card-pad lg:col-span-4">
@@ -328,38 +284,10 @@ export default async function AdminDashboard() {
         </Card>
 
         {/* Offboarding */}
-        <Card className="card-pad lg:col-span-4">
-          <CardHeader
-            title="Offboarding"
-            action={
-              <Link
-                href="/admin/offboarding"
-                className="inline-flex items-center gap-0.5 text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300"
-              >
-                Manage <ArrowUpRight className="h-3 w-3" />
-              </Link>
-            }
-          />
-          <div className="mt-3 flex items-center gap-3">
-            <Avatar name={offboardingEmployee.name} size={36} />
-            <div>
-              <p className="text-sm font-semibold text-ink">{offboardingEmployee.name}</p>
-              <p className="text-xs text-ink-muted">
-                Last day {formatDate(offboardingEmployee.lastDay, { year: undefined })}
-              </p>
-            </div>
-          </div>
-          <div className="mt-4 space-y-2.5">
-            {offboardingTasks.slice(0, 3).map((t) => (
-              <div key={t.id} className="flex items-center justify-between text-sm">
-                <span className="text-ink-soft">{t.label}</span>
-                <Badge tone={t.status === "Completed" ? "green" : t.status === "In-Progress" ? "amber" : "gray"}>
-                  {t.status}
-                </Badge>
-              </div>
-            ))}
-          </div>
-        </Card>
+        <OffboardingCard
+          tasks={offboardingTasks}
+          employee={{ name: offboardingEmployee.name, lastDay: offboardingEmployee.lastDay }}
+        />
       </div>
     </div>
   );

@@ -33,8 +33,10 @@ interface Ctx {
   // HR / admin
   setChecklist: (id: string, tasks: ChecklistTask[]) => Promise<void>;
   setTaskStatus: (id: string, taskId: string, status: TaskStatus) => Promise<void>;
+  deleteTask: (id: string, taskId: string) => Promise<void>;
   setTaskAssignee: (id: string, owner: TaskOwner, employeeName: string | null) => Promise<void>;
   verifyDocument: (id: string, docId: string) => Promise<void>;
+  rejectDocument: (id: string, docId: string, note: string) => Promise<void>;
   togglePolicy: (id: string, policy: string) => Promise<void>;
   activate: (id: string) => Promise<void>;
 }
@@ -78,6 +80,16 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     });
   }, []);
 
+  // Full-checklist replaces (add / import) are delete-all + re-create on the
+  // server; two of them in flight at once interleave and duplicate tasks.
+  // Chain them so a rapid double-click can never race itself.
+  const checklistQueue = React.useRef<Promise<unknown>>(Promise.resolve());
+  const enqueueChecklist = React.useCallback(<T,>(job: () => Promise<T>): Promise<T> => {
+    const next = checklistQueue.current.then(job, job);
+    checklistQueue.current = next.catch(() => {});
+    return next;
+  }, []);
+
   const value: Ctx = {
     cases,
     loading,
@@ -98,12 +110,33 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     addConsent: async (token, policy) => upsert(await actions.addConsent(token, policy)),
     finalizeSubmission: async (token) => upsert(await actions.finalizeSubmission(token)),
 
-    setChecklist: async (id, tasks) => upsert(await actions.setChecklist(id, tasks)),
+    setChecklist: (id, tasks) =>
+      enqueueChecklist(async () => upsert(await actions.setChecklist(id, tasks))),
     setTaskStatus: async (id, taskId, status) =>
       upsert(await actions.setTaskStatus(id, taskId, status)),
+    deleteTask: async (id, taskId) => {
+      // Optimistic: drop the task instantly (the round trip made Delete feel
+      // broken and invited double-clicks), then rebind to server truth.
+      setCases((prev) =>
+        prev.map((c) =>
+          c.id === id ? { ...c, checklist: c.checklist.filter((t) => t.id !== taskId) } : c,
+        ),
+      );
+      try {
+        upsert(await actions.deleteTask(id, taskId));
+      } catch (err) {
+        // 404 = already deleted (double click) — the optimistic state is
+        // correct, don't resurrect the task or surface an error.
+        if (err instanceof Error && /404|not found/i.test(err.message)) return;
+        await refresh();
+        throw err;
+      }
+    },
     setTaskAssignee: async (id, owner, employeeName) =>
       upsert(await actions.setTaskAssignee(id, owner, employeeName)),
     verifyDocument: async (id, docId) => upsert(await actions.verifyDocument(id, docId)),
+    rejectDocument: async (id, docId, note) =>
+      upsert(await actions.rejectDocument(id, docId, note)),
     togglePolicy: async (id, policy) => upsert(await actions.togglePolicy(id, policy)),
     activate: async (id) => upsert(await actions.activate(id)),
   };

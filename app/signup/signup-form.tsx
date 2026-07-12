@@ -34,20 +34,25 @@ export function SignupForm() {
     event.preventDefault();
     setError(null);
     startTransition(async () => {
+      const result = await createCompanySignup({
+        companyName,
+        adminName,
+        workEmail,
+        password,
+        province,
+      });
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
       try {
-        const result = await createCompanySignup({
-          companyName,
-          adminName,
-          workEmail,
-          password,
-          province,
-        });
         const credential = await signInWithEmailAndPassword(firebaseClientAuth(), result.email, password);
         await createSession(await credential.user.getIdToken());
         router.replace("/admin");
         router.refresh();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Signup failed.");
+      } catch {
+        // Workspace was created; only the auto-login failed. Don't strand the user.
+        setError("Your workspace was created, but automatic sign-in failed. Please sign in with your email and password.");
       }
     });
   }

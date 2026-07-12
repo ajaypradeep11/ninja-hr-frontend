@@ -164,7 +164,16 @@ function FileDrop({
   );
 }
 
-const EMPTY_PROFILE: NewHireProfileInput = {
+/**
+ * The wizard draft: identical to the submit payload except work status starts
+ * UNSELECTED — QA flagged that it (and the account holder name) must not come
+ * pre-filled; the employee has to choose/type their own values.
+ */
+type ProfileDraft = Omit<NewHireProfileInput, "workEligibility"> & {
+  workEligibility: WorkEligibilityLabel | "";
+};
+
+const EMPTY_PROFILE: ProfileDraft = {
   legalFirstName: "",
   legalLastName: "",
   preferredName: "",
@@ -178,7 +187,7 @@ const EMPTY_PROFILE: NewHireProfileInput = {
   emergencyName: "",
   emergencyRelationship: "",
   emergencyPhone: "",
-  workEligibility: "Citizen",
+  workEligibility: "",
   workPermitExpiry: "",
   bankInstitution: "",
   bankTransit: "",
@@ -208,9 +217,10 @@ function Wizard() {
 
   const [step, setStep] = React.useState(0);
 
-  // Standard new-hire form (Ontario) — controlled fields, prefilled from the case.
-  const [p, setP] = React.useState<NewHireProfileInput>(EMPTY_PROFILE);
-  const set = (patch: Partial<NewHireProfileInput>) => setP((prev) => ({ ...prev, ...patch }));
+  // Standard new-hire form (Ontario) — controlled fields; only the legal name
+  // prefills (from the invite HR created). Everything else starts blank.
+  const [p, setP] = React.useState<ProfileDraft>(EMPTY_PROFILE);
+  const set = (patch: Partial<ProfileDraft>) => setP((prev) => ({ ...prev, ...patch }));
   const prefilled = React.useRef(false);
   React.useEffect(() => {
     if (prefilled.current) return;
@@ -261,21 +271,12 @@ function Wizard() {
     p.emergencyName.trim() !== "" &&
     p.emergencyRelationship.trim() !== "" &&
     p.emergencyPhone.trim() !== "" &&
+    p.workEligibility !== "" &&
     (!needsPermitExpiry || !!p.workPermitExpiry) &&
     /^\d{3}$/.test(p.bankInstitution) &&
     /^\d{5}$/.test(p.bankTransit) &&
     /^\d{7,12}$/.test(p.bankAccount) &&
     p.bankAccountHolder.trim() !== "";
-
-  // Auto-fill the account holder from the legal name until the new hire
-  // deliberately types their own value (e.g. a joint account).
-  const holderTouched = React.useRef(false);
-  React.useEffect(() => {
-    if (holderTouched.current) return;
-    const legal = `${p.legalFirstName} ${p.legalLastName}`.trim();
-    if (legal && p.bankAccountHolder !== legal) set({ bankAccountHolder: legal });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [p.legalFirstName, p.legalLastName]);
 
   // Resume saved progress once the case loads ("your progress is saved
   // automatically" — so don't restart a returning employee at step 0).
@@ -311,8 +312,10 @@ function Wizard() {
         if (step === 0) {
           // One submission covers personal info + direct deposit — the server
           // stores the form (SIN/bank masked on read) and ticks both flags.
+          // profileValid gates this step, so the draft's work status is set.
           await submitProfile(token, {
             ...p,
+            workEligibility: p.workEligibility as WorkEligibilityLabel,
             preferredName: p.preferredName?.trim() || undefined,
             workPermitExpiry: needsPermitExpiry ? p.workPermitExpiry || undefined : undefined,
           });
@@ -536,6 +539,11 @@ function Wizard() {
                           value={p.workEligibility}
                           onChange={(e) => set({ workEligibility: e.target.value as WorkEligibilityLabel })}
                         >
+                          {/* Starts unselected on purpose — the employee must
+                              declare their own status (QA: no prefill). */}
+                          <option value="" disabled>
+                            Select your status…
+                          </option>
                           {ELIGIBILITY.map((w) => (
                             <option key={w}>{w}</option>
                           ))}
@@ -572,10 +580,7 @@ function Wizard() {
                       <input
                         className="field-input"
                         value={p.bankAccountHolder}
-                        onChange={(e) => {
-                          holderTouched.current = true;
-                          set({ bankAccountHolder: e.target.value });
-                        }}
+                        onChange={(e) => set({ bankAccountHolder: e.target.value })}
                         placeholder="Name exactly as it appears on the account"
                       />
                       <p className="mt-1 text-[11px] text-ink-faint">
@@ -816,8 +821,16 @@ function Wizard() {
                         <span className="block truncate text-sm text-ink-soft">{doc.name}</span>
                         <span className="block text-[10px] text-ink-faint">{doc.folder}</span>
                       </span>
-                      <Badge tone={doc.status === "Verified" ? "green" : "amber"}>
-                        {doc.status === "Verified" ? "Verified" : "With HR"}
+                      <Badge
+                        tone={
+                          doc.status === "Verified" ? "green" : doc.status === "Pending" ? "red" : "amber"
+                        }
+                      >
+                        {doc.status === "Verified"
+                          ? "Verified"
+                          : doc.status === "Pending"
+                            ? "Rejected — please re-upload"
+                            : "With HR"}
                       </Badge>
                     </div>
                   ))}
@@ -846,7 +859,8 @@ function Wizard() {
             </div>
           </Card>
 
-          <div className="flex items-start gap-2.5 rounded-2xl border border-line bg-white/60 p-4 text-sm text-ink-muted">
+          {/* bg-card follows the theme — a hardcoded white washed out in dark mode. */}
+          <div className="flex items-start gap-2.5 rounded-2xl border border-line bg-card p-4 text-sm text-ink-muted">
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500 dark:text-emerald-400" />
             <span>
               Your data is encrypted at rest and in transit. A human HR reviewer verifies your

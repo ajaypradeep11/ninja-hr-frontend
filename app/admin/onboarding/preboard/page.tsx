@@ -14,13 +14,19 @@ import {
   Check,
   ArrowRight,
   Mail,
+  Plus,
+  Settings2,
+  X,
 } from "lucide-react";
 import { Card } from "@/components/ui";
 import { BRAND } from "@/lib/brand";
 import { PROVINCES, type ProvinceCode } from "@/lib/compliance";
 import { useOnboarding } from "@/components/onboarding-store";
+import { getDepartmentOptions, saveDepartmentOptions } from "@/app/actions/onboarding";
 import type { OnboardingCase } from "@/lib/onboarding";
 
+/** Fallback until the company's saved list loads (kept in sync with the
+ *  server action's DEFAULT_DEPARTMENTS). */
 const DEPARTMENTS = ["Engineering", "Design", "Sales", "Finance", "Marketing", "People", "Operations"];
 const agenticPoints = [
   "Automated secure data synchronization",
@@ -39,6 +45,46 @@ export default function PreboardPage() {
   const [created, setCreated] = React.useState<OnboardingCase | null>(null);
   const [copied, setCopied] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
+
+  // Admin-manageable department options — loaded from company settings, with
+  // inline add/remove persisted back (QA: unlisted departments like
+  // "Administration" must be addable, and removable again).
+  const [departments, setDepartments] = React.useState<string[]>(DEPARTMENTS);
+  const [manageDepts, setManageDepts] = React.useState(false);
+  const [newDept, setNewDept] = React.useState("");
+  const [deptError, setDeptError] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    getDepartmentOptions()
+      .then(setDepartments)
+      .catch(() => setDepartments(DEPARTMENTS));
+  }, []);
+
+  async function persistDepartments(next: string[]) {
+    setDeptError(null);
+    const prev = departments;
+    setDepartments(next); // optimistic — the dropdown updates instantly
+    try {
+      setDepartments(await saveDepartmentOptions(next));
+    } catch {
+      setDepartments(prev);
+      setDeptError("Couldn't save the department list — please try again.");
+    }
+  }
+
+  async function addDepartment() {
+    const label = newDept.trim();
+    if (!label) return;
+    setNewDept("");
+    if (!departments.some((d) => d.toLowerCase() === label.toLowerCase())) {
+      await persistDepartments([...departments, label]);
+    }
+    setDepartment(label);
+  }
+
+  async function removeDepartment(label: string) {
+    await persistDepartments(departments.filter((d) => d !== label));
+    if (department === label) setDepartment("");
+  }
 
   const valid = name.trim() && start && email.includes("@");
   const inviteLink = created ? `${siteOrigin()}/welcome/${created.token}` : "";
@@ -183,10 +229,20 @@ export default function PreboardPage() {
                     />
                   </div>
                   <div>
-                    <label className="field-label">Department</label>
+                    <div className="flex items-center justify-between">
+                      <label className="field-label">Department</label>
+                      <button
+                        type="button"
+                        onClick={() => setManageDepts((v) => !v)}
+                        className="mb-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300"
+                        title="Add or remove department options"
+                      >
+                        <Settings2 className="h-3 w-3" /> {manageDepts ? "Done" : "Edit options"}
+                      </button>
+                    </div>
                     <select value={department} onChange={(e) => setDepartment(e.target.value)} className="field-input">
                       <option value="">Select…</option>
-                      {DEPARTMENTS.map((d) => (
+                      {departments.map((d) => (
                         <option key={d}>{d}</option>
                       ))}
                     </select>
@@ -206,6 +262,55 @@ export default function PreboardPage() {
                     </select>
                   </div>
                 </div>
+
+                {/* Department option manager — persisted to company settings
+                    so the list is shared by every admin. */}
+                {manageDepts && (
+                  <div className="rounded-xl border border-line bg-canvas p-3.5">
+                    <p className="text-xs font-semibold text-ink-soft">Department options</p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {departments.map((d) => (
+                        <span
+                          key={d}
+                          className="inline-flex items-center gap-1 rounded-lg bg-card px-2 py-1 text-xs font-medium text-ink-soft"
+                        >
+                          {d}
+                          <button
+                            type="button"
+                            onClick={() => void removeDepartment(d)}
+                            title={`Remove ${d}`}
+                            className="text-ink-faint transition hover:text-red-500"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                    <div className="mt-2.5 flex items-center gap-2">
+                      <input
+                        value={newDept}
+                        onChange={(e) => setNewDept(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            void addDepartment();
+                          }
+                        }}
+                        placeholder="Add a department, e.g. Administration"
+                        className="h-8 flex-1 rounded-lg border border-line bg-card px-2.5 text-xs outline-none focus:border-brand-300"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => void addDepartment()}
+                        disabled={!newDept.trim()}
+                        className="inline-flex h-8 items-center gap-1 rounded-lg bg-brand-500 px-2.5 text-xs font-semibold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <Plus className="h-3.5 w-3.5" /> Add
+                      </button>
+                    </div>
+                    {deptError && <p className="mt-2 text-xs text-red-600 dark:text-red-300">{deptError}</p>}
+                  </div>
+                )}
               </div>
 
               {launchError && (
@@ -259,7 +364,8 @@ export default function PreboardPage() {
             </ul>
           </Card>
 
-          <div className="rounded-2xl border border-line bg-white/60 p-5">
+          {/* bg-card follows the theme — a hardcoded white washed out in dark mode. */}
+          <div className="rounded-2xl border border-line bg-card p-5">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-ink-faint">
               <Info className="h-3.5 w-3.5" /> Next steps
             </div>

@@ -25,7 +25,14 @@ export default async function LoginPage({
         {unprovisioned && (
           <div className="mb-4 flex items-start gap-2 rounded-xl bg-amber-50 dark:bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
             <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
-            <span>Your account isn&apos;t linked to an employee profile yet — contact HR.</span>
+            <span>
+              Your account isn&apos;t linked to an employee profile yet. If your company already uses{" "}
+              {BRAND.name}, ask HR to invite you. Setting up a new company?{" "}
+              <Link className="font-semibold underline" href="/signup">
+                Create your workspace
+              </Link>
+              .
+            </span>
           </div>
         )}
         <LoginForm />

@@ -72,8 +72,10 @@ export default function CaseDetailPage() {
     loading,
     setChecklist,
     setTaskStatus,
+    deleteTask,
     setTaskAssignee,
     verifyDocument,
+    rejectDocument,
     activate,
   } = useOnboarding();
   const c = getCase(params.id);
@@ -82,6 +84,10 @@ export default function CaseDetailPage() {
   const [uploadText, setUploadText] = React.useState("");
   const [showAudit, setShowAudit] = React.useState(false);
   const [preview, setPreview] = React.useState<CaseDocument | null>(null);
+  // Document being rejected + the note sent to the employee / audit trail.
+  const [rejecting, setRejecting] = React.useState<CaseDocument | null>(null);
+  const [rejectNote, setRejectNote] = React.useState("");
+  const [rejectBusy, setRejectBusy] = React.useState(false);
   const [newTask, setNewTask] = React.useState<{ label: string; owner: TaskOwner; blocking: boolean; access: DataAccess }>(
     { label: "", owner: "HR", blocking: false, access: "general" },
   );
@@ -186,7 +192,9 @@ export default function CaseDetailPage() {
   }
 
   function removeTask(id: string) {
-    void run(setChecklist(c!.id, c!.checklist.filter((t) => t.id !== id)));
+    // Single-task delete (optimistic in the store) — a full-checklist replace
+    // here used to duplicate tasks when two deletes raced each other.
+    void run(deleteTask(c!.id, id));
   }
 
   function downloadDoc(doc: CaseDocument) {
@@ -285,13 +293,13 @@ Policy:     ESIGN / PIPEDA compliant signing
         <div className="mt-4 flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 dark:bg-amber-500/10 px-4 py-3">
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-300" />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-amber-900">
+            <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
               Action Required: {pendingVerifyCount} document
               {pendingVerifyCount === 1 ? "" : "s"} require HR verification to activate this account.
             </p>
             <a
               href="#hr-verification"
-              className="mt-0.5 inline-block text-xs font-semibold text-amber-700 dark:text-amber-300 underline underline-offset-2 hover:text-amber-900"
+              className="mt-0.5 inline-block text-xs font-semibold text-amber-700 dark:text-amber-300 underline underline-offset-2 hover:text-amber-900 dark:hover:text-amber-100"
             >
               Jump to verification →
             </a>
@@ -487,9 +495,24 @@ Policy:     ESIGN / PIPEDA compliant signing
                       <Badge tone="green">
                         <CheckCircle2 className="h-3 w-3" /> Verified
                       </Badge>
+                    ) : d.status === "Pending" ? (
+                      // Rejected — parked until the employee re-uploads (the
+                      // rejection note is in the audit trail).
+                      <Badge tone="red">
+                        <XCircle className="h-3 w-3" /> Rejected — awaiting re-upload
+                      </Badge>
                     ) : (
                       <>
                         <Badge tone="amber">Needs verification</Badge>
+                        <button
+                          onClick={() => {
+                            setRejectNote("");
+                            setRejecting(d);
+                          }}
+                          className="rounded-lg border border-red-200 dark:border-red-500/30 px-2.5 py-1 text-xs font-semibold text-red-600 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/10"
+                        >
+                          Reject
+                        </button>
                         <button
                           onClick={() => run(verifyDocument(c.id, d.id))}
                           className="rounded-lg bg-brand-500 px-2.5 py-1 text-xs font-semibold text-white hover:bg-brand-600"
@@ -648,6 +671,49 @@ Policy:     ESIGN / PIPEDA compliant signing
         </Modal>
       )}
 
+      {/* Reject document modal — a note is required so the employee knows
+          what to fix; it's recorded in the audit trail. */}
+      {rejecting && (
+        <Modal onClose={() => setRejecting(null)} title={`Reject "${rejecting.name}"`}>
+          <p className="text-sm text-ink-muted">
+            The document is sent back to the employee: it shows as{" "}
+            <span className="font-semibold text-red-600 dark:text-red-300">Rejected</span> in their
+            onboarding portal until they upload a corrected copy, and it keeps blocking
+            activation.
+          </p>
+          <label className="field-label mt-4">Note to the employee *</label>
+          <textarea
+            value={rejectNote}
+            onChange={(e) => setRejectNote(e.target.value)}
+            rows={4}
+            maxLength={500}
+            className="w-full rounded-xl border border-line bg-card p-3 text-sm outline-none focus:border-brand-300"
+            placeholder="e.g. The TD1 is missing a signature on page 2 — please sign and re-upload."
+          />
+          <div className="mt-4 flex justify-end gap-2">
+            <button
+              onClick={() => setRejecting(null)}
+              className="rounded-xl border border-line px-4 py-2 text-sm font-semibold text-ink-soft hover:bg-canvas"
+            >
+              Cancel
+            </button>
+            <button
+              disabled={!rejectNote.trim() || rejectBusy}
+              onClick={() => {
+                setRejectBusy(true);
+                void run(rejectDocument(c.id, rejecting.id, rejectNote.trim())).finally(() => {
+                  setRejectBusy(false);
+                  setRejecting(null);
+                });
+              }}
+              className="rounded-xl bg-red-500 px-4 py-2 text-sm font-semibold text-white hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {rejectBusy ? "Rejecting…" : "Reject & notify employee"}
+            </button>
+          </div>
+        </Modal>
+      )}
+
       {/* Doc preview modal */}
       {preview && (
         <Modal onClose={() => setPreview(null)} title={preview.name}>
@@ -711,7 +777,9 @@ function InfoTip({ text }: { text: string }) {
       </button>
       <span
         role="tooltip"
-        className="pointer-events-none absolute left-1/2 top-full z-30 mt-1.5 w-56 -translate-x-1/2 rounded-lg bg-ink px-3 py-2 text-[11px] font-medium leading-snug text-white opacity-0 shadow-lg transition-opacity group-hover/tip:opacity-100"
+        // bg-ink flips light in dark mode, so the text must flip too —
+        // text-canvas is its themed inverse (text-white went invisible).
+        className="pointer-events-none absolute left-1/2 top-full z-30 mt-1.5 w-56 -translate-x-1/2 rounded-lg bg-ink px-3 py-2 text-[11px] font-medium leading-snug text-canvas opacity-0 shadow-lg transition-opacity group-hover/tip:opacity-100"
       >
         {text}
       </span>

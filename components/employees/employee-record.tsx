@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import {
   Banknote,
   Briefcase,
@@ -24,6 +25,7 @@ import {
   deleteEmergencyContact,
   updateEmployee,
 } from "@/app/actions/employees";
+import { assignTraining } from "@/app/actions/training";
 import {
   EMPLOYEE_STATUSES,
   EMPLOYMENT_TYPES,
@@ -32,7 +34,7 @@ import {
   type EmployeeDetail,
   type UpdateEmployeeInput,
 } from "@/lib/employees";
-import type { TrainingAssignment } from "@/lib/training";
+import type { TrainingAssignment, TrainingCourse } from "@/lib/training";
 import { PROVINCES, provinceName } from "@/lib/compliance";
 import { formatCAD, formatDate } from "@/lib/utils";
 
@@ -40,6 +42,15 @@ const trainingTone: Record<string, "gray" | "amber" | "green"> = {
   Assigned: "gray",
   "In-Progress": "amber",
   Completed: "green",
+};
+
+const SECTION_TITLES: Record<string, string> = {
+  personal: "Personal",
+  contact: "Contact & Address",
+  employment: "Employment",
+  comp: "Compensation",
+  eligibility: "Work Eligibility & Tax",
+  banking: "Direct Deposit",
 };
 
 function Field({ label, value }: { label: string; value?: React.ReactNode }) {
@@ -51,47 +62,115 @@ function Field({ label, value }: { label: string; value?: React.ReactNode }) {
   );
 }
 
+/** Every existing value of the section, so the modal opens fully pre-populated. */
+function seedFor(section: string, emp: EmployeeDetail): UpdateEmployeeInput {
+  switch (section) {
+    case "personal":
+      return {
+        name: emp.name,
+        preferredName: emp.preferredName,
+        pronouns: emp.pronouns,
+        birthDate: emp.birthDate,
+      };
+    case "contact":
+      return {
+        personalEmail: emp.personalEmail,
+        phone: emp.phone,
+        addressStreet: emp.addressStreet,
+        addressCity: emp.addressCity,
+        addressProvince: emp.addressProvince,
+        addressPostal: emp.addressPostal,
+      };
+    case "employment":
+      return {
+        employeeNumber: emp.employeeNumber,
+        title: emp.title,
+        department: emp.department,
+        manager: emp.manager,
+        status: emp.status,
+        employmentType: emp.employmentType,
+        workLocation: emp.workLocation,
+        hireDate: emp.hireDate,
+      };
+    case "comp":
+      return { salary: emp.salary, payFrequency: emp.payFrequency };
+    case "eligibility":
+      return {
+        workEligibility: emp.workEligibility,
+        workPermitExpiry: emp.workPermitExpiry,
+        td1FederalOnFile: emp.td1FederalOnFile,
+        td1ProvincialOnFile: emp.td1ProvincialOnFile,
+        sin: "",
+      };
+    case "banking":
+      return {
+        bankInstitution: emp.bankInstitution,
+        bankTransit: emp.bankTransit,
+        bankAccount: "",
+      };
+    default:
+      return {};
+  }
+}
+
 export function EmployeeRecord({
   initial,
-  training = [],
+  training: initialTraining = [],
+  courses = [],
   autoEdit = false,
 }: {
   initial: EmployeeDetail;
   training?: TrainingAssignment[];
+  courses?: TrainingCourse[];
   autoEdit?: boolean;
 }) {
   const [emp, setEmp] = React.useState(initial);
+  const [training, setTraining] = React.useState(initialTraining);
   // Deep-linked "Edit Details" (?edit=1) opens the contact section straight away.
   const [editing, setEditing] = React.useState<string | null>(autoEdit ? "contact" : null);
   const [draft, setDraft] = React.useState<UpdateEmployeeInput>(
-    autoEdit
-      ? {
-          personalEmail: initial.personalEmail,
-          phone: initial.phone,
-          addressStreet: initial.addressStreet,
-          addressCity: initial.addressCity,
-          addressProvince: initial.addressProvince,
-          addressPostal: initial.addressPostal,
-        }
-      : {},
+    autoEdit ? seedFor("contact", initial) : {},
   );
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [assigning, setAssigning] = React.useState(false);
 
-  function startEdit(section: string, seed: UpdateEmployeeInput) {
+  function startEdit(section: string) {
     setEditing(section);
-    setDraft(seed);
+    setDraft(seedFor(section, emp));
+    setError(null);
+  }
+
+  function closeEdit() {
+    setEditing(null);
+    setDraft({});
     setError(null);
   }
 
   async function save() {
     if (busy) return;
+    if (draft.name !== undefined && !draft.name.trim()) {
+      setError("Legal name is required");
+      return;
+    }
+    // Sanity: an employee cannot start work before they were born. Compare the
+    // drafted value against the saved one when only one side is being edited.
+    const hire = draft.hireDate ?? emp.hireDate;
+    const birth = draft.birthDate ?? emp.birthDate;
+    if (hire && birth && hire < birth) {
+      setError("Start date cannot be before date of birth");
+      return;
+    }
+    // "Leave blank to keep": an empty SIN/account means don't touch the stored
+    // value, so it must not reach the API (the backend treats "" as a clear).
+    const payload = { ...draft };
+    if (!payload.sin) delete payload.sin;
+    if (!payload.bankAccount) delete payload.bankAccount;
     setBusy(true);
     setError(null);
     try {
-      setEmp(await updateEmployee(emp.id, draft));
-      setEditing(null);
-      setDraft({});
+      setEmp(await updateEmployee(emp.id, payload));
+      closeEdit();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save");
     } finally {
@@ -99,35 +178,9 @@ export function EmployeeRecord({
     }
   }
 
-  const SectionEdit = ({ section, children }: { section: string; children: React.ReactNode }) =>
-    editing === section ? (
-      <div className="space-y-3">
-        {children}
-        {error && <p className="text-xs text-red-600 dark:text-red-300">{error}</p>}
-        <div className="flex gap-2">
-          <button
-            onClick={save}
-            disabled={busy}
-            className="inline-flex items-center gap-1 rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-600 disabled:opacity-50"
-          >
-            <Check className="h-3.5 w-3.5" /> {busy ? "Saving…" : "Save"}
-          </button>
-          <button
-            onClick={() => {
-              setEditing(null);
-              setDraft({});
-            }}
-            className="rounded-lg border border-line px-3 py-1.5 text-xs font-semibold text-ink-soft hover:bg-canvas"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    ) : null;
-
-  const editBtn = (section: string, seed: UpdateEmployeeInput) => (
+  const editBtn = (section: string) => (
     <button
-      onClick={() => startEdit(section, seed)}
+      onClick={() => startEdit(section)}
       className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300"
     >
       <Pencil className="h-3 w-3" /> Edit
@@ -170,15 +223,116 @@ export function EmployeeRecord({
     </div>
   );
 
+  const checkbox = (key: keyof UpdateEmployeeInput, label: string) => (
+    <label className="flex items-center gap-2 text-xs text-ink-soft">
+      <input
+        type="checkbox"
+        checked={!!draft[key]}
+        onChange={(e) => setDraft((d) => ({ ...d, [key]: e.target.checked }))}
+        className="h-4 w-4 rounded border-line text-brand-500 dark:text-brand-400"
+      />
+      {label}
+    </label>
+  );
+
+  /** All fields of the section being edited, pre-populated from the record. */
+  function sectionFields(section: string): React.ReactNode {
+    switch (section) {
+      case "personal":
+        return (
+          <>
+            {input("name", "Legal name")}
+            {input("preferredName", "Preferred name")}
+            {input("birthDate", "Date of birth", { type: "date" })}
+            {input("pronouns", "Pronouns")}
+          </>
+        );
+      case "contact":
+        return (
+          <>
+            {input("personalEmail", "Personal email", { type: "email" })}
+            {input("phone", "Phone")}
+            {input("addressStreet", "Street")}
+            <div className="grid grid-cols-2 gap-3">
+              {input("addressCity", "City")}
+              {select("addressProvince", "Province", PROVINCES.map((p) => p.code))}
+            </div>
+            {input("addressPostal", "Postal code")}
+          </>
+        );
+      case "employment":
+        return (
+          <>
+            {input("employeeNumber", "Employee ID")}
+            {input("title", "Job title")}
+            {input("department", "Department")}
+            {input("manager", "Manager")}
+            {select("employmentType", "Employment type", EMPLOYMENT_TYPES)}
+            {input("workLocation", "Work location")}
+            {input("hireDate", "Start date", { type: "date" })}
+            {select("status", "Status", EMPLOYEE_STATUSES)}
+          </>
+        );
+      case "comp":
+        return (
+          <>
+            <div>
+              <label className="field-label">Annual salary</label>
+              <input
+                type="number"
+                value={(draft.salary as number) ?? ""}
+                onChange={(e) => setDraft((d) => ({ ...d, salary: Number(e.target.value) }))}
+                className="field-input"
+              />
+            </div>
+            {select("payFrequency", "Pay frequency", PAY_FREQUENCIES)}
+          </>
+        );
+      case "eligibility":
+        return (
+          <>
+            {select("workEligibility", "Work eligibility", WORK_ELIGIBILITY)}
+            {input("workPermitExpiry", "Permit expiry (if any)", { type: "date" })}
+            {input("sin", "SIN (leave blank to keep)", { placeholder: "000000000" })}
+            {checkbox("td1FederalOnFile", "Federal TD1 on file")}
+            {checkbox("td1ProvincialOnFile", "Provincial TD1 on file")}
+          </>
+        );
+      case "banking":
+        return (
+          <>
+            {input("bankInstitution", "Institution")}
+            {input("bankTransit", "Transit no.")}
+            {input("bankAccount", "Account no. (leave blank to keep)")}
+          </>
+        );
+      default:
+        return null;
+    }
+  }
+
+  /** Merge freshly created assignments for this employee into the local record. */
+  function handleAssigned(returned: TrainingAssignment[]) {
+    const mine = returned.filter((a) => a.employeeId === emp.id);
+    setTraining((prev) => [
+      ...prev.filter((p) => !mine.some((m) => m.courseId === p.courseId)),
+      ...mine,
+    ]);
+    setAssigning(false);
+  }
+
+  // Header shows the name the person goes by; legal name stays in Personal.
+  const displayName = emp.preferredName || emp.name;
+
   return (
     <div className="space-y-5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Avatar name={emp.name} size={56} />
+          <Avatar name={displayName} size={56} />
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-ink">
-              {emp.name}
+              {displayName}
               {emp.pronouns && <span className="ml-2 text-sm font-normal text-ink-faint">({emp.pronouns})</span>}
             </h1>
             <p className="text-sm text-ink-muted">
@@ -192,300 +346,137 @@ export function EmployeeRecord({
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {/* Personal */}
         <Card className="card-pad">
-          <CardHeader
-            title="Personal"
-            action={
-              editing === "personal"
-                ? undefined
-                : editBtn("personal", {
-                    preferredName: emp.preferredName,
-                    pronouns: emp.pronouns,
-                  })
-            }
-          />
-          {editing === "personal" ? (
-            <div className="mt-3">
-              <SectionEdit section="personal">
-                {input("preferredName", "Preferred name")}
-                {input("pronouns", "Pronouns")}
-              </SectionEdit>
-            </div>
-          ) : (
-            <div className="mt-3 grid grid-cols-2 gap-4">
-              <Field label="Legal name" value={emp.name} />
-              <Field label="Preferred name" value={emp.preferredName} />
-              <Field label="Date of birth" value={formatDate(emp.birthDate)} />
-              <Field label="Pronouns" value={emp.pronouns} />
-            </div>
-          )}
+          <CardHeader title="Personal" action={editBtn("personal")} />
+          <div className="mt-3 grid grid-cols-2 gap-4">
+            <Field label="Legal name" value={emp.name} />
+            <Field label="Preferred name" value={emp.preferredName} />
+            <Field label="Date of birth" value={formatDate(emp.birthDate)} />
+            <Field label="Pronouns" value={emp.pronouns} />
+          </div>
         </Card>
 
         {/* Contact & address */}
         <Card className="card-pad">
-          <CardHeader
-            title="Contact & Address"
-            action={
-              editing === "contact"
-                ? undefined
-                : editBtn("contact", {
-                    personalEmail: emp.personalEmail,
-                    phone: emp.phone,
-                    addressStreet: emp.addressStreet,
-                    addressCity: emp.addressCity,
-                    addressProvince: emp.addressProvince,
-                    addressPostal: emp.addressPostal,
-                  })
-            }
-          />
-          {editing === "contact" ? (
-            <div className="mt-3">
-              <SectionEdit section="contact">
-                {input("personalEmail", "Personal email", { type: "email" })}
-                {input("phone", "Phone")}
-                {input("addressStreet", "Street")}
-                <div className="grid grid-cols-2 gap-3">
-                  {input("addressCity", "City")}
-                  {select("addressProvince", "Province", PROVINCES.map((p) => p.code))}
-                </div>
-                {input("addressPostal", "Postal code")}
-              </SectionEdit>
-            </div>
-          ) : (
-            <div className="mt-3 grid grid-cols-2 gap-4">
-              <Field label="Work email" value={emp.email} />
-              <Field label="Personal email" value={emp.personalEmail} />
+          <CardHeader title="Contact & Address" action={editBtn("contact")} />
+          <div className="mt-3 grid grid-cols-2 gap-4">
+            <Field label="Work email" value={emp.email} />
+            <Field label="Personal email" value={emp.personalEmail} />
+            <Field
+              label="Phone"
+              value={emp.phone && (
+                <span className="inline-flex items-center gap-1">
+                  <Phone className="h-3 w-3 text-ink-faint" /> {emp.phone}
+                </span>
+              )}
+            />
+            <Field label="Province" value={provinceName(emp.province)} />
+            <div className="col-span-2">
               <Field
-                label="Phone"
-                value={emp.phone && (
-                  <span className="inline-flex items-center gap-1">
-                    <Phone className="h-3 w-3 text-ink-faint" /> {emp.phone}
-                  </span>
-                )}
-              />
-              <Field label="Province" value={provinceName(emp.province)} />
-              <div className="col-span-2">
-                <Field
-                  label="Home address"
-                  value={
-                    emp.addressStreet && (
-                      <span className="inline-flex items-center gap-1">
-                        <MapPin className="h-3 w-3 text-ink-faint" />
-                        {[emp.addressStreet, emp.addressCity, emp.addressProvince, emp.addressPostal]
-                          .filter(Boolean)
-                          .join(", ")}
-                      </span>
-                    )
-                  }
-                />
-              </div>
-            </div>
-          )}
-        </Card>
-
-        {/* Employment */}
-        <Card className="card-pad">
-          <CardHeader
-            title="Employment"
-            action={
-              editing === "employment"
-                ? undefined
-                : editBtn("employment", {
-                    title: emp.title,
-                    department: emp.department,
-                    manager: emp.manager,
-                    status: emp.status,
-                    employmentType: emp.employmentType,
-                    workLocation: emp.workLocation,
-                    employeeNumber: emp.employeeNumber,
-                  })
-            }
-          />
-          {editing === "employment" ? (
-            <div className="mt-3">
-              <SectionEdit section="employment">
-                {input("employeeNumber", "Employee ID")}
-                {input("title", "Job title")}
-                {input("department", "Department")}
-                {input("manager", "Manager")}
-                {select("employmentType", "Employment type", EMPLOYMENT_TYPES)}
-                {input("workLocation", "Work location")}
-                {select("status", "Status", EMPLOYEE_STATUSES)}
-              </SectionEdit>
-            </div>
-          ) : (
-            <div className="mt-3 grid grid-cols-2 gap-4">
-              <Field label="Employee ID" value={emp.employeeNumber} />
-              <Field
-                label="Title"
+                label="Home address"
                 value={
-                  <span className="inline-flex items-center gap-1">
-                    <Briefcase className="h-3 w-3 text-ink-faint" /> {emp.title}
-                  </span>
-                }
-              />
-              <Field label="Department" value={emp.department} />
-              <Field label="Manager" value={emp.manager} />
-              <Field label="Employment type" value={emp.employmentType} />
-              <Field label="Work location" value={emp.workLocation} />
-              <Field label="Start date" value={formatDate(emp.hireDate)} />
-              <Field label="Status" value={emp.status} />
-            </div>
-          )}
-        </Card>
-
-        {/* Compensation */}
-        <Card className="card-pad">
-          <CardHeader
-            title="Compensation"
-            action={
-              editing === "comp"
-                ? undefined
-                : editBtn("comp", { salary: emp.salary, payFrequency: emp.payFrequency })
-            }
-          />
-          {editing === "comp" ? (
-            <div className="mt-3">
-              <SectionEdit section="comp">
-                <div>
-                  <label className="field-label">Annual salary</label>
-                  <input
-                    type="number"
-                    value={(draft.salary as number) ?? ""}
-                    onChange={(e) => setDraft((d) => ({ ...d, salary: Number(e.target.value) }))}
-                    className="field-input"
-                  />
-                </div>
-                {select("payFrequency", "Pay frequency", PAY_FREQUENCIES)}
-              </SectionEdit>
-            </div>
-          ) : (
-            <div className="mt-3 grid grid-cols-2 gap-4">
-              <Field label="Annual salary" value={formatCAD(emp.salary, { maximumFractionDigits: 0 })} />
-              <Field label="Pay frequency" value={emp.payFrequency} />
-            </div>
-          )}
-        </Card>
-
-        {/* Work eligibility & tax */}
-        <Card className="card-pad">
-          <CardHeader
-            title="Work Eligibility & Tax"
-            action={
-              editing === "eligibility"
-                ? undefined
-                : editBtn("eligibility", {
-                    workEligibility: emp.workEligibility,
-                    workPermitExpiry: emp.workPermitExpiry,
-                    td1FederalOnFile: emp.td1FederalOnFile,
-                    td1ProvincialOnFile: emp.td1ProvincialOnFile,
-                    sin: "",
-                  })
-            }
-          />
-          {editing === "eligibility" ? (
-            <div className="mt-3">
-              <SectionEdit section="eligibility">
-                {select("workEligibility", "Work eligibility", WORK_ELIGIBILITY)}
-                {input("workPermitExpiry", "Permit expiry (if any)", { type: "date" })}
-                {input("sin", "SIN (leave blank to keep)", { placeholder: "000000000" })}
-                <label className="flex items-center gap-2 text-xs text-ink-soft">
-                  <input
-                    type="checkbox"
-                    checked={!!draft.td1FederalOnFile}
-                    onChange={(e) => setDraft((d) => ({ ...d, td1FederalOnFile: e.target.checked }))}
-                    className="h-4 w-4 rounded border-line text-brand-500 dark:text-brand-400"
-                  />
-                  Federal TD1 on file
-                </label>
-                <label className="flex items-center gap-2 text-xs text-ink-soft">
-                  <input
-                    type="checkbox"
-                    checked={!!draft.td1ProvincialOnFile}
-                    onChange={(e) => setDraft((d) => ({ ...d, td1ProvincialOnFile: e.target.checked }))}
-                    className="h-4 w-4 rounded border-line text-brand-500 dark:text-brand-400"
-                  />
-                  Provincial TD1 on file
-                </label>
-              </SectionEdit>
-            </div>
-          ) : (
-            <div className="mt-3 grid grid-cols-2 gap-4">
-              <Field label="Work eligibility" value={emp.workEligibility} />
-              <Field label="Permit expiry" value={emp.workPermitExpiry && formatDate(emp.workPermitExpiry)} />
-              <Field
-                label="SIN"
-                value={
-                  emp.hasSin ? (
-                    <span className="inline-flex items-center gap-1 font-mono">
-                      <Lock className="h-3 w-3 text-ink-faint" /> {emp.sinMasked}
-                    </span>
-                  ) : undefined
-                }
-              />
-              <Field
-                label="TD1 forms"
-                value={
-                  <span className="flex gap-1">
-                    <Badge tone={emp.td1FederalOnFile ? "green" : "gray"}>
-                      Federal {emp.td1FederalOnFile ? "✓" : "—"}
-                    </Badge>
-                    <Badge tone={emp.td1ProvincialOnFile ? "green" : "gray"}>
-                      Prov. {emp.td1ProvincialOnFile ? "✓" : "—"}
-                    </Badge>
-                  </span>
-                }
-              />
-            </div>
-          )}
-        </Card>
-
-        {/* Direct deposit */}
-        <Card className="card-pad">
-          <CardHeader
-            title="Direct Deposit"
-            action={
-              editing === "banking"
-                ? undefined
-                : editBtn("banking", {
-                    bankInstitution: emp.bankInstitution,
-                    bankTransit: emp.bankTransit,
-                    bankAccount: "",
-                  })
-            }
-          />
-          {editing === "banking" ? (
-            <div className="mt-3">
-              <SectionEdit section="banking">
-                {input("bankInstitution", "Institution")}
-                {input("bankTransit", "Transit no.")}
-                {input("bankAccount", "Account no. (leave blank to keep)")}
-              </SectionEdit>
-            </div>
-          ) : (
-            <div className="mt-3 grid grid-cols-2 gap-4">
-              <Field
-                label="Institution"
-                value={
-                  emp.bankInstitution && (
+                  emp.addressStreet && (
                     <span className="inline-flex items-center gap-1">
-                      <Landmark className="h-3 w-3 text-ink-faint" /> {emp.bankInstitution}
+                      <MapPin className="h-3 w-3 text-ink-faint" />
+                      {[emp.addressStreet, emp.addressCity, emp.addressProvince, emp.addressPostal]
+                        .filter(Boolean)
+                        .join(", ")}
                     </span>
                   )
                 }
               />
-              <Field label="Transit" value={emp.bankTransit} />
-              <Field
-                label="Account"
-                value={
-                  emp.hasBanking ? (
-                    <span className="inline-flex items-center gap-1 font-mono">
-                      <Banknote className="h-3 w-3 text-ink-faint" /> {emp.bankAccountMasked}
-                    </span>
-                  ) : undefined
-                }
-              />
             </div>
-          )}
+          </div>
+        </Card>
+
+        {/* Employment */}
+        <Card className="card-pad">
+          <CardHeader title="Employment" action={editBtn("employment")} />
+          <div className="mt-3 grid grid-cols-2 gap-4">
+            <Field label="Employee ID" value={emp.employeeNumber} />
+            <Field
+              label="Title"
+              value={
+                <span className="inline-flex items-center gap-1">
+                  <Briefcase className="h-3 w-3 text-ink-faint" /> {emp.title}
+                </span>
+              }
+            />
+            <Field label="Department" value={emp.department} />
+            <Field label="Manager" value={emp.manager} />
+            <Field label="Employment type" value={emp.employmentType} />
+            <Field label="Work location" value={emp.workLocation} />
+            <Field label="Start date" value={formatDate(emp.hireDate)} />
+            <Field label="Status" value={emp.status} />
+          </div>
+        </Card>
+
+        {/* Compensation */}
+        <Card className="card-pad">
+          <CardHeader title="Compensation" action={editBtn("comp")} />
+          <div className="mt-3 grid grid-cols-2 gap-4">
+            <Field label="Annual salary" value={formatCAD(emp.salary, { maximumFractionDigits: 0 })} />
+            <Field label="Pay frequency" value={emp.payFrequency} />
+          </div>
+        </Card>
+
+        {/* Work eligibility & tax */}
+        <Card className="card-pad">
+          <CardHeader title="Work Eligibility & Tax" action={editBtn("eligibility")} />
+          <div className="mt-3 grid grid-cols-2 gap-4">
+            <Field label="Work eligibility" value={emp.workEligibility} />
+            <Field label="Permit expiry" value={emp.workPermitExpiry && formatDate(emp.workPermitExpiry)} />
+            <Field
+              label="SIN"
+              value={
+                emp.hasSin ? (
+                  <span className="inline-flex items-center gap-1 font-mono">
+                    <Lock className="h-3 w-3 text-ink-faint" /> {emp.sinMasked}
+                  </span>
+                ) : undefined
+              }
+            />
+            <Field
+              label="TD1 forms"
+              value={
+                <span className="flex gap-1">
+                  <Badge tone={emp.td1FederalOnFile ? "green" : "gray"}>
+                    Federal {emp.td1FederalOnFile ? "✓" : "—"}
+                  </Badge>
+                  <Badge tone={emp.td1ProvincialOnFile ? "green" : "gray"}>
+                    Prov. {emp.td1ProvincialOnFile ? "✓" : "—"}
+                  </Badge>
+                </span>
+              }
+            />
+          </div>
+        </Card>
+
+        {/* Direct deposit */}
+        <Card className="card-pad">
+          <CardHeader title="Direct Deposit" action={editBtn("banking")} />
+          <div className="mt-3 grid grid-cols-2 gap-4">
+            <Field
+              label="Institution"
+              value={
+                emp.bankInstitution && (
+                  <span className="inline-flex items-center gap-1">
+                    <Landmark className="h-3 w-3 text-ink-faint" /> {emp.bankInstitution}
+                  </span>
+                )
+              }
+            />
+            <Field label="Transit" value={emp.bankTransit} />
+            <Field
+              label="Account"
+              value={
+                emp.hasBanking ? (
+                  <span className="inline-flex items-center gap-1 font-mono">
+                    <Banknote className="h-3 w-3 text-ink-faint" /> {emp.bankAccountMasked}
+                  </span>
+                ) : undefined
+              }
+            />
+          </div>
           <p className="mt-3 flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-300">
             <ShieldCheck className="h-3 w-3" /> SIN and account numbers are masked and HR-only.
           </p>
@@ -500,7 +491,15 @@ export function EmployeeRecord({
         <CardHeader title="Documents" action={<FileText className="h-4 w-4 text-brand-500 dark:text-brand-400" />} />
         <div className="mt-3 space-y-2">
           {emp.documents.length === 0 ? (
-            <p className="text-sm text-ink-muted">No documents on file for this employee.</p>
+            <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-line py-8 text-center">
+              <p className="text-sm text-ink-muted">No documents on file for this employee.</p>
+              <Link
+                href="/admin/documents"
+                className="inline-flex items-center gap-1 rounded-lg bg-brand-50 px-2.5 py-1.5 text-xs font-semibold text-brand-700 dark:text-brand-400 hover:bg-brand-100"
+              >
+                <Plus className="h-3.5 w-3.5" /> Add Document
+              </Link>
+            </div>
           ) : (
             emp.documents.map((d) => (
               <div key={d.id} className="flex items-center gap-3 rounded-xl border border-line px-3 py-2.5">
@@ -524,7 +523,15 @@ export function EmployeeRecord({
           action={<GraduationCap className="h-4 w-4 text-brand-500 dark:text-brand-400" />}
         />
         {training.length === 0 ? (
-          <p className="mt-3 text-sm text-ink-muted">No training assigned to this employee yet.</p>
+          <div className="mt-3 flex flex-col items-center gap-2 rounded-2xl border border-dashed border-line py-8 text-center">
+            <p className="text-sm text-ink-muted">No training assigned to this employee yet.</p>
+            <button
+              onClick={() => setAssigning(true)}
+              className="inline-flex items-center gap-1 rounded-lg bg-brand-50 px-2.5 py-1.5 text-xs font-semibold text-brand-700 dark:text-brand-400 hover:bg-brand-100"
+            >
+              <Plus className="h-3.5 w-3.5" /> Assign Training
+            </button>
+          </div>
         ) : (
           <div className="mt-3 space-y-2">
             {training.map((t) => {
@@ -561,7 +568,145 @@ export function EmployeeRecord({
           </div>
         )}
       </Card>
+
+      {/* Section edit modal — every field of the section, pre-populated. */}
+      {editing && (
+        <>
+          <div className="fixed inset-0 z-40 bg-ink/20" onClick={closeEdit} />
+          <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col bg-card shadow-pop">
+            <div className="flex items-center justify-between border-b border-line px-5 py-4">
+              <p className="text-sm font-bold text-ink">Edit {SECTION_TITLES[editing] ?? "section"}</p>
+              <button onClick={closeEdit} className="rounded-lg p-1.5 text-ink-muted hover:bg-canvas">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4">{sectionFields(editing)}</div>
+            <div className="border-t border-line px-5 py-4">
+              {error && <p className="mb-2 text-xs text-red-600 dark:text-red-300">{error}</p>}
+              <div className="flex gap-2">
+                <button
+                  onClick={save}
+                  disabled={busy}
+                  className="inline-flex flex-1 items-center justify-center gap-1 rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-600 disabled:opacity-50"
+                >
+                  <Check className="h-4 w-4" /> {busy ? "Saving…" : "Save"}
+                </button>
+                <button
+                  onClick={closeEdit}
+                  className="rounded-xl border border-line px-4 py-2.5 text-sm font-semibold text-ink-soft hover:bg-canvas"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {assigning && (
+        <AssignTrainingModal
+          emp={emp}
+          courses={courses}
+          onClose={() => setAssigning(false)}
+          onAssigned={handleAssigned}
+        />
+      )}
     </div>
+  );
+}
+
+/** In-place "+ Assign Training" flow: pick a published course, optional due date. */
+function AssignTrainingModal({
+  emp,
+  courses,
+  onClose,
+  onAssigned,
+}: {
+  emp: EmployeeDetail;
+  courses: TrainingCourse[];
+  onClose: () => void;
+  onAssigned: (assignments: TrainingAssignment[]) => void;
+}) {
+  const [courseId, setCourseId] = React.useState("");
+  const [dueDate, setDueDate] = React.useState("");
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  // Only published catalog entries can be assigned (backend rejects the rest).
+  const assignable = courses.filter((c) => c.active && (c.status ?? "Published") === "Published");
+
+  async function assign() {
+    if (!courseId || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      onAssigned(await assignTraining(courseId, [emp.id], dueDate || undefined));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to assign");
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <div className="fixed inset-0 z-40 bg-ink/20" onClick={onClose} />
+      <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col bg-card shadow-pop">
+        <div className="flex items-center justify-between border-b border-line px-5 py-4">
+          <div>
+            <p className="text-sm font-bold text-ink">Assign training</p>
+            <p className="text-xs text-ink-muted">{emp.preferredName || emp.name}</p>
+          </div>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-ink-muted hover:bg-canvas">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4">
+          <div>
+            <label className="field-label">Course</label>
+            <select
+              value={courseId}
+              onChange={(e) => setCourseId(e.target.value)}
+              className="field-input"
+            >
+              <option value="">Select a course…</option>
+              {assignable.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.title} · {c.category}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="field-label">Due date (optional)</label>
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="field-input"
+            />
+          </div>
+          {assignable.length === 0 && (
+            <p className="text-xs text-ink-muted">
+              No published courses in the catalog yet — create one under{" "}
+              <Link href="/admin/training" className="font-semibold text-brand-600 dark:text-brand-400">
+                Training
+              </Link>
+              .
+            </p>
+          )}
+        </div>
+        <div className="border-t border-line px-5 py-4">
+          {error && <p className="mb-2 text-xs text-red-600 dark:text-red-300">{error}</p>}
+          <button
+            onClick={assign}
+            disabled={!courseId || busy}
+            className="w-full rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-600 disabled:opacity-50"
+          >
+            {busy ? "Assigning…" : "Assign course"}
+          </button>
+        </div>
+      </div>
+    </>
   );
 }
 

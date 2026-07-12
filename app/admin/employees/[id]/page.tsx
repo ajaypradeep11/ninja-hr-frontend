@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { getEmployeeDetail } from "@/app/actions/employees";
 import { getAllAssignments } from "@/app/actions/training";
+import { getTrainingCourses } from "@/lib/queries";
 import { EmployeeRecord } from "@/components/employees/employee-record";
 
 export default async function EmployeeRecordPage({
@@ -14,10 +15,12 @@ export default async function EmployeeRecordPage({
 }) {
   const { id } = await params;
   const { edit } = await searchParams;
-  const [employee, allAssignments] = await Promise.all([
+  const [employee, allAssignments, courses] = await Promise.all([
     getEmployeeDetail(id),
     // The employee's training record lives on their profile alongside documents.
     getAllAssignments().catch(() => []),
+    // Catalog needed by the in-place "+ Assign Training" empty-state CTA.
+    getTrainingCourses().catch(() => []),
   ]);
   const training = allAssignments.filter((a) => a.employeeId === id);
 
@@ -29,7 +32,12 @@ export default async function EmployeeRecordPage({
       >
         <ChevronLeft className="h-3.5 w-3.5" /> Back to Employees
       </Link>
-      <EmployeeRecord initial={employee} training={training} autoEdit={edit === "1"} />
+      <EmployeeRecord
+        initial={employee}
+        training={training}
+        courses={courses}
+        autoEdit={edit === "1"}
+      />
     </div>
   );
 }

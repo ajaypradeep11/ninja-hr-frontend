@@ -70,6 +70,9 @@ export interface EmployeeDetail {
 
 export type UpdateEmployeeInput = Partial<{
   birthdayPrivate: boolean;
+  name: string;
+  hireDate: string;
+  birthDate: string;
   title: string;
   department: string;
   manager: string;

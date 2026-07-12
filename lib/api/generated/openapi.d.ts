@@ -254,10 +254,26 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete?: never;
+        delete: operations["OnboardingController_deleteTask"];
         options?: never;
         head?: never;
         patch: operations["OnboardingController_setTaskStatus"];
+        trace?: never;
+    };
+    "/api/v1/onboarding/cases/{id}/documents/{docId}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["OnboardingController_rejectDocument"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/onboarding/cases/{id}/documents/{docId}/verify": {
@@ -1261,7 +1277,7 @@ export interface paths {
         };
         get: operations["WorkplaceController_getVaultDocuments"];
         put?: never;
-        post?: never;
+        post: operations["WorkplaceController_uploadVaultDocument"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1883,6 +1899,16 @@ export interface components {
             /** @enum {string} */
             mode: "save" | "signature";
         };
+        UploadVaultDocumentDto: {
+            name: string;
+            type: string;
+            /** @enum {string} */
+            folder: "01_Recruitment" | "02_Onboarding_and_Tax" | "03_Compliance_and_Training" | "04_Performance_and_PIPs" | "05_Leaves_and_Medical" | "06_Offboarding";
+            /** @enum {string} */
+            access: "Employee" | "Manager" | "HR Admin" | "Super Admin";
+            /** Optional owner — links the document to an employee's personal vault. */
+            employeeName?: string;
+        };
         CreateCourseDto: {
             title: string;
             category: string;
@@ -2322,6 +2348,26 @@ export interface operations {
             };
         };
     };
+    OnboardingController_deleteTask: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                taskId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     OnboardingController_verifyDocument: {
         parameters: {
             query?: never;
@@ -2333,6 +2379,32 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    OnboardingController_rejectDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                docId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    note: string;
+                };
+            };
+        };
         responses: {
             201: {
                 headers: {
@@ -3802,6 +3874,27 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    WorkplaceController_uploadVaultDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UploadVaultDocumentDto"];
+            };
+        };
+        responses: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };

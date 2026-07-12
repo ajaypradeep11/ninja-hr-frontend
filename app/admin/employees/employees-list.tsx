@@ -2,16 +2,20 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
-  CalendarDays,
+  Bot,
   ChevronDown,
   Download,
+  FilterX,
   LogOut,
   MoreVertical,
   Pencil,
+  Rocket,
   Search,
   UserPlus,
   UserRound,
+  X,
 } from "lucide-react";
 import { Avatar, Badge, Card, PageHeader, Stat } from "@/components/ui";
 import type { Employee } from "@/lib/data";
@@ -79,10 +83,20 @@ function downloadCsv(filename: string, rows: Employee[]) {
 }
 
 export function EmployeesList({ employees }: { employees: Employee[] }) {
+  const router = useRouter();
   const [query, setQuery] = React.useState("");
   const [dept, setDept] = React.useState("All");
   const [status, setStatus] = React.useState("All");
   const [location, setLocation] = React.useState("All");
+
+  const hasActiveFilters = query !== "" || dept !== "All" || status !== "All" || location !== "All";
+
+  function clearFilters() {
+    setQuery("");
+    setDept("All");
+    setStatus("All");
+    setLocation("All");
+  }
 
   const departments = ["All", ...Array.from(new Set(employees.map((e) => e.department))).sort()];
   // Data-driven filter options so they never list values that aren't present.
@@ -94,11 +108,12 @@ export function EmployeesList({ employees }: { employees: Employee[] }) {
   ];
   const active = employees.filter((e) => e.status === "Active").length;
 
+  const q = query.trim().toLowerCase();
   const filtered = employees.filter((e) => {
     if (dept !== "All" && e.department !== dept) return false;
     if (status !== "All" && e.status !== status) return false;
     if (location !== "All" && e.province !== location) return false;
-    if (query && !`${e.name} ${e.title} ${e.email}`.toLowerCase().includes(query.toLowerCase()))
+    if (q && !`${e.name} ${e.title} ${e.email} ${e.employeeNumber ?? ""}`.toLowerCase().includes(q))
       return false;
     return true;
   });
@@ -130,9 +145,19 @@ export function EmployeesList({ employees }: { employees: Employee[] }) {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by name, title or email…"
-              className="h-10 w-full rounded-xl border border-line bg-canvas pl-9 pr-3 text-sm outline-none focus:border-brand-300 focus:bg-card"
+              placeholder="Search by name, title, email or ID…"
+              className="h-10 w-full rounded-xl border border-line bg-canvas pl-9 pr-9 text-sm outline-none focus:border-brand-300 focus:bg-card"
             />
+            {query && (
+              <button
+                type="button"
+                aria-label="Clear search"
+                onClick={() => setQuery("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-ink-faint transition hover:bg-canvas hover:text-ink"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
 
           <FilterSelect label="Department" value={dept} onChange={setDept}>
@@ -159,6 +184,16 @@ export function EmployeesList({ employees }: { employees: Employee[] }) {
             ))}
           </FilterSelect>
 
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="inline-flex h-10 items-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-ink-muted transition hover:bg-canvas hover:text-ink"
+            >
+              <FilterX className="h-4 w-4" /> Clear filters
+            </button>
+          )}
+
           <button
             type="button"
             onClick={() => downloadCsv(`employees-${filtered.length}.csv`, filtered)}
@@ -172,7 +207,18 @@ export function EmployeesList({ employees }: { employees: Employee[] }) {
 
       <Card className="card-pad">
         {filtered.length === 0 ? (
-          <p className="text-sm text-ink-muted">No employees match your filters.</p>
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-ink-muted">No employees match your filters.</p>
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="text-sm font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300"
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -189,7 +235,11 @@ export function EmployeesList({ employees }: { employees: Employee[] }) {
               </thead>
               <tbody className="divide-y divide-line">
                 {filtered.map((e) => (
-                  <tr key={e.id} className="group">
+                  <tr
+                    key={e.id}
+                    onClick={() => router.push(`/admin/employees/${e.id}`)}
+                    className="group cursor-pointer"
+                  >
                     <td className="py-2.5">
                       <Link href={`/admin/employees/${e.id}`} className="flex items-center gap-2.5">
                         <Avatar name={e.name} size={30} />
@@ -210,7 +260,8 @@ export function EmployeesList({ employees }: { employees: Employee[] }) {
                     <td className="py-2.5 text-right">
                       <Badge tone={statusTone[e.status]}>{e.status}</Badge>
                     </td>
-                    <td className="py-2.5 pl-2 text-right">
+                    {/* Menu clicks must not bubble into the row's navigation. */}
+                    <td className="py-2.5 pl-2 text-right" onClick={(ev) => ev.stopPropagation()}>
                       <RowMenu employee={e} />
                     </td>
                   </tr>
@@ -276,15 +327,15 @@ function AddEmployeeButton() {
           className="absolute right-0 z-30 mt-1.5 w-64 overflow-hidden rounded-xl border border-line bg-card py-1 shadow-lg"
         >
           <Link
-            href="/admin/recruitment"
+            href="/admin/recruitment/ats"
             role="menuitem"
             onClick={() => setOpen(false)}
             className="flex items-start gap-2.5 px-3 py-2.5 hover:bg-canvas"
           >
-            <UserPlus className="mt-0.5 h-4 w-4 text-brand-500 dark:text-brand-400" />
+            <Bot className="mt-0.5 h-4 w-4 text-brand-500 dark:text-brand-400" />
             <span>
               <span className="block text-sm font-semibold text-ink">Invite candidate</span>
-              <span className="block text-xs text-ink-muted">Open a requisition and start hiring</span>
+              <span className="block text-xs text-ink-muted">Hire with the AI Assistant</span>
             </span>
           </Link>
           <Link
@@ -348,14 +399,16 @@ function RowMenu({ employee }: { employee: Employee }) {
           >
             <Pencil className="h-3.5 w-3.5" /> Edit Details
           </Link>
-          <Link
-            href={`/admin/leave?q=${name}`}
-            role="menuitem"
-            className={itemClass}
-            onClick={() => setOpen(false)}
-          >
-            <CalendarDays className="h-3.5 w-3.5" /> Manage Leave
-          </Link>
+          {employee.status === "Pre-Hire" && (
+            <Link
+              href="/admin/onboarding/preboard"
+              role="menuitem"
+              className={itemClass}
+              onClick={() => setOpen(false)}
+            >
+              <Rocket className="h-3.5 w-3.5" /> Begin Pre-boarding
+            </Link>
+          )}
           <div className="my-1 border-t border-line" />
           {canOffboard ? (
             <Link

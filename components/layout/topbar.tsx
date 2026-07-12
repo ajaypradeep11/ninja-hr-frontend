@@ -7,7 +7,7 @@ import { Search, Bell, HelpCircle, Sparkles, ArrowLeftRight, LogOut, UserX } fro
 import { Avatar } from "@/components/ui";
 import { ThemeToggle } from "@/components/theme";
 import { AgentDrawer } from "./agent-drawer";
-import { currentUser } from "@/lib/data";
+import { CommandMenu } from "./command-menu";
 import { clearActor } from "@/app/actions/identity";
 import { signOutSession } from "@/app/actions/auth";
 import { UserSwitcher, type SwitcherUser } from "./user-switcher";
@@ -77,6 +77,7 @@ export function Topbar({
 }) {
   const router = useRouter();
   const [agentOpen, setAgentOpen] = React.useState(false);
+  const [searchOpen, setSearchOpen] = React.useState(false);
   const [stopping, setStopping] = React.useState(false);
   const impersonating = !!actor && actor.realUserId != null && actor.realUserId !== actor.id;
 
@@ -96,10 +97,12 @@ export function Topbar({
   const [ask, setAsk] = React.useState<{ q: string; nonce: number } | null>(null);
 
   React.useEffect(() => {
+    // ⌘K is the command menu (global search); the AI drawer keeps its own
+    // button + the ninjahr:ask-copilot event.
     function onKey(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setAgentOpen((o) => !o);
+        setSearchOpen((o) => !o);
       }
     }
     function onAsk(e: Event) {
@@ -118,16 +121,18 @@ export function Topbar({
   return (
     <>
       <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-line bg-card/80 px-6 backdrop-blur">
-        <div className="relative w-full max-w-md">
+        {/* Trigger only — a real input here invited typing that went nowhere;
+            all searching happens inside the ⌘K command menu. */}
+        <button
+          onClick={() => setSearchOpen(true)}
+          className="relative w-full max-w-md rounded-xl border border-line bg-canvas py-2 pl-9 pr-16 text-left text-sm text-ink-faint transition hover:border-brand-300 hover:bg-card"
+        >
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" />
-          <input
-            placeholder={searchPlaceholder}
-            className="h-9 w-full rounded-xl border border-line bg-canvas pl-9 pr-16 text-sm outline-none transition placeholder:text-ink-faint focus:border-brand-300 focus:bg-card"
-          />
+          {searchPlaceholder}
           <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md border border-line bg-card px-1.5 py-0.5 text-[10px] font-medium text-ink-faint">
             ⌘K
           </kbd>
-        </div>
+        </button>
 
         <div className="ml-auto flex items-center gap-2">
           {switchHref && switchLabel && (
@@ -183,11 +188,12 @@ export function Topbar({
               <UserSwitcher users={users} current={actor} />
             ) : null}
 
-            {actor ? <AvatarMenu name={actor.name} /> : <Avatar name={currentUser.name} size={32} />}
+            {actor ? <AvatarMenu name={actor.name} /> : <Avatar name="?" size={32} />}
           </div>
         </div>
       </header>
 
+      <CommandMenu open={searchOpen} onClose={() => setSearchOpen(false)} />
       <AgentDrawer open={agentOpen} onClose={() => setAgentOpen(false)} ask={ask} />
     </>
   );

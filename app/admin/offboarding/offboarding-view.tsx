@@ -10,6 +10,7 @@ import {
   Loader2,
   AlertTriangle,
   Bell,
+  Save,
 } from "lucide-react";
 import {
   Card,
@@ -27,11 +28,32 @@ import {
   setOffboardingTaskStatus,
   setOffboardingAssignee,
   finalizeTermination,
+  saveOffboarding,
 } from "@/app/actions/modules";
 import { listEmployeeDirectory } from "@/app/actions/onboarding";
 
 type Status = "Pending" | "In-Progress" | "Completed";
 type Owner = "Manager" | "IT / Ops" | "HR / Payroll";
+type TerminationType = "Voluntary" | "Involuntary";
+
+/** ESA-informed reason lists, keyed by the voluntary/involuntary split. */
+const TERMINATION_REASONS: Record<TerminationType, string[]> = {
+  Voluntary: [
+    "Resignation",
+    "Retirement",
+    "End of contract",
+    "Mutual agreement",
+    "Other",
+  ],
+  Involuntary: [
+    "Performance",
+    "Misconduct",
+    "Restructuring / position eliminated",
+    "Probationary release",
+    "Frustration of contract",
+    "Other",
+  ],
+};
 
 const TEMPLATES = [
   "Software Engineer Offboarding",
@@ -78,6 +100,22 @@ export function OffboardingView({
   const [terminated, setTerminated] = React.useState(false);
   const [actionError, setActionError] = React.useState<string | null>(null);
 
+  // Termination details (voluntary/involuntary, reason, rehire, notes).
+  const [terminationType, setTerminationType] = React.useState<TerminationType>("Involuntary");
+  const [reason, setReason] = React.useState(TERMINATION_REASONS.Involuntary[0]);
+  const [rehireEligible, setRehireEligible] = React.useState(true);
+  const [notes, setNotes] = React.useState("");
+
+  // Statutory-leave hardstop: the backend's 409 message when the lock trips.
+  const [statutoryBlock, setStatutoryBlock] = React.useState<string | null>(null);
+  const [hrCertified, setHrCertified] = React.useState(false);
+  const [finalizing, setFinalizing] = React.useState(false);
+
+  // Save-case state (persists the initiated offboarding to the backend).
+  const [saving, setSaving] = React.useState(false);
+  const [savedMsg, setSavedMsg] = React.useState<string | null>(null);
+  const [saveError, setSaveError] = React.useState<string | null>(null);
+
   // Internal directory for the per-department delegation pickers.
   const [directory, setDirectory] = React.useState<
     { name: string; department: string; title: string }[]
@@ -115,6 +153,52 @@ export function OffboardingView({
     } catch (err) {
       // Keep the current list — a failed PATCH must not wipe the task matrix.
       setActionError(err instanceof Error ? err.message : "Failed to update task");
+    }
+  }
+
+  async function handleSaveOffboarding() {
+    try {
+      setSaving(true);
+      setSaveError(null);
+      setSavedMsg(null);
+      await saveOffboarding(subject, template);
+      setSavedMsg(
+        `Offboarding saved for ${subject} — the employee is now marked as Offboarding and the case survives reloads.`,
+      );
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Failed to save offboarding");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  /** Finalize, optionally with the certified statutory-leave override. */
+  async function handleFinalize(withStatutoryOverride: boolean) {
+    try {
+      setFinalizing(true);
+      setActionError(null);
+      await finalizeTermination(subject, {
+        override,
+        ...(withStatutoryOverride ? { statutoryOverride: true, hrCertified: true } : {}),
+        terminationType,
+        reason,
+        rehireEligible,
+        ...(notes.trim() ? { notes: notes.trim() } : {}),
+      });
+      setTerminated(true);
+      setStatutoryBlock(null);
+    } catch (err) {
+      // Only mark terminated when the backend actually confirmed it.
+      const message = err instanceof Error ? err.message : "Termination failed";
+      if (message.includes("STATUTORY_LEAVE_LOCK")) {
+        // Hardstop: surface the dedicated override flow instead of a plain error.
+        setStatutoryBlock(message.replace(/^.*STATUTORY_LEAVE_LOCK:\s*/, ""));
+        setHrCertified(false);
+      } else {
+        setActionError(message);
+      }
+    } finally {
+      setFinalizing(false);
     }
   }
 
@@ -289,6 +373,68 @@ export function OffboardingView({
             </span>
           </div>
         )}
+        {/* Termination details — captured with the final decision and stored
+            as an immutable record on the offboarding board. */}
+        <div className="mt-4 rounded-xl border border-line bg-card p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-ink-faint">
+            Termination details
+          </p>
+          <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="field-label">Voluntary or involuntary</label>
+              <select
+                value={terminationType}
+                onChange={(e) => {
+                  const next = e.target.value as TerminationType;
+                  setTerminationType(next);
+                  setReason(TERMINATION_REASONS[next][0]);
+                }}
+                disabled={terminated}
+                className="field-input"
+              >
+                <option value="Voluntary">Voluntary</option>
+                <option value="Involuntary">Involuntary</option>
+              </select>
+            </div>
+            <div>
+              <label className="field-label">Reason for termination</label>
+              <select
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                disabled={terminated}
+                className="field-input"
+              >
+                {TERMINATION_REASONS[terminationType].map((r) => (
+                  <option key={r}>{r}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="field-label">Eligible for rehire</label>
+              <select
+                value={rehireEligible ? "Yes" : "No"}
+                onChange={(e) => setRehireEligible(e.target.value === "Yes")}
+                disabled={terminated}
+                className="field-input"
+              >
+                <option>Yes</option>
+                <option>No</option>
+              </select>
+            </div>
+            <div>
+              <label className="field-label">Notes (optional)</label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={2}
+                disabled={terminated}
+                placeholder="e.g. Severance package accepted; references agreed"
+                className="field-input resize-none"
+              />
+            </div>
+          </div>
+        </div>
+
         <label className="mt-3 flex items-center gap-2 text-xs text-ink-soft">
           <input
             type="checkbox"
@@ -305,28 +451,100 @@ export function OffboardingView({
             <span>{actionError}</span>
           </div>
         )}
+
+        {/* Statutory-leave hardstop — termination was rejected by the backend
+            and can only proceed with an explicit, certified override. */}
+        {statutoryBlock && !terminated && (
+          <div className="mt-4 rounded-xl border-2 border-red-400 dark:border-red-500/60 bg-red-50 dark:bg-red-500/10 p-4">
+            <div className="flex items-start gap-2.5">
+              <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-red-600 dark:text-red-300" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold text-red-700 dark:text-red-300">
+                  Termination blocked — employee on statutory leave
+                </p>
+                <p className="mt-1 text-xs text-red-700/90 dark:text-red-300/90">{statutoryBlock}</p>
+                <p className="mt-2 text-xs text-red-700/90 dark:text-red-300/90">
+                  Terminating an employee on job-protected leave (Parental/Maternity, Sick,
+                  Bereavement) is presumptively reprisal under the ESA. Proceed only if the
+                  termination is genuinely unrelated to the leave.
+                </p>
+                <label className="mt-3 flex items-start gap-2 text-xs font-medium text-red-800 dark:text-red-200">
+                  <input
+                    type="checkbox"
+                    checked={hrCertified}
+                    onChange={(e) => setHrCertified(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-red-300 text-red-600"
+                  />
+                  <span>
+                    I certify that this termination complies with the <b>Human Rights Code</b>{" "}
+                    and is wholly unrelated to the employee&apos;s pregnancy, parental status,
+                    disability or exercise of statutory leave rights. This certification is
+                    recorded in the audit trail.
+                  </span>
+                </label>
+                <button
+                  disabled={!hrCertified || finalizing}
+                  onClick={() => handleFinalize(true)}
+                  className="mt-3 inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <ShieldAlert className="h-3.5 w-3.5" />
+                  {finalizing ? "Overriding…" : "Override & Finalize Termination"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <button
-          disabled={!canFinalize || terminated}
-          onClick={async () => {
-            try {
-              setActionError(null);
-              await finalizeTermination(subject, override);
-              setTerminated(true);
-            } catch (err) {
-              // Only mark terminated when the backend actually confirmed it.
-              setActionError(err instanceof Error ? err.message : "Termination failed");
-            }
-          }}
+          disabled={!canFinalize || terminated || finalizing || !!statutoryBlock}
+          onClick={() => handleFinalize(false)}
           className="mt-4 inline-flex items-center gap-2 rounded-xl bg-red-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <LogOut className="h-4 w-4" />
-          {terminated ? "Employee Terminated" : "Finalize System Termination"}
+          {terminated
+            ? "Employee Terminated"
+            : finalizing
+              ? "Finalizing…"
+              : "Finalize System Termination"}
         </button>
         {terminated && (
           <p className="mt-2 text-xs text-red-600 dark:text-red-300">
             Access revoked across all integrations. ROE schedule and final-pay countdown
             started.
           </p>
+        )}
+      </Card>
+
+      {/* Save bar — persists the initiated offboarding case (QA: "Initiate
+          Offboarding … does not actually save"). */}
+      <Card className="card-pad mt-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-ink">Save this offboarding</p>
+            <p className="mt-0.5 text-xs text-ink-muted">
+              Persists the case for <b>{subject}</b> ({template}) — marks the employee as{" "}
+              <b>Offboarding</b> so the separation survives reloads and appears in reporting.
+            </p>
+          </div>
+          <button
+            onClick={handleSaveOffboarding}
+            disabled={saving || terminated}
+            className="inline-flex items-center gap-2 rounded-xl bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Save className="h-4 w-4" /> {saving ? "Saving…" : "Save Offboarding"}
+          </button>
+        </div>
+        {savedMsg && (
+          <div className="mt-3 flex items-start gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 px-3.5 py-2.5 text-xs text-emerald-700 dark:text-emerald-300">
+            <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <span>{savedMsg}</span>
+          </div>
+        )}
+        {saveError && (
+          <div className="mt-3 flex items-start gap-2 rounded-xl bg-red-50 dark:bg-red-500/10 px-3.5 py-2.5 text-xs text-red-600 dark:text-red-300">
+            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <span>{saveError}</span>
+          </div>
         )}
       </Card>
     </div>

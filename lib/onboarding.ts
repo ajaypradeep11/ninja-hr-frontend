@@ -230,7 +230,16 @@ export function checklistProgress(checklist: ChecklistTask[]): number {
 }
 
 export function caseProgress(c: OnboardingCase): number {
-  return Math.round((formProgress(c.forms) + checklistProgress(c.checklist)) / 2);
+  // Item-weighted, matching the backend pipeline() formula: every form,
+  // checklist task and document counts once. (The old average-of-averages
+  // let 5 forms outweigh a dozen tasks and ignored documents entirely.)
+  const formVals = Object.values(c.forms);
+  const done =
+    formVals.filter(Boolean).length +
+    c.checklist.filter((t) => t.status === "Completed").length +
+    c.documents.filter((d) => d.status === "Verified").length;
+  const total = formVals.length + c.checklist.length + c.documents.length;
+  return total ? Math.round((done / total) * 100) : 0;
 }
 
 export interface Gate {
@@ -243,7 +252,9 @@ export interface Gate {
 export function activationGates(c: OnboardingCase): Gate[] {
   const blockingTasks = c.checklist.filter((t) => t.blocking);
   const blockingDone = blockingTasks.filter((t) => t.status === "Completed");
-  const unverified = c.documents.filter((d) => d.status === "Needs Verification");
+  // "Pending" is the rejected/awaiting-re-upload state — it keeps the gate
+  // closed just like a document HR hasn't reviewed yet (mirrors the backend).
+  const unverified = c.documents.filter((d) => d.status !== "Verified");
   const formsDone = formProgress(c.forms) === 100;
 
   return [

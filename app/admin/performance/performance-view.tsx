@@ -22,9 +22,15 @@ import {
   PageHeader,
   Avatar,
 } from "@/components/ui";
-import { issuePip, advanceReviewState } from "@/app/actions/modules";
+import {
+  issuePip,
+  advanceReviewState,
+  requestGoalWeightChange,
+  saveSettings,
+  type ProbationSweepResult,
+} from "@/app/actions/modules";
 import type { PerformanceReview, Pip } from "@/lib/data";
-import { currentUser } from "@/lib/data";
+import type { CompanySettings, GoalSummary, ReviewCadence } from "@/lib/queries";
 import { cn, formatDate } from "@/lib/utils";
 
 const REVIEW_STATES = [
@@ -101,8 +107,8 @@ interface GuardrailRequest {
 }
 
 // Seeded demo of a change that tripped the >15% constructive-dismissal guardrail
-// and was routed to HR. In production these are created by the goal editor when a
-// manager attempts an out-of-band change to a signed goal.
+// and was routed to HR. Live entries are appended by the goal weight editor
+// below whenever the backend rejects an out-of-band change on a signed goal.
 const INITIAL_GUARDRAIL_REQUESTS: GuardrailRequest[] = [
   {
     id: "gr-1",
@@ -118,18 +124,40 @@ const INITIAL_GUARDRAIL_REQUESTS: GuardrailRequest[] = [
   },
 ];
 
+const CADENCES: ReviewCadence[] = ["Annual", "Bi-Annual", "Quarterly"];
+
+const CADENCE_HINT: Record<ReviewCadence, string> = {
+  Annual: "One full review cycle per year (default).",
+  "Bi-Annual": "Two cycles per year — mid-year check-in plus year-end calibration.",
+  Quarterly: "Four lightweight cycles per year aligned to quarterly goals.",
+};
+
 export function PerformanceView({
   initialReviews,
   initialPips,
+  goals = [],
+  settings = null,
+  probation = null,
+  actorName,
 }: {
   initialReviews: PerformanceReview[];
   initialPips: Pip[];
+  goals?: GoalSummary[];
+  settings?: CompanySettings | null;
+  probation?: ProbationSweepResult | null;
+  /** Real signed-in user (was the hardcoded lib/data mock "Sarah Mitchell"). */
+  actorName: string;
 }) {
   const [pips, setPips] = React.useState(initialPips);
   const [reviews, setReviews] = React.useState(initialReviews);
   const [advanceError, setAdvanceError] = React.useState<string | null>(null);
   const [guardrailReqs, setGuardrailReqs] = React.useState(INITIAL_GUARDRAIL_REQUESTS);
   const [reminderMsg, setReminderMsg] = React.useState<string | null>(null);
+
+  // Cadence Configuration (persisted via company settings).
+  const [cadence, setCadence] = React.useState<ReviewCadence>(settings?.reviewCadence ?? "Annual");
+  const [cadenceSaving, setCadenceSaving] = React.useState(false);
+  const [cadenceMsg, setCadenceMsg] = React.useState<string | null>(null);
 
   const completed = reviews.filter((r) => r.state === "Completed").length;
   const completionPct = reviews.length ? Math.round((completed / reviews.length) * 100) : 0;
@@ -169,12 +197,56 @@ export function PerformanceView({
     setGuardrailReqs((prev) => prev.map((g) => (g.id === id ? { ...g, status } : g)));
   }
 
+  /** Weight editor callback: a blocked change lands in the approvals queue. */
+  function handleGuardrailRouted(req: GuardrailRequest) {
+    setGuardrailReqs((prev) => [req, ...prev]);
+  }
+
+  async function saveCadence(next: ReviewCadence) {
+    setCadence(next);
+    if (!settings) return;
+    try {
+      setCadenceSaving(true);
+      setCadenceMsg(null);
+      await saveSettings({ ...settings, reviewCadence: next });
+      setCadenceMsg(`Review cadence saved: ${next.toLowerCase()} cycles.`);
+    } catch (err) {
+      setCadenceMsg(err instanceof Error ? err.message : "Failed to save cadence");
+    } finally {
+      setCadenceSaving(false);
+    }
+  }
+
   return (
     <div>
       <PageHeader
         title="Performance Management"
         subtitle="Compliance-aware reviews, goal setting and watertight PIPs that protect against wrongful-dismissal claims."
       />
+
+      {/* Probation automation results from this page load (Day-60 / Day-80). */}
+      {probation && probation.initialized.length > 0 && (
+        <div className="mb-5 flex items-start gap-3 rounded-xl border border-emerald-300 dark:border-emerald-500/40 bg-emerald-50 dark:bg-emerald-500/10 px-4 py-3">
+          <CalendarClock className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-300" />
+          <div className="min-w-0 flex-1 text-sm text-emerald-800 dark:text-emerald-200">
+            <span className="font-semibold">Day-60 probation trigger:</span> 90-day probationary
+            review{probation.initialized.length === 1 ? "" : "s"} auto-initialized for{" "}
+            <b>{probation.initialized.join(", ")}</b> — manager notified via the automation feed.
+          </div>
+        </div>
+      )}
+      {probation && probation.escalated.length > 0 && (
+        <div className="mb-5 flex items-start gap-3 rounded-xl border border-red-300 dark:border-red-500/40 bg-red-50 dark:bg-red-500/10 px-4 py-3">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-600 dark:text-red-300" />
+          <div className="min-w-0 flex-1 text-sm text-red-800 dark:text-red-200">
+            <span className="font-semibold">Day-80 escalation:</span>{" "}
+            <b>{probation.escalated.join(", ")}</b>{" "}
+            {probation.escalated.length === 1 ? "is" : "are"} past Day 80 of probation with the
+            90-day review still open — decide extension or termination before statutory notice
+            applies at Day 90.
+          </div>
+        </div>
+      )}
 
       {/* Constructive-dismissal guardrail — surface pending approvals up top so
           HR can act on out-of-band goal changes immediately. */}
@@ -248,6 +320,40 @@ export function PerformanceView({
               {advanceError}
             </div>
           )}
+
+          {/* Cadence Configuration — recurring review cadence, persisted in
+              company settings. */}
+          <div className="mt-4 rounded-xl border border-line bg-canvas/50 p-3.5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-ink-faint">
+                  Cadence Configuration
+                </p>
+                <p className="mt-0.5 text-xs text-ink-muted">{CADENCE_HINT[cadence]}</p>
+              </div>
+              <div className="flex items-center gap-1 rounded-lg border border-line bg-card p-1">
+                {CADENCES.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => saveCadence(c)}
+                    disabled={cadenceSaving}
+                    className={cn(
+                      "rounded-md px-2.5 py-1 text-[11px] font-semibold transition-colors disabled:opacity-60",
+                      cadence === c
+                        ? "bg-brand-500 text-white"
+                        : "text-ink-soft hover:bg-canvas",
+                    )}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {cadenceMsg && (
+              <p className="mt-2 text-[11px] text-emerald-700 dark:text-emerald-300">{cadenceMsg}</p>
+            )}
+          </div>
+
           <div className="mt-4 space-y-4">
             {reviews.map((r) => {
               const idx = REVIEW_STATES.indexOf(r.state as (typeof REVIEW_STATES)[number]);
@@ -333,6 +439,10 @@ export function PerformanceView({
               signed consent.
             </p>
           </Card>
+
+          {/* Goal weight editor — the live entry point that the guardrail
+              protects. Within 15% saves; beyond routes to Pending Approvals. */}
+          <GoalWeightEditor goals={goals} onRouted={handleGuardrailRouted} actorName={actorName} />
 
           {/* Guardrail approvals queue — the live counterpart to the rule above. */}
           <Card className="card-pad scroll-mt-6" id="guardrail-approvals">
@@ -447,9 +557,153 @@ export function PerformanceView({
         <CreatePipForm
           onIssued={setPips}
           employeeOptions={[...new Set(reviews.map((r) => r.employee))]}
+          actorName={actorName}
         />
       </div>
     </div>
+  );
+}
+
+/**
+ * Adjust a signed goal's weight. The backend enforces the 15% constructive-
+ * dismissal guardrail: within-threshold changes save (audit-logged); larger
+ * ones are rejected with 409 and land in the Pending Approvals queue here.
+ */
+function GoalWeightEditor({
+  goals,
+  onRouted,
+  actorName,
+}: {
+  goals: GoalSummary[];
+  onRouted: (req: GuardrailRequest) => void;
+  actorName: string;
+}) {
+  const activeGoals = goals.filter((g) => g.status === "Active");
+  const [goalId, setGoalId] = React.useState(activeGoals[0]?.id ?? "");
+  const [previousWeight, setPreviousWeight] = React.useState(30);
+  const [proposedWeight, setProposedWeight] = React.useState(40);
+  const [busy, setBusy] = React.useState(false);
+  const [result, setResult] = React.useState<
+    { tone: "ok" | "routed" | "error"; text: string } | null
+  >(null);
+
+  const goal = activeGoals.find((g) => g.id === goalId);
+  const delta = Math.abs(proposedWeight - previousWeight);
+
+  async function submit() {
+    if (!goal) return;
+    try {
+      setBusy(true);
+      setResult(null);
+      await requestGoalWeightChange(goal.id, previousWeight, proposedWeight);
+      setResult({
+        tone: "ok",
+        text: `Saved — ${delta}% change is within the 15% guardrail (audit-logged on the goal).`,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to submit weight change";
+      if (message.includes("WEIGHT_GUARDRAIL")) {
+        onRouted({
+          id: `gr-${Date.now()}`,
+          employee: goal.employee,
+          manager: actorName,
+          goalTitle: goal.title,
+          field: "Core responsibility weight",
+          previousValue: `${previousWeight}%`,
+          proposedValue: `${proposedWeight}%`,
+          changePct: delta,
+          requestedAt: new Date().toISOString().slice(0, 10),
+          status: "Pending",
+        });
+        setResult({
+          tone: "routed",
+          text: `Blocked — a ${delta}% change exceeds the 15% guardrail. The change was NOT saved; it has been routed to Pending Approvals and needs mutual signed consent.`,
+        });
+      } else {
+        setResult({ tone: "error", text: message });
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card className="card-pad">
+      <div className="flex items-center gap-2 text-sm font-semibold text-ink">
+        <PenLine className="h-4 w-4 text-brand-500 dark:text-brand-400" /> Adjust Goal Weight
+      </div>
+      {activeGoals.length === 0 ? (
+        <p className="mt-3 text-xs text-ink-muted">
+          No active goals found — goals appear here once employees have signed goals in the
+          growth module.
+        </p>
+      ) : (
+        <div className="mt-3 space-y-3">
+          <div>
+            <label className="field-label">Goal</label>
+            <select
+              value={goalId}
+              onChange={(e) => setGoalId(e.target.value)}
+              className="field-input"
+            >
+              {activeGoals.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.employee} — {g.title}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="field-label">Current weight %</label>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                value={previousWeight}
+                onChange={(e) => setPreviousWeight(Number(e.target.value))}
+                className="field-input"
+              />
+            </div>
+            <div>
+              <label className="field-label">New weight %</label>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                value={proposedWeight}
+                onChange={(e) => setProposedWeight(Number(e.target.value))}
+                className="field-input"
+              />
+            </div>
+          </div>
+          <p
+            className={cn(
+              "text-[11px]",
+              delta > 15 ? "font-semibold text-amber-700 dark:text-amber-300" : "text-ink-faint",
+            )}
+          >
+            Change: {delta} percentage points{" "}
+            {delta > 15 ? "— exceeds the 15% guardrail, will route to approvals" : "— within the 15% guardrail"}
+          </p>
+          <Button className="w-full" disabled={busy || !goal} onClick={submit}>
+            {busy ? "Submitting…" : "Save Weight Change"}
+          </Button>
+          {result && (
+            <p
+              className={cn(
+                "text-[11px]",
+                result.tone === "ok" && "text-emerald-700 dark:text-emerald-300",
+                result.tone === "routed" && "font-medium text-amber-700 dark:text-amber-300",
+                result.tone === "error" && "text-red-600 dark:text-red-300",
+              )}
+            >
+              {result.text}
+            </p>
+          )}
+        </div>
+      )}
+    </Card>
   );
 }
 
@@ -465,9 +719,11 @@ function SignOff({ label, ok }: { label: string; ok: boolean }) {
 function CreatePipForm({
   onIssued,
   employeeOptions,
+  actorName,
 }: {
   onIssued: (pips: Pip[]) => void;
   employeeOptions: string[];
+  actorName: string;
 }) {
   const [employee, setEmployee] = React.useState("");
   const [duration, setDuration] = React.useState(60);
@@ -496,7 +752,7 @@ function CreatePipForm({
       setIssueError(null);
       const updatedPips = await issuePip({
         employee: employee.trim(),
-        manager: currentUser.name,
+        manager: actorName,
         durationDays: duration,
       });
       onIssued(updatedPips);

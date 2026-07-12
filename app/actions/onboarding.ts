@@ -121,6 +121,19 @@ export async function setChecklist(id: string, tasks: ChecklistTask[]): Promise<
   );
 }
 
+/**
+ * Deletes ONE checklist task. Deliberately not a full-checklist PUT: two
+ * concurrent full replaces (e.g. a double-clicked Delete) interleave their
+ * delete-all + re-create on the server and duplicate the checklist.
+ */
+export async function deleteTask(id: string, taskId: string): Promise<OnboardingCase | null> {
+  return unwrap<OnboardingCase | null>(
+    (await api()).DELETE("/api/v1/onboarding/cases/{id}/tasks/{taskId}", {
+      params: { path: { id, taskId } },
+    }),
+  );
+}
+
 export async function setTaskStatus(id: string, taskId: string, status: TaskStatus): Promise<OnboardingCase | null> {
   return unwrap<OnboardingCase | null>(
     (await api()).PATCH("/api/v1/onboarding/cases/{id}/tasks/{taskId}", {
@@ -162,6 +175,21 @@ export async function verifyDocument(id: string, docId: string): Promise<Onboard
   );
 }
 
+/**
+ * HR rejects a submitted document with a note. The backend parks it as
+ * 'Pending' (the rejected/awaiting-re-upload state — no REJECTED status in
+ * the schema yet), records the note in the audit trail, and keeps the
+ * activation gate closed until the employee re-uploads.
+ */
+export async function rejectDocument(id: string, docId: string, note: string): Promise<OnboardingCase | null> {
+  return unwrap<OnboardingCase | null>(
+    (await api()).POST("/api/v1/onboarding/cases/{id}/documents/{docId}/reject", {
+      params: { path: { id, docId } },
+      body: { note },
+    }),
+  );
+}
+
 export async function togglePolicy(id: string, policy: string): Promise<OnboardingCase | null> {
   return unwrap<OnboardingCase | null>(
     (await api()).POST("/api/v1/onboarding/cases/{id}/policies/toggle", {
@@ -177,4 +205,41 @@ export async function activate(id: string): Promise<OnboardingCase | null> {
       params: { path: { id } },
     }),
   );
+}
+
+/* ----------------------- Department options (preboard) ----------------------- */
+
+// Seed list until an admin customizes the company's departments. Kept in sync
+// with the preboard page's fallback ("use server" files may only export async
+// functions, so this can't be exported from here).
+const DEFAULT_DEPARTMENTS = [
+  "Engineering", "Design", "Sales", "Finance", "Marketing", "People", "Operations",
+];
+
+type SettingsWithDepartments = { departments?: string[] } & Record<string, unknown>;
+
+/** The company's department list for the Launch Onboarding form. */
+export async function getDepartmentOptions(): Promise<string[]> {
+  const settings = await unwrap<SettingsWithDepartments | null>(
+    (await api()).GET("/api/v1/platform/settings"),
+  );
+  const departments = settings?.departments;
+  return Array.isArray(departments) && departments.length ? departments : DEFAULT_DEPARTMENTS;
+}
+
+/**
+ * Persists the admin-managed department list on the company settings
+ * (read-modify-write — the settings PUT takes the whole object).
+ */
+export async function saveDepartmentOptions(departments: string[]): Promise<string[]> {
+  const settings = await unwrap<SettingsWithDepartments | null>(
+    (await api()).GET("/api/v1/platform/settings"),
+  );
+  const cleaned = [...new Set(departments.map((d) => d.trim()).filter(Boolean))];
+  await unwrap<unknown>(
+    (await api()).PUT("/api/v1/platform/settings", {
+      body: { ...settings, departments: cleaned } as never,
+    }),
+  );
+  return cleaned;
 }

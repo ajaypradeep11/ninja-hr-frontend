@@ -76,6 +76,24 @@ export async function getPips(): Promise<Pip[]> {
   return unwrap<Pip[]>((await api()).GET("/api/v1/performance/pips"), []);
 }
 
+/** HR-facing goal summary for the admin weight-change guardrail flow. */
+export interface GoalSummary {
+  id: string;
+  employee: string;
+  title: string;
+  status: "Active" | "Completed";
+  progress: number;
+}
+
+/** Company-wide goal list (HR-only endpoint). Not yet in the generated
+ *  OpenAPI types — regenerate with `npm run api:generate`. */
+export async function getAllGoals(): Promise<GoalSummary[]> {
+  const client = (await api()) as unknown as {
+    GET: (path: string) => Promise<{ data?: unknown; error?: unknown; response: Response }>;
+  };
+  return unwrap<GoalSummary[]>(client.GET("/api/v1/performance/growth/goals"), []);
+}
+
 /* ------------------------------- Training -------------------------------- */
 
 export async function getTrainingCourses(): Promise<TrainingCourse[]> {
@@ -129,11 +147,15 @@ export interface Integrations {
   quickbooks: boolean;
 }
 
+export type ReviewCadence = "Annual" | "Bi-Annual" | "Quarterly";
+
 export interface CompanySettings {
   companyName: string;
   provinces: string[];
   integrations: Integrations;
   recognitionPublic: boolean;
+  /** Recurring review cadence (Cadence Configuration on the Performance page). */
+  reviewCadence?: ReviewCadence;
 }
 
 const DEFAULT_SETTINGS: CompanySettings = {
@@ -148,6 +170,7 @@ const DEFAULT_SETTINGS: CompanySettings = {
     quickbooks: true,
   },
   recognitionPublic: true,
+  reviewCadence: "Annual",
 };
 
 export async function getSettings(): Promise<CompanySettings> {

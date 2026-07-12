@@ -1,9 +1,11 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import {
   Folder,
   FolderLock,
+  Loader2,
   Lock,
   UploadCloud,
   FileText,
@@ -20,6 +22,7 @@ import {
   EmptyState,
 } from "@/components/ui";
 import type { DocFolder, VaultDocument } from "@/lib/data";
+import { uploadVaultDocument } from "@/app/actions/documents";
 import { cn, formatDate } from "@/lib/utils";
 
 type Role = "Employee" | "Manager" | "HR Admin" | "Super Admin";
@@ -53,17 +56,50 @@ function canSeeFolder(role: Role, folderName: string) {
   );
 }
 
+const ACCEPTED_EXTENSIONS = ["pdf", "jpg", "jpeg", "png", "docx"];
+
+/**
+ * The "metadata switchboard": route an upload to its folder by what the file
+ * looks like (workflow context), falling back to the folder being viewed.
+ */
+const ROUTING_RULES: { pattern: RegExp; type: string; folder: string }[] = [
+  { pattern: /resume|cv\b|cover.?letter|candidate/i, type: "Resume", folder: "01_Recruitment" },
+  { pattern: /offer/i, type: "Offer Letter", folder: "02_Onboarding_and_Tax" },
+  { pattern: /td1|tax|direct.?deposit|void.?cheque/i, type: "Tax Form", folder: "02_Onboarding_and_Tax" },
+  { pattern: /aoda|whmis|certificate|training/i, type: "Certificate", folder: "03_Compliance_and_Training" },
+  { pattern: /appraisal|performance|review|pip\b/i, type: "Appraisal", folder: "04_Performance_and_PIPs" },
+  { pattern: /medical|accommodation|doctor|sick/i, type: "Medical", folder: "05_Leaves_and_Medical" },
+  { pattern: /roe\b|separation|termination|exit|release/i, type: "Offboarding", folder: "06_Offboarding" },
+];
+
+function routeFile(fileName: string, fallbackFolder: string) {
+  const rule = ROUTING_RULES.find((r) => r.pattern.test(fileName));
+  return rule
+    ? { type: rule.type, folder: rule.folder }
+    : { type: "General", folder: fallbackFolder || "03_Compliance_and_Training" };
+}
+
 interface DocumentsViewProps {
   initialDocFolders: DocFolder[];
   initialVaultDocuments: VaultDocument[];
 }
 
 export function DocumentsView({ initialDocFolders, initialVaultDocuments }: DocumentsViewProps) {
+  const router = useRouter();
   const [role, setRole] = React.useState<Role>("HR Admin");
   const [selected, setSelected] = React.useState<string>(initialDocFolders[0]?.name ?? "");
   const [openDocId, setOpenDocId] = React.useState<string | null>(null);
+  const [docs, setDocs] = React.useState(initialVaultDocuments);
+  const [dragOver, setDragOver] = React.useState(false);
+  const [uploading, setUploading] = React.useState(false);
+  const [notice, setNotice] = React.useState<{ tone: "ok" | "error"; text: string } | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => setDocs(initialVaultDocuments), [initialVaultDocuments]);
 
   const visibleFolders = initialDocFolders.filter((f) => canSeeFolder(role, f.name));
+  // Vault writes are an HR capability — workflows file everyone else's documents.
+  const canUpload = role === "HR Admin" || role === "Super Admin";
 
   // If current selection becomes hidden after a role switch, fall back.
   React.useEffect(() => {
@@ -73,8 +109,52 @@ export function DocumentsView({ initialDocFolders, initialVaultDocuments }: Docu
     }
   }, [role]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const folderDocs = initialVaultDocuments.filter((d) => d.folder === selected);
-  const openDoc = initialVaultDocuments.find((d) => d.id === openDocId) ?? null;
+  const folderDocs = docs.filter((d) => d.folder === selected);
+  const openDoc = docs.find((d) => d.id === openDocId) ?? null;
+
+  async function handleFiles(files: File[]) {
+    if (!canUpload || uploading || files.length === 0) return;
+    setNotice(null);
+
+    const rejected = files.filter(
+      (f) => !ACCEPTED_EXTENSIONS.includes(f.name.split(".").pop()?.toLowerCase() ?? ""),
+    );
+    const accepted = files.filter((f) => !rejected.includes(f));
+    if (accepted.length === 0) {
+      setNotice({ tone: "error", text: "Only PDF, JPEG, PNG or DOCX files are accepted." });
+      return;
+    }
+
+    setUploading(true);
+    const uploaded: VaultDocument[] = [];
+    const failed: string[] = [];
+    for (const file of accepted) {
+      const { type, folder } = routeFile(file.name, selected);
+      try {
+        uploaded.push(
+          await uploadVaultDocument({ name: file.name, type, folder, access: "HR Admin" }),
+        );
+      } catch {
+        failed.push(file.name);
+      }
+    }
+    setUploading(false);
+
+    if (uploaded.length > 0) {
+      setDocs((d) => [...uploaded, ...d]);
+      // Jump to the routed folder so the result of the upload is visible.
+      setSelected(uploaded[uploaded.length - 1].folder);
+      setOpenDocId(null);
+      router.refresh();
+    }
+    const parts = [
+      uploaded.length > 0 &&
+        `Filed ${uploaded.length} document${uploaded.length === 1 ? "" : "s"} to ${[...new Set(uploaded.map((u) => u.folder))].join(", ")}.`,
+      rejected.length > 0 && `Skipped (unsupported type): ${rejected.map((f) => f.name).join(", ")}.`,
+      failed.length > 0 && `Failed: ${failed.join(", ")}.`,
+    ].filter(Boolean);
+    setNotice({ tone: rejected.length || failed.length ? "error" : "ok", text: parts.join(" ") });
+  }
 
   return (
     <div>
@@ -125,7 +205,10 @@ export function DocumentsView({ initialDocFolders, initialVaultDocuments }: Docu
                   <Icon className="h-4 w-4 shrink-0" />
                   <span className="flex-1 truncate font-medium">{f.name}</span>
                   {f.restricted && <Lock className="h-3 w-3 text-ink-faint" />}
-                  <span className="text-[11px] text-ink-faint">{f.count}</span>
+                  {/* Live count — the static seed count drifted as soon as uploads worked. */}
+                  <span className="text-[11px] text-ink-faint">
+                    {docs.filter((d) => d.folder === f.name).length}
+                  </span>
                 </button>
               );
             })}
@@ -147,15 +230,74 @@ export function DocumentsView({ initialDocFolders, initialVaultDocuments }: Docu
 
         {/* Documents + dropzone */}
         <div className="space-y-5">
-          <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-line bg-card py-8 text-center transition-colors hover:border-brand-300">
-            <UploadCloud className="h-7 w-7 text-brand-400" />
+          <div
+            role="button"
+            tabIndex={canUpload ? 0 : -1}
+            onClick={() => canUpload && !uploading && fileInputRef.current?.click()}
+            onKeyDown={(e) => {
+              if (canUpload && !uploading && (e.key === "Enter" || e.key === " ")) {
+                e.preventDefault();
+                fileInputRef.current?.click();
+              }
+            }}
+            // preventDefault on dragover is what makes a DOM element a valid
+            // drop target — without it the browser cancels the drop entirely.
+            onDragOver={(e) => {
+              e.preventDefault();
+              if (canUpload) setDragOver(true);
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragOver(false);
+              void handleFiles(Array.from(e.dataTransfer.files));
+            }}
+            className={cn(
+              "flex flex-col items-center justify-center rounded-2xl border-2 border-dashed bg-card py-8 text-center transition-colors",
+              dragOver ? "border-brand-400 bg-brand-50/50" : "border-line",
+              canUpload ? "cursor-pointer hover:border-brand-300" : "opacity-60",
+            )}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".pdf,.jpg,.jpeg,.png,.docx"
+              className="hidden"
+              onChange={(e) => {
+                void handleFiles(Array.from(e.target.files ?? []));
+                e.target.value = "";
+              }}
+            />
+            {uploading ? (
+              <Loader2 className="h-7 w-7 animate-spin text-brand-400" />
+            ) : (
+              <UploadCloud className="h-7 w-7 text-brand-400" />
+            )}
             <p className="mt-2 text-sm font-semibold text-ink">
-              Drop files to upload
+              {uploading
+                ? "Filing documents…"
+                : canUpload
+                  ? "Drop files to upload, or click to browse"
+                  : "Uploads require HR Admin access"}
             </p>
             <p className="mt-0.5 text-xs text-ink-muted">
               PDF, JPEG, PNG, DOCX — auto-routed to the right folder by workflow context.
             </p>
           </div>
+
+          {notice && (
+            <p
+              className={cn(
+                "rounded-xl px-3 py-2.5 text-xs",
+                notice.tone === "ok"
+                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+                  : "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-300",
+              )}
+            >
+              {notice.text}
+            </p>
+          )}
 
           <Card className="card-pad">
             <CardHeader

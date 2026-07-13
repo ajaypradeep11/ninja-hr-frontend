@@ -3,6 +3,7 @@
 import * as React from "react";
 import {
   Building2,
+  ListChecks,
   MapPin,
   ShieldCheck,
   Plug,
@@ -16,6 +17,12 @@ import { PROVINCES } from "@/lib/compliance";
 import { BRAND } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 import { saveSettings } from "@/app/actions/modules";
+import {
+  getDepartmentOptions,
+  getJobTitleOptions,
+  saveDepartmentOptions,
+  saveJobTitleOptions,
+} from "@/app/actions/onboarding";
 import type { CompanySettings, Integrations } from "@/lib/queries";
 
 const roles = ["Employee", "Manager", "HR_Admin", "Super_Admin"] as const;
@@ -205,6 +212,26 @@ export function SettingsView({ initial }: { initial: CompanySettings }) {
         </Card>
 
         {/* Compliance feed */}
+        <Card className="card-pad lg:col-span-2">
+          <CardHeader title={<span className="flex items-center gap-2"><ListChecks className="h-4 w-4 text-brand-600 dark:text-brand-400" /> Option Lists</span>} />
+          <p className="mt-1 text-xs text-ink-muted">
+            The dropdown choices offered across the app (Add Employee, Launch Onboarding). Add,
+            rename or remove — changes apply company-wide immediately.
+          </p>
+          <div className="mt-4 grid gap-5 sm:grid-cols-2">
+            <OptionListEditor
+              title="Departments"
+              load={getDepartmentOptions}
+              save={saveDepartmentOptions}
+            />
+            <OptionListEditor
+              title="Job titles"
+              load={getJobTitleOptions}
+              save={saveJobTitleOptions}
+            />
+          </div>
+        </Card>
+
         <Card className="card-pad">
           <CardHeader title={<span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-brand-600 dark:text-brand-400" /> Compliance Feed</span>} />
           <div className="mt-4 flex items-center justify-between rounded-2xl bg-canvas p-4">
@@ -258,6 +285,150 @@ export function SettingsView({ initial }: { initial: CompanySettings }) {
           </div>
         </Card>
       </div>
+    </div>
+  );
+}
+
+
+/** Admin CRUD for one option list (departments / job titles): add, inline
+ *  rename, delete. Every mutation persists the whole list via the settings PUT. */
+function OptionListEditor({
+  title,
+  load,
+  save,
+}: {
+  title: string;
+  load: () => Promise<string[]>;
+  save: (items: string[]) => Promise<string[]>;
+}) {
+  const [items, setItems] = React.useState<string[] | null>(null);
+  const [draft, setDraft] = React.useState("");
+  const [editing, setEditing] = React.useState<number | null>(null);
+  const [editText, setEditText] = React.useState("");
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    void load().then(setItems).catch(() => setError("Could not load the list."));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function persist(next: string[]) {
+    setBusy(true);
+    setError(null);
+    try {
+      setItems(await save(next));
+    } catch {
+      setError("Save failed — try again.");
+      setItems(await load().catch(() => items));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!items) return <p className="text-xs text-ink-faint">{error ?? "Loading…"}</p>;
+
+  const input = "h-9 w-full rounded-lg border border-line bg-canvas px-2.5 text-sm outline-none focus:border-brand-300 focus:bg-card";
+
+  return (
+    <div>
+      <p className="text-xs font-bold uppercase tracking-wide text-ink-faint">{title}</p>
+      <ul className="mt-2 space-y-1.5">
+        {items.map((item, i) => (
+          <li key={item} className="flex items-center gap-1.5">
+            {editing === i ? (
+              <>
+                <input
+                  autoFocus
+                  className={input}
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const v = editText.trim();
+                      if (v && v !== item) void persist(items.map((x, j) => (j === i ? v : x)));
+                      setEditing(null);
+                    }
+                    if (e.key === "Escape") setEditing(null);
+                  }}
+                />
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => {
+                    const v = editText.trim();
+                    if (v && v !== item) void persist(items.map((x, j) => (j === i ? v : x)));
+                    setEditing(null);
+                  }}
+                  className="shrink-0 rounded-lg bg-brand-500 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-brand-600"
+                >
+                  Save
+                </button>
+              </>
+            ) : (
+              <>
+                <span className="flex-1 truncate rounded-lg border border-line bg-canvas px-2.5 py-1.5 text-sm text-ink-soft">
+                  {item}
+                </span>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => {
+                    setEditing(i);
+                    setEditText(item);
+                  }}
+                  className="shrink-0 rounded-lg px-2 py-1.5 text-xs font-semibold text-brand-600 hover:bg-canvas dark:text-brand-400"
+                >
+                  Rename
+                </button>
+                <button
+                  type="button"
+                  disabled={busy || items.length <= 1}
+                  title={items.length <= 1 ? "Keep at least one option" : `Remove ${item}`}
+                  onClick={() => void persist(items.filter((_, j) => j !== i))}
+                  className="shrink-0 rounded-lg px-2 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-40 dark:text-red-300 dark:hover:bg-red-500/10"
+                >
+                  Remove
+                </button>
+              </>
+            )}
+          </li>
+        ))}
+      </ul>
+      <div className="mt-2 flex gap-1.5">
+        <input
+          className={input}
+          placeholder={`Add a ${title.toLowerCase().replace(/s$/, "")}…`}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              const v = draft.trim();
+              if (v) {
+                void persist([...items, v]);
+                setDraft("");
+              }
+            }
+          }}
+        />
+        <button
+          type="button"
+          disabled={busy || !draft.trim()}
+          onClick={() => {
+            const v = draft.trim();
+            if (v) {
+              void persist([...items, v]);
+              setDraft("");
+            }
+          }}
+          className="shrink-0 rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-600 disabled:opacity-60"
+        >
+          Add
+        </button>
+      </div>
+      {error && <p className="mt-1.5 text-xs text-red-600 dark:text-red-300">{error}</p>}
     </div>
   );
 }

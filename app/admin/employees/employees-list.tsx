@@ -22,6 +22,12 @@ import {
 import { Avatar, Badge, Card, PageHeader, Stat } from "@/components/ui";
 import type { Employee } from "@/lib/data";
 import { createEmployee } from "@/app/actions/employees";
+import {
+  getDepartmentOptions,
+  getJobTitleOptions,
+  saveDepartmentOptions,
+  saveJobTitleOptions,
+} from "@/app/actions/onboarding";
 import { formatDate } from "@/lib/utils";
 import { PROVINCES, provinceName, type ProvinceCode } from "@/lib/compliance";
 
@@ -389,6 +395,13 @@ function ManualAddModal({ onClose }: { onClose: () => void }) {
   const router = useRouter();
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  // Admin-managed option lists (Settings → Option lists); adding here persists company-wide.
+  const [deptOptions, setDeptOptions] = React.useState<string[]>([]);
+  const [titleOptions, setTitleOptions] = React.useState<string[]>([]);
+  React.useEffect(() => {
+    void getDepartmentOptions().then(setDeptOptions).catch(() => {});
+    void getJobTitleOptions().then(setTitleOptions).catch(() => {});
+  }, []);
   const [f, setF] = React.useState({
     name: "", title: "", department: "", province: "ON", email: "",
     hireDate: "", birthDate: "", salary: "", employmentType: "", phone: "", preferredName: "",
@@ -444,14 +457,26 @@ function ManualAddModal({ onClose }: { onClose: () => void }) {
               <label className={label} htmlFor="ma-preferred">Preferred name</label>
               <input id="ma-preferred" className={field} value={f.preferredName} onChange={set("preferredName")} />
             </div>
-            <div>
-              <label className={label} htmlFor="ma-title">Job title *</label>
-              <input id="ma-title" required minLength={2} className={field} value={f.title} onChange={set("title")} />
-            </div>
-            <div>
-              <label className={label} htmlFor="ma-dept">Department *</label>
-              <input id="ma-dept" required minLength={2} className={field} value={f.department} onChange={set("department")} />
-            </div>
+            <OptionSelect
+              id="ma-title"
+              label="Job title *"
+              value={f.title}
+              options={titleOptions}
+              fieldClass={field}
+              labelClass={label}
+              onChange={(v) => setF((prev) => ({ ...prev, title: v }))}
+              onAdd={async (v) => setTitleOptions(await saveJobTitleOptions([...titleOptions, v]))}
+            />
+            <OptionSelect
+              id="ma-dept"
+              label="Department *"
+              value={f.department}
+              options={deptOptions}
+              fieldClass={field}
+              labelClass={label}
+              onChange={(v) => setF((prev) => ({ ...prev, department: v }))}
+              onAdd={async (v) => setDeptOptions(await saveDepartmentOptions([...deptOptions, v]))}
+            />
             <div>
               <label className={label} htmlFor="ma-email">Work email *</label>
               <input id="ma-email" required type="email" className={field} value={f.email} onChange={set("email")} />
@@ -587,6 +612,99 @@ function RowMenu({ employee }: { employee: Employee }) {
             </span>
           )}
         </div>
+      )}
+    </div>
+  );
+}
+
+
+/** Select fed by an admin-managed option list, with an inline "+ Add new" that
+ *  persists the new option company-wide (Settings → Option lists manages them). */
+function OptionSelect({
+  id,
+  label,
+  value,
+  options,
+  onChange,
+  onAdd,
+  fieldClass,
+  labelClass,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  options: string[];
+  onChange: (v: string) => void;
+  onAdd: (v: string) => Promise<void>;
+  fieldClass: string;
+  labelClass: string;
+}) {
+  const [adding, setAdding] = React.useState(false);
+  const [draft, setDraft] = React.useState("");
+  const [busy, setBusy] = React.useState(false);
+
+  async function commit() {
+    const v = draft.trim();
+    if (!v) return;
+    setBusy(true);
+    try {
+      await onAdd(v);
+      onChange(v);
+      setAdding(false);
+      setDraft("");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div>
+      <label className={labelClass} htmlFor={id}>{label}</label>
+      {adding ? (
+        <div className="flex gap-1.5">
+          <input
+            autoFocus
+            className={fieldClass}
+            placeholder="New option…"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                void commit();
+              }
+              if (e.key === "Escape") setAdding(false);
+            }}
+          />
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void commit()}
+            className="shrink-0 rounded-xl bg-brand-500 px-3 text-sm font-semibold text-white hover:bg-brand-600 disabled:opacity-60"
+          >
+            {busy ? "…" : "Add"}
+          </button>
+        </div>
+      ) : (
+        <select
+          id={id}
+          required
+          className={fieldClass}
+          value={value}
+          onChange={(e) => {
+            if (e.target.value === "__add__") setAdding(true);
+            else onChange(e.target.value);
+          }}
+        >
+          <option value="" disabled>
+            Select…
+          </option>
+          {options.map((o) => (
+            <option key={o} value={o}>{o}</option>
+          ))}
+          {value && !options.includes(value) && <option value={value}>{value}</option>}
+          <option value="__add__">+ Add new…</option>
+        </select>
       )}
     </div>
   );

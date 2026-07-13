@@ -43,3 +43,12 @@ export async function uploadVaultDocument(
     }),
   );
 }
+
+/** Remove a vault document (HR curates an employee's file cabinet). */
+export async function deleteVaultDocument(id: string): Promise<void> {
+  // Endpoint added after the last openapi.d.ts generation — regenerate to type it.
+  const raw = (await client()) as unknown as {
+    DELETE: (path: string, init?: object) => Promise<{ data?: unknown; error?: unknown; response: Response }>;
+  };
+  await unwrap(raw.DELETE(`/api/v1/workplace/documents/${id}`));
+}

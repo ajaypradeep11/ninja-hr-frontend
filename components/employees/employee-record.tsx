@@ -26,6 +26,7 @@ import {
   updateEmployee,
 } from "@/app/actions/employees";
 import { assignTraining } from "@/app/actions/training";
+import { deleteVaultDocument, uploadVaultDocument } from "@/app/actions/documents";
 import {
   EMPLOYEE_STATUSES,
   EMPLOYMENT_TYPES,
@@ -113,19 +114,46 @@ function seedFor(section: string, emp: EmployeeDetail): UpdateEmployeeInput {
   }
 }
 
+export interface CaseDocRef {
+  caseId: string;
+  docId: string;
+  name: string;
+  status: string;
+  hasFile: boolean;
+}
+
 export function EmployeeRecord({
   initial,
   training: initialTraining = [],
   courses = [],
+  caseDocs = [],
   autoEdit = false,
 }: {
   initial: EmployeeDetail;
   training?: TrainingAssignment[];
   courses?: TrainingCourse[];
+  /** Onboarding submissions (from this person's case) — viewable via the BFF file proxy. */
+  caseDocs?: CaseDocRef[];
   autoEdit?: boolean;
 }) {
   const [emp, setEmp] = React.useState(initial);
   const [training, setTraining] = React.useState(initialTraining);
+  const [addingDoc, setAddingDoc] = React.useState(false);
+  const [docBusy, setDocBusy] = React.useState<string | null>(null);
+  const [docError, setDocError] = React.useState<string | null>(null);
+
+  async function removeDoc(id: string) {
+    setDocBusy(id);
+    setDocError(null);
+    try {
+      await deleteVaultDocument(id);
+      setEmp((prev) => ({ ...prev, documents: prev.documents.filter((d) => d.id !== id) }));
+    } catch (e) {
+      setDocError(e instanceof Error ? e.message : "Could not remove the document");
+    } finally {
+      setDocBusy(null);
+    }
+  }
   // Deep-linked "Edit Details" (?edit=1) opens the contact section straight away.
   const [editing, setEditing] = React.useState<string | null>(autoEdit ? "contact" : null);
   const [draft, setDraft] = React.useState<UpdateEmployeeInput>(
@@ -486,34 +514,92 @@ export function EmployeeRecord({
       {/* Emergency contacts */}
       <EmergencyContacts emp={emp} onChange={setEmp} />
 
-      {/* Documents */}
+      {/* Documents — the employee's full file record: vault entries (HR can add
+          or remove) plus their onboarding submissions (openable via the file proxy). */}
       <Card className="card-pad">
-        <CardHeader title="Documents" action={<FileText className="h-4 w-4 text-brand-500 dark:text-brand-400" />} />
+        <CardHeader
+          title="Documents"
+          action={
+            <button
+              onClick={() => setAddingDoc(true)}
+              className="inline-flex items-center gap-1 rounded-lg bg-brand-50 px-2.5 py-1.5 text-xs font-semibold text-brand-700 dark:text-brand-400 hover:bg-brand-100"
+            >
+              <Plus className="h-3.5 w-3.5" /> Add Document
+            </button>
+          }
+        />
         <div className="mt-3 space-y-2">
-          {emp.documents.length === 0 ? (
+          {emp.documents.length === 0 && caseDocs.length === 0 && (
             <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-line py-8 text-center">
               <p className="text-sm text-ink-muted">No documents on file for this employee.</p>
-              <Link
-                href="/admin/documents"
-                className="inline-flex items-center gap-1 rounded-lg bg-brand-50 px-2.5 py-1.5 text-xs font-semibold text-brand-700 dark:text-brand-400 hover:bg-brand-100"
-              >
-                <Plus className="h-3.5 w-3.5" /> Add Document
-              </Link>
             </div>
-          ) : (
-            emp.documents.map((d) => (
-              <div key={d.id} className="flex items-center gap-3 rounded-xl border border-line px-3 py-2.5">
-                <FileText className="h-4 w-4 shrink-0 text-brand-500 dark:text-brand-400" />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium text-ink">{d.name}</span>
-                  <span className="block text-[11px] text-ink-muted">
-                    {d.type} · {d.folder} · uploaded {formatDate(d.uploaded)}
-                  </span>
+          )}
+          {emp.documents.map((d) => (
+            <div key={d.id} className="flex items-center gap-3 rounded-xl border border-line px-3 py-2.5">
+              <FileText className="h-4 w-4 shrink-0 text-brand-500 dark:text-brand-400" />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-medium text-ink">{d.name}</span>
+                <span className="block text-[11px] text-ink-muted">
+                  {d.type} · {d.folder} · uploaded {formatDate(d.uploaded)}
                 </span>
-              </div>
-            ))
+              </span>
+              <button
+                onClick={() => void removeDoc(d.id)}
+                disabled={docBusy === d.id}
+                title={`Remove ${d.name}`}
+                className="shrink-0 rounded-lg px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50 dark:text-red-300 dark:hover:bg-red-500/10"
+              >
+                {docBusy === d.id ? "Removing…" : "Remove"}
+              </button>
+            </div>
+          ))}
+          {caseDocs.length > 0 && (
+            <p className="pt-1 text-[10px] font-semibold uppercase tracking-wide text-ink-faint">
+              Onboarding submissions
+            </p>
+          )}
+          {caseDocs.map((d) => (
+            <div key={d.docId} className="flex items-center gap-3 rounded-xl border border-line px-3 py-2.5">
+              <FileText className="h-4 w-4 shrink-0 text-emerald-500 dark:text-emerald-400" />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-medium text-ink">{d.name}</span>
+                <span className="block text-[11px] text-ink-muted">Onboarding · {d.status}</span>
+              </span>
+              {d.hasFile ? (
+                <a
+                  href={`/api/onboarding/${d.caseId}/documents/${d.docId}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="shrink-0 rounded-lg bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 hover:bg-brand-100 dark:text-brand-400"
+                >
+                  View
+                </a>
+              ) : (
+                <span className="shrink-0 text-[11px] text-ink-faint">No file</span>
+              )}
+            </div>
+          ))}
+          {docError && (
+            <p className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-500/10 dark:text-red-300">
+              {docError}
+            </p>
           )}
         </div>
+        {addingDoc && (
+          <AddDocumentModal
+            employeeName={emp.name}
+            onClose={() => setAddingDoc(false)}
+            onAdded={(doc) =>
+              setEmp((prev) => ({
+                ...prev,
+                documents: [
+                  { id: doc.id, name: doc.name, type: doc.type, folder: doc.folder, uploaded: doc.uploaded },
+                  ...prev.documents,
+                ],
+              }))
+            }
+          />
+        )}
       </Card>
 
       {/* Training record — the employee's assigned courses live on their profile. */}
@@ -811,5 +897,99 @@ function EmergencyContacts({
         ))}
       </div>
     </Card>
+  );
+}
+
+
+const VAULT_FOLDERS = [
+  "01_Recruitment", "02_Onboarding_and_Tax", "03_Certifications",
+  "04_Performance", "05_HR_Letters", "06_Offboarding",
+];
+
+/** Files a document into this employee's personal vault (metadata record —
+ *  file binaries only exist for onboarding submissions today). */
+function AddDocumentModal({
+  employeeName,
+  onClose,
+  onAdded,
+}: {
+  employeeName: string;
+  onClose: () => void;
+  onAdded: (doc: { id: string; name: string; type: string; folder: string; uploaded: string }) => void;
+}) {
+  const [name, setName] = React.useState("");
+  const [type, setType] = React.useState("General");
+  const [folder, setFolder] = React.useState(VAULT_FOLDERS[1]);
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  async function submit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      const doc = await uploadVaultDocument({
+        name: name.trim(),
+        type: type.trim() || "General",
+        folder,
+        access: "Employee",
+        employeeName,
+      });
+      onAdded(doc);
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not add the document");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const field =
+    "h-10 w-full rounded-xl border border-line bg-canvas px-3 text-sm outline-none focus:border-brand-300 focus:bg-card";
+  const label = "mb-1 block text-xs font-semibold text-ink-soft";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-ink/20" onClick={onClose} />
+      <div className="relative w-full max-w-md rounded-2xl border border-line bg-card p-5 shadow-card-lg">
+        <h2 className="text-base font-bold text-ink">Add document for {employeeName}</h2>
+        <p className="mt-1 text-xs text-ink-muted">
+          Files a record into their personal vault (visible to them in My Profile → Documents).
+        </p>
+        <form className="mt-4 space-y-3" onSubmit={submit}>
+          <div>
+            <label className={label} htmlFor="doc-name">Document name *</label>
+            <input id="doc-name" required minLength={2} className={field} value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className={label} htmlFor="doc-type">Type</label>
+              <input id="doc-type" className={field} value={type} onChange={(e) => setType(e.target.value)} />
+            </div>
+            <div>
+              <label className={label} htmlFor="doc-folder">Folder</label>
+              <select id="doc-folder" className={field} value={folder} onChange={(e) => setFolder(e.target.value)}>
+                {VAULT_FOLDERS.map((f) => (
+                  <option key={f} value={f}>{f}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          {error && (
+            <p className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-500/10 dark:text-red-300" role="alert">
+              {error}
+            </p>
+          )}
+          <div className="flex justify-end gap-2 pt-1">
+            <button type="button" onClick={onClose} className="rounded-xl border border-line px-4 py-2 text-sm font-semibold text-ink-soft hover:bg-canvas">
+              Cancel
+            </button>
+            <button type="submit" disabled={busy} className="rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600 disabled:opacity-60">
+              {busy ? "Adding…" : "Add document"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }

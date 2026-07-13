@@ -243,3 +243,33 @@ export async function saveDepartmentOptions(departments: string[]): Promise<stri
   );
   return cleaned;
 }
+
+const DEFAULT_JOB_TITLES = [
+  "Software Engineer", "Product Designer", "Account Executive", "HR Generalist",
+  "Financial Analyst", "Marketing Specialist", "Operations Manager",
+];
+
+type SettingsWithTitles = { jobTitles?: string[] } & Record<string, unknown>;
+
+/** The company's admin-managed job-title list. */
+export async function getJobTitleOptions(): Promise<string[]> {
+  const settings = await unwrap<SettingsWithTitles | null>(
+    (await api()).GET("/api/v1/platform/settings"),
+  );
+  const titles = settings?.jobTitles;
+  return Array.isArray(titles) && titles.length ? titles : DEFAULT_JOB_TITLES;
+}
+
+/** Persists the job-title list (read-modify-write, same as departments). */
+export async function saveJobTitleOptions(jobTitles: string[]): Promise<string[]> {
+  const settings = await unwrap<SettingsWithTitles | null>(
+    (await api()).GET("/api/v1/platform/settings"),
+  );
+  const cleaned = [...new Set(jobTitles.map((t) => t.trim()).filter(Boolean))];
+  await unwrap<unknown>(
+    (await api()).PUT("/api/v1/platform/settings", {
+      body: { ...settings, jobTitles: cleaned } as never,
+    }),
+  );
+  return cleaned;
+}

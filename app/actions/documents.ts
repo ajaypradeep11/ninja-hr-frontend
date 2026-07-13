@@ -30,6 +30,9 @@ export interface UploadVaultDocumentInput {
   folder: string;
   access: VaultDocument["access"];
   employeeName?: string;
+  /** Optional stored file — base64 payload + MIME type (both or neither). */
+  mimeType?: string;
+  dataBase64?: string;
 }
 
 /** File a manually uploaded document into the vault (Documents dropzone). */

@@ -155,6 +155,9 @@ export interface VaultDocument {
   type: string;
   uploaded: string;
   access: "Employee" | "Manager" | "HR Admin" | "Super Admin";
+  /** True when the vault row stores the actual file (viewable via /api/vault/[id]). */
+  hasFile?: boolean;
+  size?: number | null;
 }
 
 export interface PerformanceReview {

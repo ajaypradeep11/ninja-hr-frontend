@@ -18,6 +18,9 @@ import {
   Trash2,
   UserRound,
   X,
+  ChevronDown,
+  Eye,
+  Loader2,
 } from "lucide-react";
 import { Avatar, Badge, Card, CardHeader, ProgressBar } from "@/components/ui";
 import {
@@ -28,6 +31,12 @@ import {
 import { assignTraining } from "@/app/actions/training";
 import { deleteVaultDocument, uploadVaultDocument } from "@/app/actions/documents";
 import {
+  getDepartmentOptions,
+  getJobTitleOptions,
+  saveDepartmentOptions,
+  saveJobTitleOptions,
+} from "@/app/actions/onboarding";
+import {
   EMPLOYEE_STATUSES,
   EMPLOYMENT_TYPES,
   PAY_FREQUENCIES,
@@ -37,7 +46,7 @@ import {
 } from "@/lib/employees";
 import type { TrainingAssignment, TrainingCourse } from "@/lib/training";
 import { PROVINCES, provinceName } from "@/lib/compliance";
-import { formatCAD, formatDate } from "@/lib/utils";
+import { formatCAD, formatDate, cn } from "@/lib/utils";
 
 const trainingTone: Record<string, "gray" | "amber" | "green"> = {
   Assigned: "gray",
@@ -139,6 +148,13 @@ export function EmployeeRecord({
   const [emp, setEmp] = React.useState(initial);
   const [training, setTraining] = React.useState(initialTraining);
   const [addingDoc, setAddingDoc] = React.useState(false);
+  // Admin-managed option lists for the Employment edit modal (Settings → Option Lists).
+  const [deptOptions, setDeptOptions] = React.useState<string[]>([]);
+  const [titleOptions, setTitleOptions] = React.useState<string[]>([]);
+  React.useEffect(() => {
+    void getDepartmentOptions().then(setDeptOptions).catch(() => {});
+    void getJobTitleOptions().then(setTitleOptions).catch(() => {});
+  }, []);
   const [docBusy, setDocBusy] = React.useState<string | null>(null);
   const [docError, setDocError] = React.useState<string | null>(null);
 
@@ -251,6 +267,46 @@ export function EmployeeRecord({
     </div>
   );
 
+  /** Select fed by an admin-managed option list with an inline "+ Add new…"
+   *  that persists company-wide (same lists the Add-Employee form uses). */
+  const optionField = (
+    key: keyof UpdateEmployeeInput,
+    label: string,
+    options: string[],
+    persist: (items: string[]) => Promise<string[]>,
+    setOptions: (items: string[]) => void,
+  ) => {
+    const current = (draft[key] as string) ?? "";
+    return (
+      <div>
+        <label className="field-label">{label}</label>
+        <select
+          value={current}
+          onChange={(e) => {
+            const v = e.target.value;
+            if (v === "__add__") {
+              const added = window.prompt(`New ${label.toLowerCase()}:`)?.trim();
+              if (added) {
+                void persist([...options, added]).then(setOptions).catch(() => {});
+                setDraft((d) => ({ ...d, [key]: added }));
+              }
+              return;
+            }
+            setDraft((d) => ({ ...d, [key]: v }));
+          }}
+          className="field-input"
+        >
+          <option value="">—</option>
+          {options.map((o) => (
+            <option key={o}>{o}</option>
+          ))}
+          {current && !options.includes(current) && <option value={current}>{current}</option>}
+          <option value="__add__">+ Add new…</option>
+        </select>
+      </div>
+    );
+  };
+
   const checkbox = (key: keyof UpdateEmployeeInput, label: string) => (
     <label className="flex items-center gap-2 text-xs text-ink-soft">
       <input
@@ -292,8 +348,8 @@ export function EmployeeRecord({
         return (
           <>
             {input("employeeNumber", "Employee ID")}
-            {input("title", "Job title")}
-            {input("department", "Department")}
+            {optionField("title", "Job title", titleOptions, saveJobTitleOptions, setTitleOptions)}
+            {optionField("department", "Department", deptOptions, saveDepartmentOptions, setDeptOptions)}
             {input("manager", "Manager")}
             {select("employmentType", "Employment type", EMPLOYMENT_TYPES)}
             {input("workLocation", "Work location")}
@@ -543,14 +599,11 @@ export function EmployeeRecord({
                   {d.type} · {d.folder} · uploaded {formatDate(d.uploaded)}
                 </span>
               </span>
-              <button
-                onClick={() => void removeDoc(d.id)}
-                disabled={docBusy === d.id}
-                title={`Remove ${d.name}`}
-                className="shrink-0 rounded-lg px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50 dark:text-red-300 dark:hover:bg-red-500/10"
-              >
-                {docBusy === d.id ? "Removing…" : "Remove"}
-              </button>
+              <DocRowMenu
+                viewHref={d.hasFile ? `/api/vault/${d.id}` : undefined}
+                onRemove={() => void removeDoc(d.id)}
+                busy={docBusy === d.id}
+              />
             </div>
           ))}
           {caseDocs.length > 0 && (
@@ -566,14 +619,7 @@ export function EmployeeRecord({
                 <span className="block text-[11px] text-ink-muted">Onboarding · {d.status}</span>
               </span>
               {d.hasFile ? (
-                <a
-                  href={`/api/onboarding/${d.caseId}/documents/${d.docId}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="shrink-0 rounded-lg bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 hover:bg-brand-100 dark:text-brand-400"
-                >
-                  View
-                </a>
+                <DocRowMenu viewHref={`/api/onboarding/${d.caseId}/documents/${d.docId}`} />
               ) : (
                 <span className="shrink-0 text-[11px] text-ink-faint">No file</span>
               )}
@@ -593,7 +639,7 @@ export function EmployeeRecord({
               setEmp((prev) => ({
                 ...prev,
                 documents: [
-                  { id: doc.id, name: doc.name, type: doc.type, folder: doc.folder, uploaded: doc.uploaded },
+                  { id: doc.id, name: doc.name, type: doc.type, folder: doc.folder, uploaded: doc.uploaded, hasFile: doc.hasFile },
                   ...prev.documents,
                 ],
               }))
@@ -901,6 +947,76 @@ function EmergencyContacts({
 }
 
 
+/** Per-row actions dropdown (chevron at the side): View when a file is
+ *  stored, Remove for vault entries HR curates. */
+function DocRowMenu({
+  viewHref,
+  onRemove,
+  busy = false,
+}: {
+  viewHref?: string;
+  onRemove?: () => void;
+  busy?: boolean;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+
+  if (!viewHref && !onRemove) return null;
+
+  return (
+    <div ref={ref} className="relative shrink-0">
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label="Document actions"
+        disabled={busy}
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-ink-muted transition hover:bg-canvas hover:text-ink disabled:opacity-50"
+      >
+        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ChevronDown className={cn("h-4 w-4 transition-transform", open && "rotate-180")} />}
+      </button>
+      {open && (
+        <div role="menu" className="absolute right-0 z-30 mt-1 w-36 overflow-hidden rounded-xl border border-line bg-card py-1 shadow-lg">
+          {viewHref && (
+            <a
+              href={viewHref}
+              target="_blank"
+              rel="noreferrer"
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 px-3 py-2 text-sm text-ink hover:bg-canvas"
+            >
+              <Eye className="h-3.5 w-3.5 text-brand-500 dark:text-brand-400" /> View
+            </a>
+          )}
+          {onRemove && (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                onRemove();
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-500/10"
+            >
+              <Trash2 className="h-3.5 w-3.5" /> Remove
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const VAULT_FOLDERS = [
   "01_Recruitment", "02_Onboarding_and_Tax", "03_Certifications",
   "04_Performance", "05_HR_Letters", "06_Offboarding",
@@ -915,25 +1031,55 @@ function AddDocumentModal({
 }: {
   employeeName: string;
   onClose: () => void;
-  onAdded: (doc: { id: string; name: string; type: string; folder: string; uploaded: string }) => void;
+  onAdded: (doc: { id: string; name: string; type: string; folder: string; uploaded: string; hasFile?: boolean }) => void;
 }) {
   const [name, setName] = React.useState("");
   const [type, setType] = React.useState("General");
   const [folder, setFolder] = React.useState(VAULT_FOLDERS[1]);
+  const [file, setFile] = React.useState<File | null>(null);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+
+  const ACCEPTED = ["application/pdf", "image/png", "image/jpeg", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+
+  function pickFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0] ?? null;
+    setError(null);
+    if (f && !ACCEPTED.includes(f.type)) {
+      setError("Supported files: PDF, PNG, JPG, DOCX.");
+      return;
+    }
+    if (f && f.size > 8 * 1024 * 1024) {
+      setError("File is too large — 8 MB max.");
+      return;
+    }
+    setFile(f);
+    if (f && !name.trim()) setName(f.name.replace(/\.[a-z0-9]+$/i, ""));
+  }
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
     setError(null);
     try {
+      let filePayload: { mimeType: string; dataBase64: string } | undefined;
+      if (file) {
+        const buf = await file.arrayBuffer();
+        let binary = "";
+        const bytes = new Uint8Array(buf);
+        const CHUNK = 0x8000;
+        for (let i = 0; i < bytes.length; i += CHUNK) {
+          binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+        }
+        filePayload = { mimeType: file.type, dataBase64: btoa(binary) };
+      }
       const doc = await uploadVaultDocument({
         name: name.trim(),
         type: type.trim() || "General",
         folder,
         access: "Employee",
         employeeName,
+        ...filePayload,
       });
       onAdded(doc);
       onClose();
@@ -954,9 +1100,24 @@ function AddDocumentModal({
       <div className="relative w-full max-w-md rounded-2xl border border-line bg-card p-5 shadow-card-lg">
         <h2 className="text-base font-bold text-ink">Add document for {employeeName}</h2>
         <p className="mt-1 text-xs text-ink-muted">
-          Files a record into their personal vault (visible to them in My Profile → Documents).
+          Goes into their personal vault (visible to them in My Profile → Documents). Attach the file itself to make it viewable, or save a metadata-only record.
         </p>
         <form className="mt-4 space-y-3" onSubmit={submit}>
+          <div>
+            <label className={label} htmlFor="doc-file">File (PDF, PNG, JPG or DOCX — optional)</label>
+            <input
+              id="doc-file"
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg,.docx"
+              onChange={pickFile}
+              className="block w-full text-sm text-ink-soft file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-brand-700 hover:file:bg-brand-100"
+            />
+            {file && (
+              <p className="mt-1 text-[11px] text-ink-faint">
+                {file.name} · {(file.size / 1024).toFixed(0)} KB — will be stored and viewable.
+              </p>
+            )}
+          </div>
           <div>
             <label className={label} htmlFor="doc-name">Document name *</label>
             <input id="doc-name" required minLength={2} className={field} value={name} onChange={(e) => setName(e.target.value)} />

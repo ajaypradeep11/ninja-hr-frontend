@@ -1,0 +1,30 @@
+import { buildProxyAuthHeaders } from "@/lib/api/proxy-headers";
+
+// Proxies a stored vault file from the backend on the verified-session bearer
+// lane (backend allows HR or the owning employee). Mirrors the onboarding
+// document proxy: the browser never sees the internal key; the binary passes
+// straight through.
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ docId: string }> },
+) {
+  const { docId } = await params;
+  const authHeaders = await buildProxyAuthHeaders();
+  if (!authHeaders) return new Response("Unauthorized", { status: 401 });
+  const rawBase = process.env.NINJA_HR_API_URL ?? "";
+  const baseUrl = rawBase.replace(/\/api\/v1\/?$/, "");
+
+  const res = await fetch(`${baseUrl}/api/v1/workplace/documents/${docId}/file`, {
+    headers: authHeaders,
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    return new Response("Document not available", { status: res.status });
+  }
+  const headers = new Headers();
+  headers.set("Content-Type", res.headers.get("Content-Type") ?? "application/octet-stream");
+  const disp = res.headers.get("Content-Disposition");
+  if (disp) headers.set("Content-Disposition", disp);
+  return new Response(res.body, { status: 200, headers });
+}

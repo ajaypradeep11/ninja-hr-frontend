@@ -131,8 +131,20 @@ export function DocumentsView({ initialDocFolders, initialVaultDocuments }: Docu
     for (const file of accepted) {
       const { type, folder } = routeFile(file.name, selected);
       try {
+        // Store the actual file when within the ceiling — larger files fall
+        // back to a metadata-only record rather than failing the upload.
+        let filePayload: { mimeType: string; dataBase64: string } | undefined;
+        if (file.size <= 8 * 1024 * 1024 && file.type) {
+          const bytes = new Uint8Array(await file.arrayBuffer());
+          let binary = "";
+          const CHUNK = 0x8000;
+          for (let i = 0; i < bytes.length; i += CHUNK) {
+            binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+          }
+          filePayload = { mimeType: file.type, dataBase64: btoa(binary) };
+        }
         uploaded.push(
-          await uploadVaultDocument({ name: file.name, type, folder, access: "HR Admin" }),
+          await uploadVaultDocument({ name: file.name, type, folder, access: "HR Admin", ...filePayload }),
         );
       } catch {
         failed.push(file.name);

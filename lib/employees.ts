@@ -27,6 +27,8 @@ export interface EmployeeDocumentRef {
   type: string;
   folder: string;
   uploaded: string;
+  /** True when the vault row stores the actual file (viewable via /api/vault/[id]). */
+  hasFile?: boolean;
 }
 
 export interface EmployeeDetail {

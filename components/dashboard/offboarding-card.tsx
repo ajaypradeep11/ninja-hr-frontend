@@ -33,7 +33,8 @@ export function OffboardingCard({
   employee,
 }: {
   tasks: OffboardingTask[];
-  employee: { name: string; lastDay: string };
+  /** Real employee currently offboarding — null renders the quiet empty state. */
+  employee: { name: string; lastDay?: string | null } | null;
 }) {
   const router = useRouter();
   const [items, setItems] = React.useState(tasks);
@@ -72,12 +73,19 @@ export function OffboardingCard({
           </Link>
         }
       />
+      {!employee && (
+        <p className="mt-3 text-sm text-ink-muted">
+          No one is being offboarded right now. Start one from an employee&apos;s row menu.
+        </p>
+      )}
+      {employee && (
+      <>
       <div className="mt-3 flex items-center gap-3">
         <Avatar name={employee.name} size={36} />
         <div>
           <p className="text-sm font-semibold text-ink">{employee.name}</p>
           <p className="text-xs text-ink-muted">
-            Last day {formatDate(employee.lastDay, { year: undefined })}
+            {employee.lastDay ? `Last day ${formatDate(employee.lastDay, { year: undefined })}` : "Offboarding in progress"}
           </p>
         </div>
       </div>
@@ -113,6 +121,8 @@ export function OffboardingCard({
       <p className="mt-3 text-[11px] text-ink-faint">
         Click a status to advance it — changes sync with the Offboarding module.
       </p>
+      </>
+      )}
     </Card>
   );
 }

@@ -23,10 +23,7 @@ import { Bill149Badge } from "@/components/dashboard/bill149-badge";
 import { TeamHealthCard } from "@/components/dashboard/team-health-card";
 import { LeaveRequestsCard } from "@/components/dashboard/leave-requests-card";
 import { OffboardingCard } from "@/components/dashboard/offboarding-card";
-import {
-  offboardingEmployee,
-  upcomingEvents,
-} from "@/lib/data";
+import { upcomingEvents } from "@/lib/data";
 import { getActor } from "@/lib/actor";
 import {
   getSalaryBenchmarks,
@@ -283,10 +280,14 @@ export default async function AdminDashboard() {
           </div>
         </Card>
 
-        {/* Offboarding */}
+        {/* Offboarding — real subject from the directory (no mock): the first
+            employee currently in Offboarding status, or a quiet empty state. */}
         <OffboardingCard
           tasks={offboardingTasks}
-          employee={{ name: offboardingEmployee.name, lastDay: offboardingEmployee.lastDay }}
+          employee={(() => {
+            const subject = employees.find((e) => e.status === "Offboarding");
+            return subject ? { name: subject.name } : null;
+          })()}
         />
       </div>
     </div>

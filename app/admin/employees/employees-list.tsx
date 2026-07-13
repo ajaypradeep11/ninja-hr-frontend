@@ -16,9 +16,12 @@ import {
   UserPlus,
   UserRound,
   X,
+  ClipboardPen,
+  Loader2,
 } from "lucide-react";
 import { Avatar, Badge, Card, PageHeader, Stat } from "@/components/ui";
 import type { Employee } from "@/lib/data";
+import { createEmployee } from "@/app/actions/employees";
 import { formatDate } from "@/lib/utils";
 import { PROVINCES, provinceName, type ProvinceCode } from "@/lib/compliance";
 
@@ -306,6 +309,7 @@ function FilterSelect({
 /** Prominent directory CTA — routes into the two ways people join the org. */
 function AddEmployeeButton() {
   const [open, setOpen] = React.useState(false);
+  const [manualOpen, setManualOpen] = React.useState(false);
   const ref = useDismiss(open, () => setOpen(false));
 
   return (
@@ -350,8 +354,166 @@ function AddEmployeeButton() {
               <span className="block text-xs text-ink-muted">Start a new hire&apos;s paperwork</span>
             </span>
           </Link>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              setManualOpen(true);
+            }}
+            className="flex w-full items-start gap-2.5 px-3 py-2.5 text-left hover:bg-canvas"
+          >
+            <ClipboardPen className="mt-0.5 h-4 w-4 text-brand-500 dark:text-brand-400" />
+            <span>
+              <span className="block text-sm font-semibold text-ink">Add manually</span>
+              <span className="block text-xs text-ink-muted">
+                Hired or pre-boarded outside the system
+              </span>
+            </span>
+          </button>
         </div>
       )}
+      {manualOpen && <ManualAddModal onClose={() => setManualOpen(false)} />}
+    </div>
+  );
+}
+
+const MANUAL_PROVINCES = [
+  ["ON", "Ontario"], ["BC", "British Columbia"], ["AB", "Alberta"], ["QC", "Quebec"],
+  ["SK", "Saskatchewan"], ["MB", "Manitoba"], ["NS", "Nova Scotia"], ["NB", "New Brunswick"],
+] as const;
+
+/** Manual profile creation — for people hired outside the recruiting/onboarding flows.
+ *  Creates a full ACTIVE directory profile (backend assigns the EMP number + login). */
+function ManualAddModal({ onClose }: { onClose: () => void }) {
+  const router = useRouter();
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [f, setF] = React.useState({
+    name: "", title: "", department: "", province: "ON", email: "",
+    hireDate: "", birthDate: "", salary: "", employmentType: "", phone: "", preferredName: "",
+  });
+  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setF((v) => ({ ...v, [k]: e.target.value }));
+
+  async function submit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    const res = await createEmployee({
+      name: f.name.trim(),
+      title: f.title.trim(),
+      department: f.department.trim(),
+      province: f.province,
+      email: f.email.trim(),
+      hireDate: f.hireDate,
+      ...(f.birthDate ? { birthDate: f.birthDate } : {}),
+      ...(f.salary ? { salary: Number(f.salary) } : {}),
+      ...(f.employmentType ? { employmentType: f.employmentType } : {}),
+      ...(f.phone.trim() ? { phone: f.phone.trim() } : {}),
+      ...(f.preferredName.trim() ? { preferredName: f.preferredName.trim() } : {}),
+    });
+    setBusy(false);
+    if (!res.ok) {
+      setError(res.error);
+      return;
+    }
+    onClose();
+    router.refresh();
+  }
+
+  const field = "h-10 w-full rounded-xl border border-line bg-canvas px-3 text-sm outline-none focus:border-brand-300 focus:bg-card";
+  const label = "mb-1 block text-xs font-semibold text-ink-soft";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-ink/20" onClick={onClose} />
+      <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-line bg-card p-5 shadow-card-lg">
+        <h2 className="text-base font-bold text-ink">Add employee manually</h2>
+        <p className="mt-1 text-xs text-ink-muted">
+          For people hired or pre-boarded outside the system. Creates an Active profile with the
+          next employee number; they can sign in with this email right away.
+        </p>
+        <form className="mt-4 space-y-3" onSubmit={submit}>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className={label} htmlFor="ma-name">Full legal name *</label>
+              <input id="ma-name" required minLength={2} className={field} value={f.name} onChange={set("name")} />
+            </div>
+            <div>
+              <label className={label} htmlFor="ma-preferred">Preferred name</label>
+              <input id="ma-preferred" className={field} value={f.preferredName} onChange={set("preferredName")} />
+            </div>
+            <div>
+              <label className={label} htmlFor="ma-title">Job title *</label>
+              <input id="ma-title" required minLength={2} className={field} value={f.title} onChange={set("title")} />
+            </div>
+            <div>
+              <label className={label} htmlFor="ma-dept">Department *</label>
+              <input id="ma-dept" required minLength={2} className={field} value={f.department} onChange={set("department")} />
+            </div>
+            <div>
+              <label className={label} htmlFor="ma-email">Work email *</label>
+              <input id="ma-email" required type="email" className={field} value={f.email} onChange={set("email")} />
+            </div>
+            <div>
+              <label className={label} htmlFor="ma-phone">Phone</label>
+              <input id="ma-phone" className={field} value={f.phone} onChange={set("phone")} />
+            </div>
+            <div>
+              <label className={label} htmlFor="ma-province">Province *</label>
+              <select id="ma-province" className={field} value={f.province} onChange={set("province")}>
+                {MANUAL_PROVINCES.map(([v, l]) => (
+                  <option key={v} value={v}>{l}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className={label} htmlFor="ma-type">Employment type</label>
+              <select id="ma-type" className={field} value={f.employmentType} onChange={set("employmentType")}>
+                <option value="">Not set</option>
+                <option>Full-time</option>
+                <option>Part-time</option>
+                <option>Contractor</option>
+              </select>
+            </div>
+            <div>
+              <label className={label} htmlFor="ma-hire">Start date *</label>
+              <input id="ma-hire" required type="date" className={field} value={f.hireDate} onChange={set("hireDate")} />
+            </div>
+            <div>
+              <label className={label} htmlFor="ma-birth">Date of birth</label>
+              <input id="ma-birth" type="date" className={field} value={f.birthDate} onChange={set("birthDate")} />
+            </div>
+            <div>
+              <label className={label} htmlFor="ma-salary">Annual salary (CAD)</label>
+              <input id="ma-salary" type="number" min={0} step={1000} className={field} value={f.salary} onChange={set("salary")} />
+            </div>
+          </div>
+          {error && (
+            <p className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-500/10 dark:text-red-300" role="alert">
+              {error}
+            </p>
+          )}
+          <div className="flex justify-end gap-2 pt-1">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-xl border border-line px-4 py-2 text-sm font-semibold text-ink-soft hover:bg-canvas"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={busy}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600 disabled:opacity-60"
+            >
+              {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              {busy ? "Creating…" : "Create profile"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

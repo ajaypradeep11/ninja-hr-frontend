@@ -19,8 +19,11 @@ export async function askCoPilot(
 ): Promise<CoPilotResult> {
   try {
     const client = await authedApi(persona as Persona);
+    // Bound the wait — an unresponsive backend/model must degrade to the
+    // canned fallback, not leave the drawer on "Thinking…" forever.
     const { data } = await client.POST("/api/v1/platform/copilot/ask", {
       body: { question },
+      signal: AbortSignal.timeout(30_000),
     });
     const result = data as unknown as { text: string; live: boolean } | undefined;
     if (!result) return { text: "", live: false };

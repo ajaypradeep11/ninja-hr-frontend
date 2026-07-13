@@ -804,6 +804,15 @@ function Wizard() {
               Company forms to download — and every document you upload, live.
             </p>
 
+            {/* Resubmission loop: rejected docs demand a re-upload, with HR's note. */}
+            {found && found.documents.some((d) => d.status === "Pending") && (
+              <div className="mt-3 rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-300">
+                Action needed: {found.documents.filter((d) => d.status === "Pending").length} document(s)
+                were rejected by HR. Review the note below, fix the document, and upload it again from its
+                step — the new upload replaces the rejected one and goes back to HR for review.
+              </div>
+            )}
+
             {/* Your uploaded documents — bound to the case, updates on every upload. */}
             {found && found.documents.length > 0 && (
               <div className="mt-4">
@@ -820,6 +829,11 @@ function Wizard() {
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm text-ink-soft">{doc.name}</span>
                         <span className="block text-[10px] text-ink-faint">{doc.folder}</span>
+                        {doc.status === "Pending" && (
+                          <span className="mt-0.5 block text-[11px] text-red-600 dark:text-red-300">
+                            {rejectionNoteFor(found.auditLog, doc.name) ?? "Please re-upload this document."}
+                          </span>
+                        )}
                       </span>
                       <Badge
                         tone={
@@ -878,6 +892,17 @@ function Wizard() {
       </div>
     </div>
   );
+}
+
+/** Latest HR rejection note for a document, parsed from the case audit trail
+ *  (the frozen schema has no rejectionNote column — the note lives in the
+ *  immutable audit line `HR rejected document "<name>" — <note>`). */
+function rejectionNoteFor(auditLog: { at: string; event: string }[], docName: string): string | null {
+  const prefix = `HR rejected document "${docName}" — `;
+  for (let i = auditLog.length - 1; i >= 0; i--) {
+    if (auditLog[i].event.startsWith(prefix)) return auditLog[i].event.slice(prefix.length);
+  }
+  return null;
 }
 
 export default function OnboardingWizardPage() {

@@ -62,13 +62,13 @@ export function AgentDrawer({
 }: {
   open: boolean;
   onClose: () => void;
-  /** Externally handed-in question (dashboard quick-ask) — auto-submitted. */
+  /** Externally handed-in question (dashboard quick-ask) — populates the input for review, not auto-run. */
   ask?: { q: string; nonce: number } | null;
 }) {
   const [messages, setMessages] = React.useState<Msg[]>([
     {
       role: "agent",
-      text: "Hi Sarah — I'm your HR Co-Pilot. Ask me anything about your workforce, or give me a task to run.",
+      text: "Hi — I'm your HR Co-Pilot. Ask me anything about your workforce, or give me a task to run.",
     },
   ]);
   const [input, setInput] = React.useState("");
@@ -78,12 +78,15 @@ export function AgentDrawer({
     if (open) endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, open]);
 
-  // Auto-submit a question handed in from outside (dashboard quick-ask).
+  // A question handed in from outside (dashboard quick-ask) POPULATES the
+  // input so the user can review/edit it — it must never run unreviewed.
   const consumedNonce = React.useRef(0);
+  const inputRef = React.useRef<HTMLInputElement>(null);
   React.useEffect(() => {
     if (ask && ask.nonce !== consumedNonce.current) {
       consumedNonce.current = ask.nonce;
-      void send(ask.q);
+      setInput(ask.q);
+      inputRef.current?.focus();
     }
   }, [ask]);
 
@@ -188,6 +191,7 @@ export function AgentDrawer({
         <div className="border-t border-line p-3">
           <div className="flex items-center gap-2 rounded-xl border border-line bg-card px-3 py-1.5 focus-within:border-brand-400 focus-within:ring-2 focus-within:ring-brand-100">
             <input
+              ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && send(input)}

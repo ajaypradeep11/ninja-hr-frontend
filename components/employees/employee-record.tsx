@@ -21,6 +21,8 @@ import {
   ChevronDown,
   Eye,
   Loader2,
+  Folder,
+  FolderOpen,
 } from "lucide-react";
 import { Avatar, Badge, Card, CardHeader, ProgressBar } from "@/components/ui";
 import {
@@ -147,7 +149,16 @@ export function EmployeeRecord({
 }) {
   const [emp, setEmp] = React.useState(initial);
   const [training, setTraining] = React.useState(initialTraining);
+  const [view, setView] = React.useState<"details" | "documents">("details");
   const [addingDoc, setAddingDoc] = React.useState(false);
+  // Folder accordion — folders holding files start expanded.
+  const [openFolders, setOpenFolders] = React.useState<string[]>(() => {
+    const withFiles = new Set(initial.documents.map((d) => d.folder));
+    if (caseDocs.length) withFiles.add("02_Onboarding_and_Tax");
+    return [...withFiles];
+  });
+  const toggleFolder = (f: string) =>
+    setOpenFolders((prev) => (prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f]));
   // Admin-managed option lists for the Employment edit modal (Settings → Option Lists).
   const [deptOptions, setDeptOptions] = React.useState<string[]>([]);
   const [titleOptions, setTitleOptions] = React.useState<string[]>([]);
@@ -427,6 +438,31 @@ export function EmployeeRecord({
         <Badge tone={emp.status === "Active" ? "green" : "amber"}>{emp.status}</Badge>
       </div>
 
+      {/* Tabs — HRIS details vs. the document cabinet. */}
+      <div className="flex gap-1 border-b border-line">
+        {(
+          [
+            ["details", "Details"],
+            ["documents", `Documents (${emp.documents.length + caseDocs.length})`],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setView(key)}
+            className={cn(
+              "-mb-px rounded-t-xl px-4 py-2.5 text-sm font-semibold transition-colors",
+              view === key
+                ? "border-x border-t border-line bg-card text-ink"
+                : "text-ink-muted hover:text-ink",
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {view === "details" && (
+      <>
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {/* Personal */}
         <Card className="card-pad">
@@ -570,84 +606,6 @@ export function EmployeeRecord({
       {/* Emergency contacts */}
       <EmergencyContacts emp={emp} onChange={setEmp} />
 
-      {/* Documents — the employee's full file record: vault entries (HR can add
-          or remove) plus their onboarding submissions (openable via the file proxy). */}
-      <Card className="card-pad">
-        <CardHeader
-          title="Documents"
-          action={
-            <button
-              onClick={() => setAddingDoc(true)}
-              className="inline-flex items-center gap-1 rounded-lg bg-brand-50 px-2.5 py-1.5 text-xs font-semibold text-brand-700 dark:text-brand-400 hover:bg-brand-100"
-            >
-              <Plus className="h-3.5 w-3.5" /> Add Document
-            </button>
-          }
-        />
-        <div className="mt-3 space-y-2">
-          {emp.documents.length === 0 && caseDocs.length === 0 && (
-            <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-line py-8 text-center">
-              <p className="text-sm text-ink-muted">No documents on file for this employee.</p>
-            </div>
-          )}
-          {emp.documents.map((d) => (
-            <div key={d.id} className="flex items-center gap-3 rounded-xl border border-line px-3 py-2.5">
-              <FileText className="h-4 w-4 shrink-0 text-brand-500 dark:text-brand-400" />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-medium text-ink">{d.name}</span>
-                <span className="block text-[11px] text-ink-muted">
-                  {d.type} · {d.folder} · uploaded {formatDate(d.uploaded)}
-                </span>
-              </span>
-              <DocRowMenu
-                viewHref={d.hasFile ? `/api/vault/${d.id}` : undefined}
-                onRemove={() => void removeDoc(d.id)}
-                busy={docBusy === d.id}
-              />
-            </div>
-          ))}
-          {caseDocs.length > 0 && (
-            <p className="pt-1 text-[10px] font-semibold uppercase tracking-wide text-ink-faint">
-              Onboarding submissions
-            </p>
-          )}
-          {caseDocs.map((d) => (
-            <div key={d.docId} className="flex items-center gap-3 rounded-xl border border-line px-3 py-2.5">
-              <FileText className="h-4 w-4 shrink-0 text-emerald-500 dark:text-emerald-400" />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-medium text-ink">{d.name}</span>
-                <span className="block text-[11px] text-ink-muted">Onboarding · {d.status}</span>
-              </span>
-              {d.hasFile ? (
-                <DocRowMenu viewHref={`/api/onboarding/${d.caseId}/documents/${d.docId}`} />
-              ) : (
-                <span className="shrink-0 text-[11px] text-ink-faint">No file</span>
-              )}
-            </div>
-          ))}
-          {docError && (
-            <p className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-500/10 dark:text-red-300">
-              {docError}
-            </p>
-          )}
-        </div>
-        {addingDoc && (
-          <AddDocumentModal
-            employeeName={emp.name}
-            onClose={() => setAddingDoc(false)}
-            onAdded={(doc) =>
-              setEmp((prev) => ({
-                ...prev,
-                documents: [
-                  { id: doc.id, name: doc.name, type: doc.type, folder: doc.folder, uploaded: doc.uploaded, hasFile: doc.hasFile },
-                  ...prev.documents,
-                ],
-              }))
-            }
-          />
-        )}
-      </Card>
-
       {/* Training record — the employee's assigned courses live on their profile. */}
       <Card className="card-pad">
         <CardHeader
@@ -700,6 +658,116 @@ export function EmployeeRecord({
           </div>
         )}
       </Card>
+
+      </>
+      )}
+
+      {view === "documents" && (
+        <Card className="card-pad">
+          <CardHeader
+            title="Document cabinet"
+            action={
+              <button
+                onClick={() => setAddingDoc(true)}
+                className="inline-flex items-center gap-1 rounded-lg bg-brand-50 px-2.5 py-1.5 text-xs font-semibold text-brand-700 dark:text-brand-400 hover:bg-brand-100"
+              >
+                <Plus className="h-3.5 w-3.5" /> Add Document
+              </button>
+            }
+          />
+          <p className="mt-1 text-xs text-ink-muted">
+            Filed by vault folder. Onboarding submissions live under 02 · Onboarding &amp; Tax.
+          </p>
+          <div className="mt-4 space-y-2.5">
+            {employeeFolders(emp.documents).map((folder) => {
+              const vaultDocs = emp.documents.filter((d) => d.folder === folder);
+              const onboardingDocs = folder === ONBOARDING_FOLDER ? caseDocs : [];
+              const count = vaultDocs.length + onboardingDocs.length;
+              const open = openFolders.includes(folder);
+              return (
+                <div key={folder} className="overflow-hidden rounded-xl border border-line">
+                  <button
+                    type="button"
+                    onClick={() => toggleFolder(folder)}
+                    aria-expanded={open}
+                    className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left transition-colors hover:bg-canvas"
+                  >
+                    {open && count > 0 ? (
+                      <FolderOpen className="h-4 w-4 shrink-0 text-brand-500 dark:text-brand-400" />
+                    ) : (
+                      <Folder className="h-4 w-4 shrink-0 text-ink-faint" />
+                    )}
+                    <span className="flex-1 text-sm font-semibold text-ink">{folderLabel(folder)}</span>
+                    <span className="text-[11px] font-semibold text-ink-faint">
+                      {count === 0 ? "Empty" : `${count} file${count === 1 ? "" : "s"}`}
+                    </span>
+                    <ChevronDown
+                      className={cn("h-4 w-4 shrink-0 text-ink-faint transition-transform", open && "rotate-180")}
+                    />
+                  </button>
+                  {open && count > 0 && (
+                    <div className="space-y-2 border-t border-line bg-canvas/50 p-2.5">
+                      {vaultDocs.map((d) => (
+                        <div key={d.id} className="flex items-center gap-3 rounded-xl border border-line bg-card px-3 py-2.5">
+                          <FileText className="h-4 w-4 shrink-0 text-brand-500 dark:text-brand-400" />
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-medium text-ink">{d.name}</span>
+                            <span className="block text-[11px] text-ink-muted">
+                              {d.type} · uploaded {formatDate(d.uploaded)}
+                            </span>
+                          </span>
+                          <DocRowMenu
+                            viewHref={d.hasFile ? `/api/vault/${d.id}` : undefined}
+                            onRemove={() => void removeDoc(d.id)}
+                            busy={docBusy === d.id}
+                          />
+                        </div>
+                      ))}
+                      {onboardingDocs.map((d) => (
+                        <div key={d.docId} className="flex items-center gap-3 rounded-xl border border-line bg-card px-3 py-2.5">
+                          <FileText className="h-4 w-4 shrink-0 text-emerald-500 dark:text-emerald-400" />
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-medium text-ink">{d.name}</span>
+                            <span className="block text-[11px] text-ink-muted">
+                              Onboarding submission · {d.status === "Pending" ? "Rejected — awaiting re-upload" : d.status}
+                            </span>
+                          </span>
+                          {d.hasFile ? (
+                            <DocRowMenu viewHref={`/api/onboarding/${d.caseId}/documents/${d.docId}`} />
+                          ) : (
+                            <span className="shrink-0 text-[11px] text-ink-faint">No file</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          {docError && (
+            <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-500/10 dark:text-red-300">
+              {docError}
+            </p>
+          )}
+          {addingDoc && (
+            <AddDocumentModal
+              employeeName={emp.name}
+              onClose={() => setAddingDoc(false)}
+              onAdded={(doc) => {
+                setEmp((prev) => ({
+                  ...prev,
+                  documents: [
+                    { id: doc.id, name: doc.name, type: doc.type, folder: doc.folder, uploaded: doc.uploaded, hasFile: doc.hasFile },
+                    ...prev.documents,
+                  ],
+                }));
+                setOpenFolders((prev) => (prev.includes(doc.folder) ? prev : [...prev, doc.folder]));
+              }}
+            />
+          )}
+        </Card>
+      )}
 
       {/* Section edit modal — every field of the section, pre-populated. */}
       {editing && (
@@ -1015,6 +1083,20 @@ function DocRowMenu({
       )}
     </div>
   );
+}
+
+const ONBOARDING_FOLDER = "02_Onboarding_and_Tax";
+
+/** "03_Certifications" → "03 · Certifications" (display only). */
+function folderLabel(folder: string): string {
+  const m = folder.match(/^(\d+)_(.+)$/);
+  return m ? `${m[1]} · ${m[2].replace(/_/g, " ").replace(/\band\b/gi, "&")}` : folder;
+}
+
+/** The canonical folder order, plus any stray folders documents actually use. */
+function employeeFolders(docs: { folder: string }[]): string[] {
+  const stray = docs.map((d) => d.folder).filter((f) => !VAULT_FOLDERS.includes(f));
+  return [...VAULT_FOLDERS, ...[...new Set(stray)]];
 }
 
 const VAULT_FOLDERS = [

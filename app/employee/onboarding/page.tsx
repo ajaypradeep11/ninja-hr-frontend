@@ -224,6 +224,12 @@ function Wizard() {
   const prefilled = React.useRef(false);
   React.useEffect(() => {
     if (prefilled.current) return;
+    // With a case token, wait until the real invite resolves before prefilling.
+    // Otherwise this one-shot effect fires during the loading flash (found still
+    // undefined), captures the tokenless demo persona ("Jim Scott"), and never
+    // corrects itself once the actual employee loads — leaving the form stuck on
+    // the wrong name even though the header shows the right one.
+    if (token && !found) return;
     prefilled.current = true;
     const src = found?.name ?? profile.name;
     setP((prev) => ({
@@ -232,7 +238,7 @@ function Wizard() {
       legalLastName: src.split(" ").slice(1).join(" "),
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [found]);
+  }, [found, token]);
 
   // Uploaded documents: server truth (found.documents) plus a local set so the
   // demo (tokenless) mode and just-finished uploads reflect instantly.

@@ -20,6 +20,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/identity/company-signup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["IdentityController_companySignup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/identity/users": {
         parameters: {
             query?: never;
@@ -260,22 +276,6 @@ export interface paths {
         patch: operations["OnboardingController_setTaskStatus"];
         trace?: never;
     };
-    "/api/v1/onboarding/cases/{id}/documents/{docId}/reject": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["OnboardingController_rejectDocument"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/onboarding/cases/{id}/documents/{docId}/verify": {
         parameters: {
             query?: never;
@@ -286,6 +286,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["OnboardingController_verifyDocument"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/onboarding/cases/{id}/documents/{docId}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["OnboardingController_rejectDocument"];
         delete?: never;
         options?: never;
         head?: never;
@@ -333,7 +349,7 @@ export interface paths {
         };
         get: operations["PeopleController_getEmployees"];
         put?: never;
-        post?: never;
+        post: operations["PeopleController_createEmployee"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1060,6 +1076,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/performance/probation/sweep": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PerformanceController_runProbationSweep"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/performance/growth": {
         parameters: {
             query?: never;
@@ -1074,6 +1106,38 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/performance/growth/goals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["PerformanceController_listAllGoals"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/performance/growth/goals/{id}/weight": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["PerformanceController_requestGoalWeightChange"];
         trace?: never;
     };
     "/api/v1/performance/growth/goals/{id}/progress": {
@@ -1252,6 +1316,22 @@ export interface paths {
         patch: operations["OffboardingController_setAssignee"];
         trace?: never;
     };
+    "/api/v1/offboarding/save": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["OffboardingController_saveOffboarding"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/offboarding/terminate": {
         parameters: {
             query?: never;
@@ -1279,6 +1359,38 @@ export interface paths {
         put?: never;
         post: operations["WorkplaceController_uploadVaultDocument"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workplace/documents/{id}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["WorkplaceController_downloadVaultDocument"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workplace/documents/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["WorkplaceController_deleteVaultDocument"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1326,6 +1438,38 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["WorkplaceController_issueLetter"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workplace/letters/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["WorkplaceController_draftLetter"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workplace/letters/mass-issue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["WorkplaceController_massIssue"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1508,6 +1652,22 @@ export interface paths {
         patch: operations["PlatformController_setAgentRunStatus"];
         trace?: never;
     };
+    "/api/v1/platform/moderation-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["PlatformController_getModerationEvents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/platform/copilot/ask": {
         parameters: {
             query?: never;
@@ -1518,6 +1678,54 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["PlatformController_askCopilot"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/conversations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["PlatformController_getConversations"];
+        put?: never;
+        post: operations["PlatformController_createConversation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/conversations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["PlatformController_deleteConversation"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/conversations/{id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PlatformController_sendChatMessage"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1556,10 +1764,162 @@ export interface paths {
         patch: operations["PlatformController_updateCalcRule"];
         trace?: never;
     };
+    "/api/v1/platform/policy-documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["PlatformController_getPolicyDocuments"];
+        put?: never;
+        post: operations["PlatformController_uploadPolicyDocument"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/policy-documents/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["PlatformController_deletePolicyDocument"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/policy-documents/{id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PlatformController_retryPolicyIngestion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform-admin/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["PlatformAdminController_overview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform-admin/companies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["PlatformAdminController_listCompaniesRoute"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform-admin/companies/{id}/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["PlatformAdminController_companyUsers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform-admin/companies/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["PlatformAdminController_deleteCompany"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform-admin/users/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["PlatformAdminController_deleteUser"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform-admin/logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["PlatformAdminController_logsRoute"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        CompanySignupDto: {
+            companyName: string;
+            adminName: string;
+            workEmail: string;
+            password: string;
+            /** @enum {string} */
+            province: "ON" | "BC" | "AB" | "QC" | "SK" | "MB" | "NS" | "NB";
+        };
         NewCaseDto: {
             name: string;
             title?: string;
@@ -1633,8 +1993,32 @@ export interface components {
             /** @enum {string} */
             status: "Pending" | "In-Progress" | "Completed";
         };
+        RejectDocumentDto: {
+            note: string;
+        };
+        CreateEmployeeDto: {
+            name: string;
+            title: string;
+            department: string;
+            /** @enum {string} */
+            province: "ON" | "BC" | "AB" | "QC" | "SK" | "MB" | "NS" | "NB";
+            email: string;
+            /** @description ISO date (yyyy-mm-dd) */
+            hireDate: string;
+            birthDate?: string;
+            salary?: number;
+            /** @enum {string} */
+            employmentType?: "Full-time" | "Part-time" | "Contractor";
+            workLocation?: string;
+            preferredName?: string;
+            phone?: string;
+            manager?: string;
+        };
         UpdateEmployeeDto: {
             birthdayPrivate?: boolean;
+            name?: string;
+            hireDate?: string;
+            birthDate?: string;
             title?: string;
             department?: string;
             manager?: string;
@@ -1844,6 +2228,10 @@ export interface components {
             manager: string;
             durationDays: number;
         };
+        GoalWeightChangeDto: {
+            previousWeight: number;
+            proposedWeight: number;
+        };
         GoalProgressDto: {
             progress: number;
             note?: string;
@@ -1879,9 +2267,32 @@ export interface components {
             owner: "Manager" | "IT / Ops" | "HR / Payroll";
             assignee?: Record<string, never> | null;
         };
+        SaveOffboardingDto: {
+            employeeName: string;
+            template?: string;
+        };
         FinalizeTerminationDto: {
             employeeName: string;
             override?: boolean;
+            statutoryOverride?: boolean;
+            hrCertified?: boolean;
+            /** @enum {string} */
+            terminationType?: "Voluntary" | "Involuntary";
+            reason?: string;
+            rehireEligible?: boolean;
+            notes?: string;
+        };
+        UploadVaultDocumentDto: {
+            name: string;
+            type: string;
+            /** @enum {string} */
+            folder: "01_Recruitment" | "02_Onboarding_and_Tax" | "03_Compliance_and_Training" | "04_Performance_and_PIPs" | "05_Leaves_and_Medical" | "06_Offboarding";
+            /** @enum {string} */
+            access: "Employee" | "Manager" | "HR Admin" | "Super Admin";
+            employeeName?: string;
+            /** @enum {string} */
+            mimeType?: "application/pdf" | "image/png" | "image/jpeg" | "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            dataBase64?: string;
         };
         LetterTemplateDto: {
             name: string;
@@ -1898,16 +2309,28 @@ export interface components {
             name: string;
             /** @enum {string} */
             mode: "save" | "signature";
+            content?: string;
         };
-        UploadVaultDocumentDto: {
-            name: string;
-            type: string;
+        DraftLetterDto: {
+            employeeId: string;
+            instructions?: Record<string, never>;
             /** @enum {string} */
-            folder: "01_Recruitment" | "02_Onboarding_and_Tax" | "03_Compliance_and_Training" | "04_Performance_and_PIPs" | "05_Leaves_and_Medical" | "06_Offboarding";
+            kind?: "cover" | "employment_verification" | "promotion" | "probation" | "custom";
+            templateId?: string;
+        };
+        MassCohortDto: {
             /** @enum {string} */
-            access: "Employee" | "Manager" | "HR Admin" | "Super Admin";
-            /** Optional owner — links the document to an employee's personal vault. */
-            employeeName?: string;
+            type: "all" | "department" | "province" | "manual";
+            value?: string;
+            employeeIds?: string[];
+        };
+        MassIssueLetterDto: {
+            templateId: string;
+            cohort: components["schemas"]["MassCohortDto"];
+            /** @enum {string} */
+            mode: "save" | "signature";
+            personalizeWithAi?: boolean;
+            instructions?: string;
         };
         CreateCourseDto: {
             title: string;
@@ -1965,6 +2388,10 @@ export interface components {
             provinces: ("ON" | "BC" | "AB" | "QC" | "SK" | "MB" | "NS" | "NB")[];
             integrations: components["schemas"]["IntegrationsDto"];
             recognitionPublic: boolean;
+            /** @enum {string} */
+            reviewCadence?: "Annual" | "Bi-Annual" | "Quarterly";
+            departments?: string[];
+            jobTitles?: string[];
         };
         CreateAgentRunDto: {
             intent: string;
@@ -1975,6 +2402,9 @@ export interface components {
         };
         AskCopilotDto: {
             question: string;
+        };
+        SendChatMessageDto: {
+            content: string;
         };
         CalcRuleDto: {
             /** @enum {string} */
@@ -1998,6 +2428,13 @@ export interface components {
             value?: number;
             active?: boolean;
         };
+        UploadPolicyDocumentDto: {
+            title: string;
+            /** @enum {string} */
+            sourceType: "pdf" | "text";
+            base64?: string;
+            text?: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -2017,6 +2454,27 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    IdentityController_companySignup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompanySignupDto"];
+            };
+        };
+        responses: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2324,6 +2782,26 @@ export interface operations {
             };
         };
     };
+    OnboardingController_deleteTask: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                taskId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     OnboardingController_setTaskStatus: {
         parameters: {
             query?: never;
@@ -2339,26 +2817,6 @@ export interface operations {
                 "application/json": components["schemas"]["TaskStatusDto"];
             };
         };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    OnboardingController_deleteTask: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-                taskId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
         responses: {
             200: {
                 headers: {
@@ -2400,9 +2858,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": {
-                    note: string;
-                };
+                "application/json": components["schemas"]["RejectDocumentDto"];
             };
         };
         responses: {
@@ -2466,6 +2922,27 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PeopleController_createEmployee: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateEmployeeDto"];
+            };
+        };
+        responses: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3418,7 +3895,9 @@ export interface operations {
     };
     RecruitmentController_getJobs: {
         parameters: {
-            query?: never;
+            query: {
+                company: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -3587,6 +4066,23 @@ export interface operations {
             };
         };
     };
+    PerformanceController_runProbationSweep: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     PerformanceController_getGrowth: {
         parameters: {
             query?: never;
@@ -3595,6 +4091,46 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PerformanceController_listAllGoals: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PerformanceController_requestGoalWeightChange: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoalWeightChangeDto"];
+            };
+        };
         responses: {
             200: {
                 headers: {
@@ -3843,6 +4379,27 @@ export interface operations {
             };
         };
     };
+    OffboardingController_saveOffboarding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveOffboardingDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     OffboardingController_finalizeTermination: {
         parameters: {
             query?: never;
@@ -3895,6 +4452,44 @@ export interface operations {
         };
         responses: {
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    WorkplaceController_downloadVaultDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    WorkplaceController_deleteVaultDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3992,6 +4587,48 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["IssueLetterDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    WorkplaceController_draftLetter: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DraftLetterDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    WorkplaceController_massIssue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MassIssueLetterDto"];
             };
         };
         responses: {
@@ -4359,6 +4996,25 @@ export interface operations {
             };
         };
     };
+    PlatformController_getModerationEvents: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     PlatformController_askCopilot: {
         parameters: {
             query?: never;
@@ -4369,6 +5025,82 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AskCopilotDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PlatformController_getConversations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PlatformController_createConversation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PlatformController_deleteConversation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PlatformController_sendChatMessage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendChatMessageDto"];
             };
         };
         responses: {
@@ -4451,6 +5183,192 @@ export interface operations {
                 "application/json": components["schemas"]["UpdateCalcRuleDto"];
             };
         };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PlatformController_getPolicyDocuments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PlatformController_uploadPolicyDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UploadPolicyDocumentDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PlatformController_deletePolicyDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PlatformController_retryPolicyIngestion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PlatformAdminController_overview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PlatformAdminController_listCompaniesRoute: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PlatformAdminController_companyUsers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PlatformAdminController_deleteCompany: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PlatformAdminController_deleteUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PlatformAdminController_logsRoute: {
+        parameters: {
+            query: {
+                limit: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {

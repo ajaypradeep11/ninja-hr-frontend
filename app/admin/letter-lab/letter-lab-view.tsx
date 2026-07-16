@@ -20,15 +20,16 @@ import { Avatar, Badge, Card, PageHeader } from "@/components/ui";
 import {
   createLetterTemplate,
   deleteLetterTemplate,
+  draftLetter,
   issueLetter,
+  queueMassLetters,
   updateLetterTemplate,
 } from "@/app/actions/letters";
-import { askCoPilot } from "@/app/actions/ai";
 import {
   LETTER_CATEGORIES,
   LETTER_VARIABLES,
-  renderLetter,
   type LetterTemplate,
+  type MassCohort,
 } from "@/lib/letters";
 import type { Employee } from "@/lib/data";
 import { cn, formatDate } from "@/lib/utils";
@@ -53,6 +54,7 @@ export function LetterLabView({
   const [templates, setTemplates] = React.useState(initialTemplates);
   const [mode, setMode] = React.useState<Mode>({ view: "library" });
   const [generateFor, setGenerateFor] = React.useState<LetterTemplate | null>(null);
+  const [massFor, setMassFor] = React.useState<LetterTemplate | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
   async function guard<T>(work: () => Promise<T>): Promise<T | undefined> {
@@ -116,12 +118,15 @@ export function LetterLabView({
               <p className="mt-2 text-[11px] text-ink-faint">
                 Updated {formatDate(t.updatedAt.slice(0, 10))}
               </p>
-              <div className="mt-3 flex gap-2 border-t border-line pt-3">
+              <div className="mt-3 flex flex-wrap gap-2 border-t border-line pt-3">
                 <button
                   onClick={() => setGenerateFor(t)}
                   className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-600"
                 >
                   <Wand2 className="h-3.5 w-3.5" /> Generate for Employee
+                </button>
+                <button onClick={() => setMassFor(t)} className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-brand-300 px-3 py-1.5 text-xs font-semibold text-brand-600">
+                  Generate for many
                 </button>
                 <button
                   onClick={() => setMode({ view: "builder", template: t })}
@@ -167,6 +172,7 @@ export function LetterLabView({
           guard={guard}
         />
       )}
+      {massFor && <MassGenerateModal template={massFor} employees={employees} onClose={() => setMassFor(null)} guard={guard} />}
     </div>
   );
 }
@@ -319,6 +325,7 @@ function GenerateModal({
   const [aiNote, setAiNote] = React.useState<string | null>(null);
   const [issuing, setIssuing] = React.useState<"save" | "signature" | null>(null);
   const [issued, setIssued] = React.useState<string | null>(null);
+  const [blocked, setBlocked] = React.useState(false);
 
   const matches = employees.filter((e) => {
     const q = query.trim().toLowerCase();
@@ -330,30 +337,11 @@ function GenerateModal({
     if (!selected) return;
     setGenerating(true);
     setAiNote(null);
-    // Deterministic base: fill the template's variables from the HRIS record.
-    const base = renderLetter(template.body, selected);
-    let text = base;
-    if (prompt.trim()) {
-      try {
-        const res = await askCoPilot(
-          `Rewrite the following HR letter, keeping all facts, names, dates and amounts exactly as given. Apply this customization: "${prompt.trim()}". Return ONLY the final letter text, no commentary.\n\n---\n${base}`,
-          "admin",
-        );
-        if (res.live && res.text?.trim()) {
-          text = res.text.trim();
-          setAiNote("Customized by AI from your prompt — review before issuing.");
-        } else {
-          setAiNote(
-            "AI is not configured (no API key) — showing the standard template with live HRIS data; your customization prompt was not applied.",
-          );
-        }
-      } catch {
-        setAiNote(
-          "AI request failed — showing the standard template with live HRIS data instead.",
-        );
-      }
-    }
-    setLetterText(text);
+    const res = await guard(() => draftLetter({ employeeId: selected.id, templateId: template.id, instructions: prompt, kind: "custom" }));
+    if (!res) { setGenerating(false); return; }
+    setLetterText(res.text);
+    setBlocked(Boolean(res.blockedCategory));
+    setAiNote(res.blockedCategory ? "This request was blocked by safety controls. Change the request before issuing." : res.live ? "Customized by guarded AI — review and edit before issuing." : "AI is offline — showing the deterministic server-side merge.");
     setGenerating(false);
     setStep("preview");
   }
@@ -364,8 +352,9 @@ function GenerateModal({
     const ok = await guard(() =>
       issueLetter({
         employeeId: selected.id,
-        name: `${template.name} — ${selected.name}.pdf`,
+        name: `${template.name} — ${selected.name}.txt`,
         mode: modeSel,
+        content: letterText,
       }),
     );
     setIssuing(null);
@@ -467,16 +456,14 @@ function GenerateModal({
                 {aiNote}
               </p>
             )}
-            {/* PDF-style preview */}
+            {/* Editable plain-text preview; the exact reviewed text is filed. */}
             <div className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-line bg-canvas p-4">
               <div className="mx-auto max-w-lg rounded-md bg-card p-8 shadow-md">
                 <p className="text-xs font-bold uppercase tracking-widest text-brand-600 dark:text-brand-400">
                   NinjaHR
                 </p>
                 <div className="mb-5 mt-1 h-px bg-line" />
-                <pre className="whitespace-pre-wrap font-serif text-[13px] leading-relaxed text-ink">
-                  {letterText}
-                </pre>
+                <textarea value={letterText} onChange={(e) => { setLetterText(e.target.value); setBlocked(false); }} rows={16} className="w-full resize-y bg-transparent whitespace-pre-wrap font-serif text-[13px] leading-relaxed text-ink outline-none" />
               </div>
             </div>
 
@@ -498,7 +485,7 @@ function GenerateModal({
                 <div className="flex gap-2">
                   <button
                     onClick={() => issue("save")}
-                    disabled={issuing !== null}
+                    disabled={issuing !== null || blocked || !letterText.trim()}
                     className="inline-flex items-center gap-1.5 rounded-xl border border-line px-3.5 py-2 text-xs font-semibold text-ink-soft hover:bg-canvas disabled:opacity-50"
                   >
                     <Save className="h-3.5 w-3.5" />
@@ -506,7 +493,7 @@ function GenerateModal({
                   </button>
                   <button
                     onClick={() => issue("signature")}
-                    disabled={issuing !== null}
+                    disabled={issuing !== null || blocked || !letterText.trim()}
                     className="inline-flex items-center gap-1.5 rounded-xl bg-brand-500 px-3.5 py-2 text-xs font-semibold text-white hover:bg-brand-600 disabled:opacity-50"
                   >
                     <FileSignature className="h-3.5 w-3.5" />
@@ -520,4 +507,43 @@ function GenerateModal({
       </div>
     </div>
   );
+}
+
+function MassGenerateModal({ template, employees, onClose, guard }: {
+  template: LetterTemplate; employees: Employee[]; onClose: () => void;
+  guard: <T>(work: () => Promise<T>) => Promise<T | undefined>;
+}) {
+  const [type, setType] = React.useState<MassCohort["type"]>("all");
+  const [value, setValue] = React.useState("");
+  const [ids, setIds] = React.useState<string[]>([]);
+  const [mode, setMode] = React.useState<"save" | "signature">("save");
+  const [ai, setAi] = React.useState(false);
+  const [instructions, setInstructions] = React.useState("");
+  const [loading, setLoading] = React.useState(false);
+  const [queued, setQueued] = React.useState<number | null>(null);
+  const departments = [...new Set(employees.map((e) => e.department))].sort();
+  const provinces = [...new Set(employees.map((e) => e.province))].sort();
+  const estimate = type === "all" ? employees.length : type === "department" ? employees.filter((e) => e.department === value).length : type === "province" ? employees.filter((e) => e.province === value).length : ids.length;
+  async function queue() {
+    const cohort: MassCohort = type === "all" ? { type } : type === "manual" ? { type, employeeIds: ids } : { type, value };
+    setLoading(true);
+    const result = await guard(() => queueMassLetters({ templateId: template.id, cohort, mode, personalizeWithAi: ai, ...(ai ? { instructions } : {}) }));
+    setLoading(false);
+    if (result) setQueued(result.affected);
+  }
+  return <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="absolute inset-0 bg-ink/30" onClick={onClose} />
+    <div className="relative z-10 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-card p-6 shadow-pop">
+      <div className="flex justify-between"><div><h3 className="font-bold text-ink">Generate for many</h3><p className="text-xs text-ink-muted">{template.name}</p></div><button onClick={onClose}><X className="h-4 w-4" /></button></div>
+      {queued !== null ? <div className="mt-5 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-700">Queued {queued} letters for review. Nothing has been filed yet. <a className="font-semibold underline" href="/admin/agents">Review in Agents</a></div> : <>
+        <div className="mt-5 flex flex-wrap gap-2">{(["all", "department", "province", "manual"] as const).map((t) => <button key={t} onClick={() => { setType(t); setValue(""); }} className={cn("rounded-lg border px-3 py-2 text-xs font-semibold", type === t ? "border-brand-400 bg-brand-50 text-brand-700" : "border-line")}>{t === "manual" ? "Select people" : t[0].toUpperCase() + t.slice(1)}</button>)}</div>
+        {(type === "department" || type === "province") && <select className="field-input mt-3" value={value} onChange={(e) => setValue(e.target.value)}><option value="">Choose {type}</option>{(type === "department" ? departments : provinces).map((x) => <option key={x}>{x}</option>)}</select>}
+        {type === "manual" && <div className="mt-3 max-h-48 overflow-y-auto rounded-xl border border-line p-2">{employees.map((e) => <label key={e.id} className="flex gap-2 p-2 text-sm"><input type="checkbox" checked={ids.includes(e.id)} onChange={() => setIds((old) => old.includes(e.id) ? old.filter((id) => id !== e.id) : [...old, e.id])} />{e.name} <span className="text-ink-muted">· {e.department}</span></label>)}</div>}
+        <div className="mt-4 grid gap-3 sm:grid-cols-2"><select className="field-input" value={mode} onChange={(e) => setMode(e.target.value as typeof mode)}><option value="save">Save to vault</option><option value="signature">Awaiting signature</option></select><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={ai} onChange={(e) => setAi(e.target.checked)} /> Personalize each with AI</label></div>
+        {ai && <textarea className="field-input mt-3" rows={3} maxLength={1000} value={instructions} onChange={(e) => setInstructions(e.target.value)} placeholder="Personalization instructions" />}
+        <p className="mt-4 text-xs text-ink-muted">Estimated {estimate} employee(s). The server re-resolves the cohort authoritatively. Nothing is filed until an HR admin approves this run.</p>
+        <div className="mt-5 flex justify-end"><button onClick={queue} disabled={loading || !estimate || ((type === "department" || type === "province") && !value) || (ai && estimate > 100)} className="rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{loading ? "Queuing…" : "Queue for approval"}</button></div>
+      </>}
+    </div>
+  </div>;
 }

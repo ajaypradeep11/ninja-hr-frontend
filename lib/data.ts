@@ -193,6 +193,12 @@ export interface AgentRun {
   affected: number;
   summary: string;
   time: string;
+  items: AgentRunItem[];
+}
+
+export interface AgentRunItem {
+  id: string; employeeId: string; status: "Pending" | "Issued" | "Failed";
+  payload: { employeeName: string; documentName: string; body: string; mode: "save" | "signature"; aiPersonalized: boolean; error?: string; vaultDocumentId?: string };
 }
 
 /* ------------------------------------------------------------------ */
@@ -437,10 +443,10 @@ export const pips: Pip[] = [
 ];
 
 export const agentRuns: AgentRun[] = [
-  { id: "a1", intent: "Audit Ontario job postings for Bill 149 salary requirements", status: "Running", progress: 45, affected: 3, summary: "Scanning 12 active ON requisitions for salary range + AI disclosure compliance.", time: "2 min ago" },
-  { id: "a2", intent: "Purge rejected candidate files past 24-month Law 25 window", status: "Awaiting Approval", progress: 100, affected: 3, summary: "Identified 3 rejected candidate profiles exceeding the 24-month retention window.", time: "8 min ago" },
-  { id: "a3", intent: "Draft BC vacation accrual policy update to new statutory floor", status: "Awaiting Approval", progress: 100, affected: 2, summary: "Detected BC ESA update. Drafted accrual policy change for 2 affected employees.", time: "1 hr ago" },
-  { id: "a4", intent: "Generate offboarding checklist for Stanley Hudson + alert manager", status: "Completed", progress: 100, affected: 1, summary: "Created Sales Team Offboarding checklist, assigned 7 tasks, notified Michael Scott.", time: "Yesterday" },
+  { id: "a1", intent: "Audit Ontario job postings for Bill 149 salary requirements", status: "Running", progress: 45, affected: 3, summary: "Scanning 12 active ON requisitions for salary range + AI disclosure compliance.", time: "2 min ago", items: [] },
+  { id: "a2", intent: "Purge rejected candidate files past 24-month Law 25 window", status: "Awaiting Approval", progress: 100, affected: 3, summary: "Identified 3 rejected candidate profiles exceeding the 24-month retention window.", time: "8 min ago", items: [] },
+  { id: "a3", intent: "Draft BC vacation accrual policy update to new statutory floor", status: "Awaiting Approval", progress: 100, affected: 2, summary: "Detected BC ESA update. Drafted accrual policy change for 2 affected employees.", time: "1 hr ago", items: [] },
+  { id: "a4", intent: "Generate offboarding checklist for Stanley Hudson + alert manager", status: "Completed", progress: 100, affected: 1, summary: "Created Sales Team Offboarding checklist, assigned 7 tasks, notified Michael Scott.", time: "Yesterday", items: [] },
 ];
 
 export const complianceScore = {

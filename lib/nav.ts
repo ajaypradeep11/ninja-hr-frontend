@@ -62,6 +62,7 @@ export const adminNav: NavGroup[] = [
   {
     heading: "Intelligence",
     items: [
+      { label: "HR Assistant", href: "/admin/assistant", icon: MessageSquareHeart },
       { label: "Reports", href: "/admin/reports", icon: BarChart3 },
       { label: "Tracker", href: "/admin/tracker", icon: ListChecks },
       { label: "AI Agents", href: "/admin/agents", icon: Bot },
@@ -91,7 +92,7 @@ export const employeeNav: NavGroup[] = [
   {
     heading: "Help",
     items: [
-      { label: "AI Assistant", href: "/employee/assistant", icon: MessageSquareHeart },
+      { label: "HR Assistant", href: "/employee/assistant", icon: MessageSquareHeart },
     ],
   },
 ];

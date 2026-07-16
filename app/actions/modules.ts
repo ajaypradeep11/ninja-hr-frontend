@@ -48,7 +48,7 @@ async function unwrap<T>(
   if (error !== undefined || !response.ok) {
     const detail =
       error && typeof error === "object" && "message" in error
-        ? String((error as { message: unknown }).message)
+        ? `${response.status} ${String((error as { message: unknown }).message)}`
         : `${response.status} ${response.statusText}`;
     throw new Error(`Request failed: ${detail}`);
   }

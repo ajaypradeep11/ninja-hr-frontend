@@ -54,6 +54,8 @@ export function AgentsView({ initial }: AgentsViewProps) {
   const [runs, setRuns] = React.useState<AgentRun[]>(initial);
   const [command, setCommand] = React.useState("");
   const [runError, setRunError] = React.useState<string | null>(null);
+  const [expanded, setExpanded] = React.useState<string | null>(null);
+  const [resolving, setResolving] = React.useState<string | null>(null);
 
   const pending = runs.filter((r) => r.status === "Awaiting Approval");
 
@@ -72,11 +74,17 @@ export function AgentsView({ initial }: AgentsViewProps) {
   }
 
   async function resolve(id: string) {
+    const run = runs.find((candidate) => candidate.id === id);
+    if (run?.items.length && !confirm(`File ${run.items.filter((item) => item.status === "Pending").length} pending letter(s) to employee vaults? Failed drafts will not be filed.`)) return;
     try {
       setRunError(null);
+      setResolving(id);
       setRuns(await setAgentRunStatus(id, "Completed"));
     } catch (err) {
-      setRunError(err instanceof Error ? err.message : "Failed to update run");
+      const message = err instanceof Error ? err.message : "Failed to update run";
+      setRunError(message.includes("409") || message.toLowerCase().includes("processed") ? "This run is already being processed. Refresh to see its latest status." : message);
+    } finally {
+      setResolving(null);
     }
   }
 
@@ -140,6 +148,8 @@ export function AgentsView({ initial }: AgentsViewProps) {
                   {run.affected > 0 && `${run.affected} record(s) affected · `}
                   {run.time}
                 </p>
+                {run.items.length > 0 && <button onClick={() => setExpanded(expanded === run.id ? null : run.id)} className="mt-2 text-xs font-semibold text-brand-600">{expanded === run.id ? "Hide review" : "Review letters"}</button>}
+                {expanded === run.id && <div className="mt-3 max-h-80 space-y-3 overflow-y-auto border-t border-line pt-3">{run.items.map((item) => <div key={item.id} className="rounded-xl bg-canvas p-3"><div className="flex flex-wrap items-center gap-2 text-xs"><strong>{item.payload.employeeName}</strong><Badge tone={item.status === "Issued" ? "green" : item.status === "Failed" ? "red" : "amber"}>{item.status}</Badge><span>{item.payload.mode === "signature" ? "Signature" : "Save"}</span>{item.payload.aiPersonalized && <span>AI personalized</span>}</div>{item.payload.error && <p className="mt-2 text-xs text-red-600">{item.payload.error}</p>}<pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap rounded-lg bg-card p-3 text-xs text-ink">{item.payload.body}</pre></div>)}</div>}
               </div>
             ))}
           </div>
@@ -165,10 +175,10 @@ export function AgentsView({ initial }: AgentsViewProps) {
                 <div key={run.id} className="rounded-2xl bg-canvas p-3.5">
                   <p className="text-sm font-medium text-ink">{run.summary}</p>
                   <div className="mt-3 flex gap-2">
-                    <Button size="sm" className="flex-1" onClick={() => resolve(run.id)}>
+                    <Button size="sm" className="flex-1" disabled={resolving !== null} onClick={() => resolve(run.id)}>
                       <CheckCircle2 className="h-3.5 w-3.5" /> Approve
                     </Button>
-                    <Button size="sm" variant="outline" className="flex-1">
+                    <Button size="sm" variant="outline" disabled={resolving !== null} className="flex-1" onClick={() => setExpanded(expanded === run.id ? null : run.id)}>
                       <Eye className="h-3.5 w-3.5" /> Review
                     </Button>
                   </div>

@@ -14,6 +14,18 @@ export interface LetterTemplateInput {
   body: string;
 }
 
+export interface DraftLetterResult { text: string; live: boolean; blockedCategory?: string }
+export type MassCohort =
+  | { type: "all" }
+  | { type: "department"; value: string }
+  | { type: "province"; value: string }
+  | { type: "manual"; employeeIds: string[] };
+export interface MassLetterInput {
+  templateId: string; cohort: MassCohort; mode: "save" | "signature";
+  personalizeWithAi?: boolean; instructions?: string;
+}
+export interface MassLetterResult { runId: string; affected: number }
+
 export const LETTER_CATEGORIES = [
   "Offer",
   "Probation",

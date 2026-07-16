@@ -28,7 +28,7 @@ async function unwrap<T>(
 // the cast — regenerating the types needs a running backend.)
 export async function listJobs(companySlug?: string): Promise<JobPosting[]> {
   const options = companySlug ? ({ params: { query: { company: companySlug } } } as never) : undefined;
-  return unwrap<JobPosting[]>(api().GET("/api/v1/recruitment/jobs", options));
+  return unwrap<JobPosting[]>(api().GET("/api/v1/recruitment/jobs", options as never));
 }
 
 export async function getJob(slug: string): Promise<JobPostingDetail | null> {

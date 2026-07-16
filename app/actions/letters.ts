@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 import { authedApi } from "@/lib/api/client";
 import { ACTOR_COOKIE } from "@/lib/actor";
-import type { LetterTemplate, LetterTemplateInput } from "@/lib/letters";
+import type { DraftLetterResult, LetterTemplate, LetterTemplateInput, MassLetterInput, MassLetterResult } from "@/lib/letters";
 import type { CalcRule, CalcRuleInput } from "@/lib/calc";
 
 async function client() {
@@ -66,9 +66,20 @@ export async function issueLetter(input: {
   employeeId: string;
   name: string;
   mode: "save" | "signature";
+  content?: string;
 }): Promise<void> {
   const api = await client();
   await unwrap(api.POST("/api/v1/workplace/letters/issue", { body: input as never }));
+}
+
+export async function draftLetter(input: { employeeId: string; instructions: string; templateId?: string; kind?: string }): Promise<DraftLetterResult> {
+  const api = await client();
+  return unwrap<DraftLetterResult>(api.POST("/api/v1/workplace/letters/draft" as never, { body: input } as never));
+}
+
+export async function queueMassLetters(input: MassLetterInput): Promise<MassLetterResult> {
+  const api = await client();
+  return unwrap<MassLetterResult>(api.POST("/api/v1/workplace/letters/mass-issue" as never, { body: input } as never));
 }
 
 /* ------------------------- Calculator Engine --------------------------- */

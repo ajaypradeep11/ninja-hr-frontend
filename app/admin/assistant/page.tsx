@@ -2,14 +2,14 @@ import { listConversations } from "@/app/actions/assistant";
 import { AssistantView } from "@/components/assistant/assistant-view";
 import { getActor } from "@/lib/actor";
 
-export default async function EmployeeAssistantPage() {
+export default async function AdminAssistantPage() {
   const [actor, conversations] = await Promise.all([
     getActor(),
-    listConversations("employee"),
+    listConversations("admin"),
   ]);
   return (
     <AssistantView
-      persona="employee"
+      persona="admin"
       actorName={actor.name}
       initialConversations={conversations}
     />

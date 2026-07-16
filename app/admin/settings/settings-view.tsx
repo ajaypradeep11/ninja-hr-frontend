@@ -11,8 +11,9 @@ import {
   Check,
   CircleCheckBig,
   Save,
+  BookOpen,
 } from "lucide-react";
-import { Card, CardHeader, Badge, PageHeader, Button } from "@/components/ui";
+import { Card, CardHeader, Badge, PageHeader, Button, LinkButton } from "@/components/ui";
 import { PROVINCES } from "@/lib/compliance";
 import { BRAND } from "@/lib/brand";
 import { cn } from "@/lib/utils";
@@ -51,7 +52,10 @@ function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className={cn("relative h-5 w-9 rounded-full transition-colors", on ? "bg-brand-500" : "bg-line")}
+      className={cn(
+        "relative h-5 w-9 rounded-full transition-colors",
+        on ? "bg-brand-500" : "bg-line",
+      )}
     >
       <span
         className={cn(
@@ -122,7 +126,13 @@ export function SettingsView({ initial }: { initial: CompanySettings }) {
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {/* Company profile */}
         <Card className="card-pad">
-          <CardHeader title={<span className="flex items-center gap-2"><Building2 className="h-4 w-4 text-brand-600 dark:text-brand-400" /> Company Profile</span>} />
+          <CardHeader
+            title={
+              <span className="flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-brand-600 dark:text-brand-400" /> Company Profile
+              </span>
+            }
+          />
           <div className="mt-4 space-y-4">
             <div>
               <label className="field-label">Legal entity name</label>
@@ -150,7 +160,14 @@ export function SettingsView({ initial }: { initial: CompanySettings }) {
 
         {/* Provinces of operation */}
         <Card className="card-pad">
-          <CardHeader title={<span className="flex items-center gap-2"><MapPin className="h-4 w-4 text-brand-600 dark:text-brand-400" /> Provinces of Operation</span>} />
+          <CardHeader
+            title={
+              <span className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-brand-600 dark:text-brand-400" /> Provinces of
+                Operation
+              </span>
+            }
+          />
           <p className="mt-1 text-xs text-ink-muted">
             Determines which ESA rules, training, and policies the engine enforces.
           </p>
@@ -163,7 +180,9 @@ export function SettingsView({ initial }: { initial: CompanySettings }) {
                   onClick={() => toggleProvince(p.code)}
                   className={cn(
                     "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
-                    on ? "border-brand-300 bg-brand-50 text-brand-700 dark:text-brand-400" : "border-line text-ink-muted hover:bg-canvas",
+                    on
+                      ? "border-brand-300 bg-brand-50 text-brand-700 dark:text-brand-400"
+                      : "border-line text-ink-muted hover:bg-canvas",
                   )}
                 >
                   {on && <Check className="h-3 w-3" />}
@@ -176,14 +195,23 @@ export function SettingsView({ initial }: { initial: CompanySettings }) {
 
         {/* RBAC */}
         <Card className="card-pad lg:col-span-2">
-          <CardHeader title={<span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-brand-600 dark:text-brand-400" /> Roles &amp; Permissions</span>} />
+          <CardHeader
+            title={
+              <span className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-brand-600 dark:text-brand-400" /> Roles &amp;
+                Permissions
+              </span>
+            }
+          />
           <div className="mt-4 overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-[10px] uppercase tracking-wide text-ink-faint">
                   <th className="pb-2 font-semibold">Module</th>
                   {roles.map((r) => (
-                    <th key={r} className="pb-2 text-center font-semibold">{r}</th>
+                    <th key={r} className="pb-2 text-center font-semibold">
+                      {r}
+                    </th>
                   ))}
                 </tr>
               </thead>
@@ -213,7 +241,13 @@ export function SettingsView({ initial }: { initial: CompanySettings }) {
 
         {/* Compliance feed */}
         <Card className="card-pad lg:col-span-2">
-          <CardHeader title={<span className="flex items-center gap-2"><ListChecks className="h-4 w-4 text-brand-600 dark:text-brand-400" /> Option Lists</span>} />
+          <CardHeader
+            title={
+              <span className="flex items-center gap-2">
+                <ListChecks className="h-4 w-4 text-brand-600 dark:text-brand-400" /> Option Lists
+              </span>
+            }
+          />
           <p className="mt-1 text-xs text-ink-muted">
             The dropdown choices offered across the app (Add Employee, Launch Onboarding). Add,
             rename or remove — changes apply company-wide immediately.
@@ -233,7 +267,14 @@ export function SettingsView({ initial }: { initial: CompanySettings }) {
         </Card>
 
         <Card className="card-pad">
-          <CardHeader title={<span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-brand-600 dark:text-brand-400" /> Compliance Feed</span>} />
+          <CardHeader
+            title={
+              <span className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-brand-600 dark:text-brand-400" /> Compliance
+                Feed
+              </span>
+            }
+          />
           <div className="mt-4 flex items-center justify-between rounded-2xl bg-canvas p-4">
             <div>
               <p className="text-sm font-semibold text-ink">Compliance Works</p>
@@ -246,15 +287,29 @@ export function SettingsView({ initial }: { initial: CompanySettings }) {
           <div className="mt-3 flex items-center justify-between rounded-2xl border border-line p-4">
             <div>
               <p className="text-sm font-semibold text-ink">Public recognition</p>
-              <p className="text-xs text-ink-muted">Show anniversaries &amp; birthdays company-wide (Law 25 opt-in)</p>
+              <p className="text-xs text-ink-muted">
+                Show anniversaries &amp; birthdays company-wide (Law 25 opt-in)
+              </p>
             </div>
-            <Toggle on={recognitionPublic} onClick={() => { setRecognitionPublic((v) => !v); setSaved(false); }} />
+            <Toggle
+              on={recognitionPublic}
+              onClick={() => {
+                setRecognitionPublic((v) => !v);
+                setSaved(false);
+              }}
+            />
           </div>
         </Card>
 
         {/* Branding */}
         <Card className="card-pad">
-          <CardHeader title={<span className="flex items-center gap-2"><Palette className="h-4 w-4 text-brand-600 dark:text-brand-400" /> Branding</span>} />
+          <CardHeader
+            title={
+              <span className="flex items-center gap-2">
+                <Palette className="h-4 w-4 text-brand-600 dark:text-brand-400" /> Branding
+              </span>
+            }
+          />
           <div className="mt-4">
             <label className="field-label">Product name</label>
             <input
@@ -272,12 +327,41 @@ export function SettingsView({ initial }: { initial: CompanySettings }) {
           </div>
         </Card>
 
+        {/* Policy handbook (AI assistant knowledge base) */}
+        <Card className="card-pad lg:col-span-2">
+          <CardHeader
+            title={
+              <span className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4 text-brand-600 dark:text-brand-400" /> Policy Handbook
+              </span>
+            }
+            action={
+              <LinkButton href="/admin/settings/policies" size="sm" variant="outline">
+                Manage
+              </LinkButton>
+            }
+          />
+          <p className="mt-1 text-xs text-ink-muted">
+            Upload your employee manual so the AI assistant can answer policy questions with
+            citations. One handbook per workspace; replace it any time.
+          </p>
+        </Card>
+
         {/* Integrations */}
         <Card className="card-pad lg:col-span-2">
-          <CardHeader title={<span className="flex items-center gap-2"><Plug className="h-4 w-4 text-brand-600 dark:text-brand-400" /> Integrations</span>} />
+          <CardHeader
+            title={
+              <span className="flex items-center gap-2">
+                <Plug className="h-4 w-4 text-brand-600 dark:text-brand-400" /> Integrations
+              </span>
+            }
+          />
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {INTEGRATION_FIELDS.map((it) => (
-              <div key={it.key} className="flex items-center justify-between rounded-2xl border border-line p-3.5">
+              <div
+                key={it.key}
+                className="flex items-center justify-between rounded-2xl border border-line p-3.5"
+              >
                 <span className="text-sm font-medium text-ink-soft">{it.name}</span>
                 <Toggle on={ints[it.key]} onClick={() => toggleInt(it.key)} />
               </div>
@@ -288,7 +372,6 @@ export function SettingsView({ initial }: { initial: CompanySettings }) {
     </div>
   );
 }
-
 
 /** Admin CRUD for one option list (departments / job titles): add, inline
  *  rename, delete. Every mutation persists the whole list via the settings PUT. */
@@ -309,7 +392,9 @@ function OptionListEditor({
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    void load().then(setItems).catch(() => setError("Could not load the list."));
+    void load()
+      .then(setItems)
+      .catch(() => setError("Could not load the list."));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -328,7 +413,8 @@ function OptionListEditor({
 
   if (!items) return <p className="text-xs text-ink-faint">{error ?? "Loading…"}</p>;
 
-  const input = "h-9 w-full rounded-lg border border-line bg-canvas px-2.5 text-sm outline-none focus:border-brand-300 focus:bg-card";
+  const input =
+    "h-9 w-full rounded-lg border border-line bg-canvas px-2.5 text-sm outline-none focus:border-brand-300 focus:bg-card";
 
   return (
     <div>

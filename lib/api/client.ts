@@ -2,13 +2,14 @@ import 'server-only';
 import createClient from 'openapi-fetch';
 import type { paths } from './generated/openapi';
 import { SESSION_COOKIE } from '@/lib/session';
+import { backendApiUrl } from '@/lib/backend-url';
 
 export type Persona = 'admin' | 'employee';
 
 export function apiClient(persona: Persona = 'admin', actorId?: string, bearer?: string) {
-  // NINJA_HR_API_URL may include "/api/v1" suffix; the generated OpenAPI paths
-  // already contain "/api/v1/...", so we strip that suffix to avoid doubling.
-  const rawBase = process.env.NINJA_HR_API_URL ?? '';
+  // The resolved backend URL may include the "/api/v1" suffix; the generated
+  // OpenAPI paths already contain "/api/v1/...", so strip it to avoid doubling.
+  const rawBase = backendApiUrl();
   const baseUrl = rawBase.replace(/\/api\/v1\/?$/, '');
   return createClient<paths>({
     baseUrl,

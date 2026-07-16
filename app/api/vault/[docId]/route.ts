@@ -1,4 +1,5 @@
 import { buildProxyAuthHeaders } from "@/lib/api/proxy-headers";
+import { backendApiUrl } from "@/lib/backend-url";
 
 // Proxies a stored vault file from the backend on the verified-session bearer
 // lane (backend allows HR or the owning employee). Mirrors the onboarding
@@ -11,7 +12,7 @@ export async function GET(
   const { docId } = await params;
   const authHeaders = await buildProxyAuthHeaders();
   if (!authHeaders) return new Response("Unauthorized", { status: 401 });
-  const rawBase = process.env.NINJA_HR_API_URL ?? "";
+  const rawBase = backendApiUrl();
   const baseUrl = rawBase.replace(/\/api\/v1\/?$/, "");
 
   const res = await fetch(`${baseUrl}/api/v1/workplace/documents/${docId}/file`, {

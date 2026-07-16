@@ -1,4 +1,5 @@
 import { buildProxyAuthHeaders } from "@/lib/api/proxy-headers";
+import { backendApiUrl } from "@/lib/backend-url";
 
 // Proxies an uploaded preboarding document (SIN/banking PII) from the backend
 // for HR verification on the verified-session bearer lane, so the backend
@@ -12,7 +13,7 @@ export async function GET(
   const { caseId, docId } = await params;
   const authHeaders = await buildProxyAuthHeaders();
   if (!authHeaders) return new Response("Unauthorized", { status: 401 });
-  const rawBase = process.env.NINJA_HR_API_URL ?? "";
+  const rawBase = backendApiUrl();
   const baseUrl = rawBase.replace(/\/api\/v1\/?$/, "");
 
   const res = await fetch(`${baseUrl}/api/v1/onboarding/cases/${caseId}/documents/${docId}/file`, {

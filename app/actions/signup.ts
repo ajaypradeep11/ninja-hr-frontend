@@ -1,5 +1,7 @@
 "use server";
 
+import { backendApiUrl } from "@/lib/backend-url";
+
 type Province = "ON" | "BC" | "AB" | "QC" | "SK" | "MB" | "NS" | "NB";
 
 export interface CompanySignupInput {
@@ -18,7 +20,7 @@ export interface CompanySignupInput {
 export type CompanySignupResult = { ok: true; email: string } | { ok: false; error: string };
 
 function backendBaseUrl(): string | null {
-  const raw = process.env.NINJA_HR_API_URL;
+  const raw = backendApiUrl();
   return raw ? raw.replace(/\/api\/v1\/?$/, "") : null;
 }
 

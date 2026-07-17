@@ -151,12 +151,9 @@ export function EmployeeRecord({
   const [training, setTraining] = React.useState(initialTraining);
   const [view, setView] = React.useState<"details" | "documents">("details");
   const [addingDoc, setAddingDoc] = React.useState(false);
-  // Folder accordion — folders holding files start expanded.
-  const [openFolders, setOpenFolders] = React.useState<string[]>(() => {
-    const withFiles = new Set(initial.documents.map((d) => d.folder));
-    if (caseDocs.length) withFiles.add("02_Onboarding_and_Tax");
-    return [...withFiles];
-  });
+  // Folder accordion — every folder starts CLOSED, so the section opens as a
+  // scannable list of folders rather than a wall of every file at once.
+  const [openFolders, setOpenFolders] = React.useState<string[]>([]);
   const toggleFolder = (f: string) =>
     setOpenFolders((prev) => (prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f]));
   // Admin-managed option lists for the Employment edit modal (Settings → Option Lists).
@@ -443,7 +440,7 @@ export function EmployeeRecord({
         {(
           [
             ["details", "Details"],
-            ["documents", `Documents (${emp.documents.length + caseDocs.length})`],
+            ["documents", "Documents"],
           ] as const
         ).map(([key, label]) => (
           <button
@@ -681,7 +678,14 @@ export function EmployeeRecord({
           <div className="mt-4 space-y-2.5">
             {employeeFolders(emp.documents).map((folder) => {
               const vaultDocs = emp.documents.filter((d) => d.folder === folder);
-              const onboardingDocs = folder === ONBOARDING_FOLDER ? caseDocs : [];
+              // Activation copies every VERIFIED case document into this folder
+              // under the same name, so listing both sources showed each one
+              // twice. The vault copy wins; only still-unpublished submissions
+              // (pending / rejected / unverified) come from the case.
+              const onboardingDocs =
+                folder === ONBOARDING_FOLDER
+                  ? caseDocs.filter((c) => !vaultDocs.some((v) => v.name === c.name))
+                  : [];
               const count = vaultDocs.length + onboardingDocs.length;
               const open = openFolders.includes(folder);
               return (

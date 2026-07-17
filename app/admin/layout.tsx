@@ -4,13 +4,19 @@ import { Topbar } from "@/components/layout/topbar";
 import { BRAND } from "@/lib/brand";
 import { getActor, getUsers } from "@/lib/actor";
 import { OnboardingProvider } from "@/components/onboarding-store";
+import { getAdminNotifications } from "@/lib/notifications";
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [actor, users] = await Promise.all([getActor(), getUsers()]);
+  const [actor, users, notifications] = await Promise.all([
+    getActor(),
+    getUsers(),
+    // What's waiting on HR right now — drives the topbar bell.
+    getAdminNotifications(),
+  ]);
   // The admin console is HR-only; managers and employees use /employee.
   if (actor.roleCode !== "HR_ADMIN") redirect("/employee");
   // Gate the impersonation switcher on the *real* signed-in user, not the
@@ -35,6 +41,7 @@ export default async function AdminLayout({
           users={users}
           actor={actor}
           realIsAdmin={realIsAdmin}
+          notifications={notifications}
         />
         <main className="mx-auto max-w-[1500px] px-6 py-7">{children}</main>
       </div>

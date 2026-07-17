@@ -3,7 +3,10 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, Bell, HelpCircle, Sparkles, ArrowLeftRight, LogOut, UserX } from "lucide-react";
+import {
+  Search, Bell, HelpCircle, Sparkles, ArrowLeftRight, LogOut, UserX,
+  FileText, Rocket, CalendarDays,
+} from "lucide-react";
 import { Avatar } from "@/components/ui";
 import { ThemeToggle } from "@/components/theme";
 import { AgentDrawer } from "./agent-drawer";
@@ -12,6 +15,83 @@ import { clearActor } from "@/app/actions/identity";
 import { signOutSession } from "@/app/actions/auth";
 import { UserSwitcher, type SwitcherUser } from "./user-switcher";
 import { cn } from "@/lib/utils";
+import type { NotificationItem } from "@/lib/notifications";
+
+const NOTIFICATION_ICON: Record<NotificationItem["kind"], typeof FileText> = {
+  document: FileText,
+  case: Rocket,
+  leave: CalendarDays,
+};
+
+/**
+ * The bell. Items are derived from live data (see lib/notifications), so the
+ * dot means "there is work waiting", not "you haven't clicked this yet" — it
+ * clears when the work is done, not when it's been looked at. Previously this
+ * was a button with no handler and a red dot that never went out.
+ */
+function NotificationMenu({ items }: { items: NotificationItem[] }) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={items.length ? `Notifications (${items.length})` : "Notifications"}
+        className="relative rounded-lg p-2 text-ink-muted hover:bg-canvas hover:text-ink"
+      >
+        <Bell className="h-[18px] w-[18px]" />
+        {items.length > 0 && (
+          <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-red-500" />
+        )}
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 z-30 mt-1 w-80 overflow-hidden rounded-xl border border-line bg-card py-1 shadow-lg"
+        >
+          <p className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
+            Needs your attention
+          </p>
+          {items.length === 0 ? (
+            <p className="px-3 pb-3 pt-1 text-sm text-ink-muted">
+              You&apos;re all caught up — nothing needs you right now.
+            </p>
+          ) : (
+            items.map((n) => {
+              const Icon = NOTIFICATION_ICON[n.kind];
+              return (
+                <Link
+                  key={n.id}
+                  href={n.href}
+                  role="menuitem"
+                  onClick={() => setOpen(false)}
+                  className="flex items-start gap-2.5 px-3 py-2.5 hover:bg-canvas"
+                >
+                  <Icon className="mt-0.5 h-4 w-4 shrink-0 text-brand-500 dark:text-brand-400" />
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-medium text-ink">{n.title}</span>
+                    <span className="block truncate text-xs text-ink-muted">{n.detail}</span>
+                  </span>
+                </Link>
+              );
+            })
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /** Avatar wrapped in a small dropdown — currently just houses "Sign out". */
 function AvatarMenu({ name }: { name: string }) {
@@ -66,6 +146,7 @@ export function Topbar({
   users,
   actor,
   realIsAdmin,
+  notifications = [],
 }: {
   searchPlaceholder: string;
   switchHref?: string;
@@ -74,6 +155,8 @@ export function Topbar({
   actor?: SwitcherUser;
   /** Whether the *real* signed-in user (ignoring impersonation) is HR_ADMIN — gates the switcher. */
   realIsAdmin?: boolean;
+  /** Live "needs you" items for the bell; empty = no dot, "all caught up". */
+  notifications?: NotificationItem[];
 }) {
   const router = useRouter();
   const [agentOpen, setAgentOpen] = React.useState(false);
@@ -155,10 +238,7 @@ export function Topbar({
           </button>
 
           <ThemeToggle />
-          <button className="relative rounded-lg p-2 text-ink-muted hover:bg-canvas">
-            <Bell className="h-[18px] w-[18px]" />
-            <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-red-500" />
-          </button>
+          <NotificationMenu items={notifications} />
           <Link
             href="/help"
             target="_blank"

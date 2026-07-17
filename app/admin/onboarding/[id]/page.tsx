@@ -19,6 +19,7 @@ import {
   History,
   X,
   Download,
+  Eye,
   CircleDot,
   Circle,
   AlertTriangle,
@@ -481,15 +482,28 @@ Policy:     ESIGN / PIPEDA compliant signing
                         {d.type} · signed {d.signedAt}
                       </p>
                     </button>
-                    {/* Uploaded file — download to verify its contents. */}
+                    {/* Uploaded file — verifying it means READING it, so open it
+                        in a tab; downloading is the secondary action. */}
                     {d.hasFile && (
-                      <a
-                        href={`/api/onboarding/${c.id}/documents/${d.id}`}
-                        title="Download uploaded file"
-                        className="rounded-lg p-1.5 text-ink-muted hover:bg-canvas hover:text-ink"
-                      >
-                        <Download className="h-4 w-4" />
-                      </a>
+                      <>
+                        <a
+                          href={`/api/onboarding/${c.id}/documents/${d.id}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          title={`Preview ${d.name} in a new tab`}
+                          className="rounded-lg p-1.5 text-ink-muted hover:bg-canvas hover:text-ink"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </a>
+                        <a
+                          href={`/api/onboarding/${c.id}/documents/${d.id}`}
+                          download={d.name}
+                          title={`Download ${d.name}`}
+                          className="rounded-lg p-1.5 text-ink-muted hover:bg-canvas hover:text-ink"
+                        >
+                          <Download className="h-4 w-4" />
+                        </a>
+                      </>
                     )}
                     {d.status === "Verified" ? (
                       <Badge tone="green">
@@ -716,8 +730,23 @@ Policy:     ESIGN / PIPEDA compliant signing
 
       {/* Doc preview modal */}
       {preview && (
-        <Modal onClose={() => setPreview(null)} title={preview.name}>
-          <div className="rounded-xl border border-line bg-canvas p-4 text-sm">
+        <Modal onClose={() => setPreview(null)} title={preview.name} wide={preview.hasFile}>
+          {/* The document ITSELF, first. Verifying means reading it, and this
+              modal used to show only a metadata card — HR had to download every
+              file just to see what they were approving. */}
+          {preview.hasFile ? (
+            <DocumentPreview
+              src={`/api/onboarding/${c.id}/documents/${preview.id}`}
+              name={preview.name}
+              mimeType={preview.mimeType}
+            />
+          ) : (
+            <p className="rounded-xl border border-dashed border-line px-4 py-8 text-center text-sm text-ink-muted">
+              No file was uploaded for this document — only the signature record below.
+            </p>
+          )}
+
+          <div className="mt-4 rounded-xl border border-line bg-canvas p-4 text-sm">
             <div className="flex items-center gap-2 text-ink">
               <FileText className="h-4 w-4 text-brand-500 dark:text-brand-400" />
               <span className="font-semibold">{preview.type}</span>
@@ -733,13 +762,36 @@ Policy:     ESIGN / PIPEDA compliant signing
               <Lock className="h-3.5 w-3.5" /> ESIGN / PIPEDA-compliant electronic signature
             </p>
           </div>
-          <div className="mt-4 flex justify-end">
+
+          <div className="mt-4 flex flex-wrap justify-end gap-2">
+            {/* The signature certificate is a separate artifact from the file —
+                label it, rather than letting "Download" hand over a .txt when
+                the user asked for the document. */}
             <button
               onClick={() => downloadDoc(preview)}
-              className="inline-flex items-center gap-2 rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600"
+              className="inline-flex items-center gap-2 rounded-xl border border-line px-4 py-2 text-sm font-semibold text-ink-soft hover:bg-canvas"
             >
-              <Download className="h-4 w-4" /> Download
+              <Lock className="h-4 w-4" /> Signature certificate
             </button>
+            {preview.hasFile && (
+              <>
+                <a
+                  href={`/api/onboarding/${c.id}/documents/${preview.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 rounded-xl border border-line px-4 py-2 text-sm font-semibold text-ink-soft hover:bg-canvas"
+                >
+                  <Eye className="h-4 w-4" /> Open in new tab
+                </a>
+                <a
+                  href={`/api/onboarding/${c.id}/documents/${preview.id}`}
+                  download={preview.name}
+                  className="inline-flex items-center gap-2 rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600"
+                >
+                  <Download className="h-4 w-4" /> Download
+                </a>
+              </>
+            )}
           </div>
         </Modal>
       )}
@@ -787,6 +839,46 @@ function InfoTip({ text }: { text: string }) {
   );
 }
 
+/**
+ * Renders an uploaded document in place. Uploads are restricted to PDF / PNG /
+ * JPEG, so those are the only two shapes to handle: an image gets an <img>, a
+ * PDF gets the browser's own viewer in an <iframe> (the file streams from our
+ * proxy with `inline`, so it renders rather than downloading). Anything else
+ * falls back to a link rather than an empty frame.
+ */
+function DocumentPreview({ src, name, mimeType }: { src: string; name: string; mimeType?: string }) {
+  const isImage = mimeType?.startsWith("image/");
+  const isPdf = mimeType === "application/pdf";
+
+  if (isImage) {
+    return (
+      <div className="flex max-h-[55vh] justify-center overflow-auto rounded-xl border border-line bg-canvas p-2">
+        {/* eslint-disable-next-line @next/next/no-img-element -- streamed from our
+            own proxy, not a static asset; next/image would want a loader + dims. */}
+        <img src={src} alt={name} className="max-w-full rounded-lg object-contain" />
+      </div>
+    );
+  }
+  if (isPdf) {
+    return (
+      <iframe
+        src={src}
+        title={name}
+        className="h-[55vh] w-full rounded-xl border border-line bg-canvas"
+      />
+    );
+  }
+  return (
+    <p className="rounded-xl border border-dashed border-line px-4 py-8 text-center text-sm text-ink-muted">
+      This file type can&apos;t be previewed in the browser.{" "}
+      <a href={src} target="_blank" rel="noreferrer" className="font-semibold text-brand-600 dark:text-brand-400">
+        Open it in a new tab
+      </a>
+      .
+    </p>
+  );
+}
+
 function Row({ k, v }: { k: string; v: string }) {
   return (
     <div className="flex justify-between gap-4">
@@ -800,15 +892,23 @@ function Modal({
   title,
   children,
   onClose,
+  wide = false,
 }: {
   title: string;
   children: React.ReactNode;
   onClose: () => void;
+  /** Document previews need room to be readable; forms don't. */
+  wide?: boolean;
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog">
       <div className="absolute inset-0 bg-ink/20" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-lg rounded-2xl bg-card p-6 shadow-pop">
+      <div
+        className={cn(
+          "relative z-10 max-h-[92vh] w-full overflow-y-auto rounded-2xl bg-card p-6 shadow-pop",
+          wide ? "max-w-3xl" : "max-w-lg",
+        )}
+      >
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-base font-bold text-ink">{title}</h3>
           <button onClick={onClose} className="rounded-lg p-1.5 text-ink-muted hover:bg-canvas">

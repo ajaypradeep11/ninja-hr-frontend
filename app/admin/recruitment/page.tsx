@@ -12,6 +12,7 @@ import {
 import { getRequisitions, getCandidates } from "@/lib/queries";
 import { RequisitionsTable } from "./requisitions-table";
 import { TopCandidates } from "./top-candidates";
+import { ToolLauncher } from "@/components/tools/tool-launcher";
 
 export default async function RecruitmentPage() {
   const [requisitions, candidates] = await Promise.all([
@@ -48,6 +49,7 @@ export default async function RecruitmentPage() {
             ) : (
               <ComplianceBadge />
             )}
+            <ToolLauncher surface="recruitment" />
             <LinkButton href="/admin/recruitment/analytics" variant="outline">
               Analytics
             </LinkButton>

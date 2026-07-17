@@ -14,6 +14,7 @@ import { onboardingForms } from "@/lib/data";
 import { formatDate } from "@/lib/utils";
 import { useOnboarding } from "@/components/onboarding-store";
 import { caseProgress, type CaseStatus } from "@/lib/onboarding";
+import { ToolLauncher } from "@/components/tools/tool-launcher";
 
 const statusTone: Record<CaseStatus, "gray" | "amber" | "sky" | "brand" | "green"> = {
   Invited: "gray",
@@ -38,10 +39,13 @@ export default function OnboardingPage() {
             One checklist, shared across HR, Finance and IT — the agent does the chasing.
           </p>
         </div>
-        <LinkButton href="/admin/onboarding/preboard">
-          <Rocket className="h-4 w-4" />
-          Initiate Preboarding
-        </LinkButton>
+        <div className="flex items-center gap-2">
+          <ToolLauncher surface="onboarding" />
+          <LinkButton href="/admin/onboarding/preboard">
+            <Rocket className="h-4 w-4" />
+            Initiate Preboarding
+          </LinkButton>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">

@@ -30,6 +30,7 @@ import {
   type ProbationSweepResult,
 } from "@/app/actions/modules";
 import type { PerformanceReview, Pip } from "@/lib/data";
+import { ToolLauncher } from "@/components/tools/tool-launcher";
 import type { CompanySettings, GoalSummary, ReviewCadence } from "@/lib/queries";
 import { cn, formatDate } from "@/lib/utils";
 
@@ -222,6 +223,7 @@ export function PerformanceView({
       <PageHeader
         title="Performance Management"
         subtitle="Compliance-aware reviews, goal setting and watertight PIPs that protect against wrongful-dismissal claims."
+        action={<ToolLauncher surface="performance" />}
       />
 
       {/* Probation automation results from this page load (Day-60 / Day-80). */}

@@ -19,6 +19,7 @@ import {
   Contact,
   Globe,
   MessageSquareHeart,
+  Sparkles,
 } from "lucide-react";
 
 export interface NavItem {
@@ -62,6 +63,10 @@ export const adminNav: NavGroup[] = [
   {
     heading: "Intelligence",
     items: [
+      // The premium Tool Library governs which Intelligence entries below it
+      // stay visible (disabled built-in tools are hidden via Sidebar's
+      // hiddenHrefs) — the library entry itself is always shown to HR.
+      { label: "Tool Library", href: "/admin/tools", icon: Sparkles },
       { label: "HR Assistant", href: "/admin/assistant", icon: MessageSquareHeart },
       { label: "Reports", href: "/admin/reports", icon: BarChart3 },
       { label: "Tracker", href: "/admin/tracker", icon: ListChecks },
@@ -122,4 +127,15 @@ export const myProfileNavItem: NavItem = {
   label: "My Profile",
   href: "/employee/profile",
   icon: Contact,
+};
+
+/**
+ * Shown in the employee console ONLY when an HR admin has granted this user
+ * at least one Tool Library tool (managers/secondary users) — standard
+ * employees with no grants never see it.
+ */
+export const employeeToolsNavItem: NavItem = {
+  label: "AI Tools",
+  href: "/employee/tools",
+  icon: Sparkles,
 };

@@ -4,6 +4,7 @@ import { BRAND } from "@/lib/brand";
 import { getActor, getUsers } from "@/lib/actor";
 import { getAssignedCandidates, listRequisitions } from "@/app/actions/recruitment";
 import { getMyCase } from "@/app/actions/onboarding";
+import { listTools } from "@/app/actions/tools";
 import { OnboardingProvider } from "@/components/onboarding-store";
 
 export default async function EmployeeLayout({
@@ -38,6 +39,11 @@ export default async function EmployeeLayout({
   const myCase = await getMyCase().catch(() => null);
   const showOnboarding = !!myCase && myCase.status !== "Active";
 
+  // "AI Tools" appears only when an HR admin granted this user at least one
+  // runnable Tool Library tool (HR admins use the full library in /admin).
+  const toolLibrary = isHr ? null : await listTools().catch(() => null);
+  const showTools = (toolLibrary?.tools ?? []).some((t) => t.canRun);
+
   return (
     <OnboardingProvider scope="employee">
     <div className="min-h-screen bg-background">
@@ -48,6 +54,7 @@ export default async function EmployeeLayout({
         showRecruitment={showRecruitment}
         showInterviews={showInterviews}
         showOnboarding={showOnboarding}
+        showTools={showTools}
       />
       <div className="pl-60">
         <Topbar

@@ -21,6 +21,7 @@ import {
 } from "@/components/ui";
 import { AssigneePicker } from "@/components/assignee-picker";
 import { TaskStatusPill, BlockingTag } from "@/components/task-pills";
+import { ToolLauncher } from "@/components/tools/tool-launcher";
 import { offboardingEmployee } from "@/lib/data";
 import type { OffboardingTask } from "@/lib/data";
 import { cn, formatDate } from "@/lib/utils";
@@ -208,19 +209,22 @@ export function OffboardingView({
         title="Offboarding"
         subtitle="Role-based separation workflows with IT/Admin termination automation and asset-clearance guardrails."
         action={
-          <div className="flex items-center gap-2 rounded-xl border border-line bg-card px-3 py-1.5">
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
-              Template
-            </span>
-            <select
-              value={template}
-              onChange={(e) => setTemplate(e.target.value)}
-              className="bg-transparent text-sm font-semibold text-ink outline-none"
-            >
-              {TEMPLATES.map((t) => (
-                <option key={t}>{t}</option>
-              ))}
-            </select>
+          <div className="flex items-center gap-2">
+            <ToolLauncher surface="offboarding" />
+            <div className="flex items-center gap-2 rounded-xl border border-line bg-card px-3 py-1.5">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
+                Template
+              </span>
+              <select
+                value={template}
+                onChange={(e) => setTemplate(e.target.value)}
+                className="bg-transparent text-sm font-semibold text-ink outline-none"
+              >
+                {TEMPLATES.map((t) => (
+                  <option key={t}>{t}</option>
+                ))}
+              </select>
+            </div>
           </div>
         }
       />

@@ -9,6 +9,7 @@ import { BrandMark } from "@/components/brand-mark";
 import {
   adminNav,
   employeeNav,
+  employeeToolsNavItem,
   interviewsNavItem,
   managerRecruitmentNav,
   myProfileNavItem,
@@ -24,6 +25,8 @@ export function Sidebar({
   showRecruitment = false,
   showInterviews = false,
   showOnboarding = true,
+  showTools = false,
+  hiddenHrefs = [],
 }: {
   variant: "admin" | "employee";
   consoleLabel: string;
@@ -37,19 +40,31 @@ export function Sidebar({
   showInterviews?: boolean;
   /** False once onboarding is complete — "Onboarding" becomes "My Profile". */
   showOnboarding?: boolean;
+  /** Adds "AI Tools" to the employee console (users with Tool Library grants). */
+  showTools?: boolean;
+  /** Nav item hrefs suppressed for this company (e.g. Intelligence tools an
+   *  admin disabled in the Tool Library). */
+  hiddenHrefs?: string[];
 }) {
   const pathname = usePathname();
   const nav = React.useMemo(() => {
-    if (variant === "admin") return adminNav;
+    const prune = (groups: NavGroup[]) =>
+      hiddenHrefs.length === 0
+        ? groups
+        : groups
+            .map((g) => ({ ...g, items: g.items.filter((i) => !hiddenHrefs.includes(i.href)) }))
+            .filter((g) => g.items.length > 0);
+    if (variant === "admin") return prune(adminNav);
     // Base employee nav; splice in the recruitment group and/or interviews item.
     let items = showOnboarding
       ? employeeNav[0].items
       : employeeNav[0].items.map((i) => (i.href === "/employee/onboarding" ? myProfileNavItem : i));
     if (showInterviews) items = [...items, interviewsNavItem];
+    if (showTools) items = [...items, employeeToolsNavItem];
     const primary: typeof employeeNav[number] = { ...employeeNav[0], items };
     const rest = employeeNav.slice(1);
-    return showRecruitment ? [primary, managerRecruitmentNav, ...rest] : [primary, ...rest];
-  }, [variant, showRecruitment, showInterviews, showOnboarding]);
+    return prune(showRecruitment ? [primary, managerRecruitmentNav, ...rest] : [primary, ...rest]);
+  }, [variant, showRecruitment, showInterviews, showOnboarding, showTools, hiddenHrefs]);
 
   const isActive = (href: string) =>
     href === homeHref ? pathname === href : pathname.startsWith(href);

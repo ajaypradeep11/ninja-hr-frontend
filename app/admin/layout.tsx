@@ -3,6 +3,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { BRAND } from "@/lib/brand";
 import { getActor, getUsers } from "@/lib/actor";
+import { OnboardingProvider } from "@/components/onboarding-store";
 
 export default async function AdminLayout({
   children,
@@ -17,6 +18,7 @@ export default async function AdminLayout({
   const realIsAdmin = users.find((u) => u.id === actor.realUserId)?.roleCode === "HR_ADMIN";
 
   return (
+    <OnboardingProvider scope="hr">
     <div className="min-h-screen bg-background">
       <Sidebar
         variant="admin"
@@ -37,5 +39,6 @@ export default async function AdminLayout({
         <main className="mx-auto max-w-[1500px] px-6 py-7">{children}</main>
       </div>
     </div>
+    </OnboardingProvider>
   );
 }

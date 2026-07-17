@@ -4,7 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { signInWithEmailAndPassword, signInWithPopup, signOut, GoogleAuthProvider } from "firebase/auth";
 import { firebaseClientAuth } from "@/lib/firebase/client";
-import { createSession, activateAccount } from "@/app/actions/auth";
+import { createSession, activateAccount, activateAccountWithGoogle } from "@/app/actions/auth";
 import { Button } from "@/components/ui";
 
 export function WelcomeForm({ token, expectedEmail }: { token: string; expectedEmail: string }) {
@@ -101,7 +101,12 @@ export function WelcomeForm({ token, expectedEmail }: { token: string; expectedE
               await signOut(auth);
               throw new Error(`Sign in with ${expectedEmail} to accept this invite.`);
             }
-            await finish(await cred.user.getIdToken());
+            // Accept BEFORE minting the session: this is what creates the
+            // employee record behind the Google identity, and without it the
+            // very next page (the employee shell) 403s on an unknown caller.
+            const idToken = await cred.user.getIdToken();
+            await activateAccountWithGoogle(token, idToken);
+            await finish(idToken);
           })
         }
       >

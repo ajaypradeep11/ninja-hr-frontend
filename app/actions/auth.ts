@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { adminAuth } from "@/lib/firebase/admin";
 import { ACTOR_COOKIE } from "@/lib/actor";
 import { SESSION_COOKIE } from "@/lib/session";
-import { getCaseByToken } from "@/app/actions/onboarding";
+import { acceptInvite } from "@/app/actions/onboarding";
 
 const FIVE_DAYS_MS = 5 * 24 * 60 * 60 * 1000;
 
@@ -29,32 +29,27 @@ export interface ActivateAccountResult {
 }
 
 /**
- * Invite acceptance (`/welcome/:token`): validates the case token over the
- * internal-key lane (the new hire has no session yet — see getCaseByToken),
- * then sets the password on the Firebase identity provisioned at invite time
- * for the case's personalEmail (create-case.command.ts provisions by
- * personalEmail, since preboarding has no work-email field yet). The client
- * then signs in with the returned email + the chosen password and mints a
- * session the same way `/login` does.
+ * Invite acceptance (`/welcome/:token`). Delegates to the backend, which is the
+ * only side that can do this completely: setting a Firebase password is half
+ * the job — the hire also needs an Employee/User record bound to that uid, or
+ * their first authenticated request 403s in ActorGuard with no identity to
+ * resolve. The client then signs in with the returned email + chosen password
+ * and mints a session the same way `/login` does.
  */
 export async function activateAccount(caseToken: string, password: string): Promise<ActivateAccountResult> {
   if (password.length < 8) {
     throw new Error("Password must be at least 8 characters.");
   }
-  const onboardingCase = await getCaseByToken(caseToken);
-  if (!onboardingCase) {
-    throw new Error("This invite link is invalid or has expired — ask HR to re-send it.");
-  }
-  const email = onboardingCase.personalEmail;
-  const auth = adminAuth();
-  let uid: string;
-  try {
-    uid = (await auth.getUserByEmail(email)).uid;
-  } catch {
-    uid = (await auth.createUser({ email, emailVerified: false })).uid;
-  }
-  await auth.updateUser(uid, { password });
-  return { email };
+  return acceptInvite(caseToken, { password });
+}
+
+/**
+ * Google-lane invite acceptance: the hire already signed in with the popup, so
+ * the backend verifies that ID token itself (never trust a client-claimed
+ * identity) and links the resulting uid to this case's employee record.
+ */
+export async function activateAccountWithGoogle(caseToken: string, idToken: string): Promise<ActivateAccountResult> {
+  return acceptInvite(caseToken, { idToken });
 }
 
 /** Revoke the session's refresh tokens and clear session + impersonation cookies. */

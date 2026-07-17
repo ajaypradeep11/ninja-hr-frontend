@@ -63,6 +63,35 @@ export async function getCaseByToken(token: string): Promise<OnboardingCase | nu
   );
 }
 
+/**
+ * The signed-in caller's own case, or null when they have none (every employee
+ * who was never onboarded through this system). Unlike `listCases` — which is
+ * HR-only and 403s for a new hire — this is scoped to the caller's employee id
+ * by the backend, so it is what the employee shell reads.
+ */
+export async function getMyCase(): Promise<OnboardingCase | null> {
+  return unwrap<OnboardingCase | null>((await api()).GET("/api/v1/onboarding/cases/mine"));
+}
+
+/**
+ * Invite acceptance — see the `/welcome/:token` flow. The backend owns this
+ * end to end (set the password / verify the Google token, then provision the
+ * PRE_HIRE employee record bound to that Firebase uid), because a hire with a
+ * Firebase login but no backend identity is exactly what the employee shell
+ * cannot serve: ActorGuard has nothing to resolve and 403s them.
+ */
+export async function acceptInvite(
+  token: string,
+  credential: { password?: string; idToken?: string },
+): Promise<{ email: string }> {
+  return unwrap<{ email: string }>(
+    (await api()).POST("/api/v1/onboarding/cases/by-token/{token}/accept", {
+      params: { path: { token } },
+      body: credential as never,
+    }),
+  );
+}
+
 export async function markForm(token: string, key: keyof FormFlags): Promise<OnboardingCase | null> {
   return unwrap<OnboardingCase | null>(
     (await api()).POST("/api/v1/onboarding/cases/by-token/{token}/forms/{key}", {

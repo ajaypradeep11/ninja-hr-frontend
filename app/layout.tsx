@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { BRAND } from "@/lib/brand";
-import { OnboardingProvider } from "@/components/onboarding-store";
 import { ThemeProvider } from "@/components/theme";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -26,9 +25,10 @@ export default function RootLayout({
     // before hydration, which React would otherwise flag as a mismatch.
     <html lang="en" suppressHydrationWarning className={inter.variable}>
       <body className="font-sans antialiased">
-        <ThemeProvider>
-          <OnboardingProvider>{children}</OnboardingProvider>
-        </ThemeProvider>
+        {/* OnboardingProvider is deliberately NOT here: it fetches on mount,
+            and the signed-out pages under this layout (/login, /welcome/:token)
+            have no session to fetch with. Each shell mounts its own. */}
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );

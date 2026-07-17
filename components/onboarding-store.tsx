@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useSearchParams } from "next/navigation";
 import type {
   OnboardingCase,
   ChecklistTask,
@@ -43,19 +44,49 @@ interface Ctx {
 
 const OnboardingContext = React.createContext<Ctx | null>(null);
 
-export function OnboardingProvider({ children }: { children: React.ReactNode }) {
+/**
+ * Which cases this shell may read. The two audiences need different endpoints,
+ * not just different filters:
+ *  - "hr" → the whole company's cases (`listCases` is HR_ADMIN-only).
+ *  - "employee" → the caller's own case. A new hire calling `listCases` gets a
+ *    403, so the employee shell must never fetch it; `getMyCase` is scoped to
+ *    the caller by the backend.
+ */
+export type OnboardingScope = "hr" | "employee";
+
+export function OnboardingProvider({
+  scope,
+  children,
+}: {
+  scope: OnboardingScope;
+  children: React.ReactNode;
+}) {
   const [cases, setCases] = React.useState<OnboardingCase[]>([]);
   const [loading, setLoading] = React.useState(true);
+  // `/employee/onboarding?case=<token>` — where the invite drops the new hire,
+  // and how HR previews a case from the preboard screen.
+  const caseToken = useSearchParams().get("case");
+
+  const load = React.useCallback(async (): Promise<OnboardingCase[]> => {
+    if (scope === "hr") return actions.listCases();
+    // Both, because neither alone covers everyone: the hire has a case of their
+    // own but may arrive without the token (the sidebar's Onboarding tab), and
+    // an HR admin previewing this shell has the token but no case of their own.
+    const [mine, invited] = await Promise.all([
+      actions.getMyCase(),
+      caseToken ? actions.getCaseByToken(caseToken) : Promise.resolve(null),
+    ]);
+    return [mine, invited].filter((c): c is OnboardingCase => !!c)
+      .filter((c, i, all) => all.findIndex((o) => o.id === c.id) === i);
+  }, [scope, caseToken]);
 
   const refresh = React.useCallback(async () => {
-    const data = await actions.listCases();
-    setCases(data);
-  }, []);
+    setCases(await load());
+  }, [load]);
 
   React.useEffect(() => {
     let active = true;
-    actions
-      .listCases()
+    load()
       .then((data) => active && setCases(data))
       .catch((err: unknown) => {
         // Don't let a backend outage become an unhandled rejection; pages
@@ -66,7 +97,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     return () => {
       active = false;
     };
-  }, []);
+  }, [load]);
 
   // Replace (or insert) a case returned from a server action.
   const upsert = React.useCallback((updated: OnboardingCase | null) => {

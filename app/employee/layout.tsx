@@ -3,7 +3,8 @@ import { Topbar } from "@/components/layout/topbar";
 import { BRAND } from "@/lib/brand";
 import { getActor, getUsers } from "@/lib/actor";
 import { getAssignedCandidates, listRequisitions } from "@/app/actions/recruitment";
-import { listCases } from "@/app/actions/onboarding";
+import { getMyCase } from "@/app/actions/onboarding";
+import { OnboardingProvider } from "@/components/onboarding-store";
 
 export default async function EmployeeLayout({
   children,
@@ -32,11 +33,13 @@ export default async function EmployeeLayout({
   // Post-onboarding state: the Onboarding tab only exists while this person has
   // an onboarding case that isn't activated yet. Everyone else (including all
   // long-tenured employees, who never had a case) gets "My Profile" instead.
-  const cases = await listCases().catch(() => []);
-  const myCase = cases.find((c) => c.name === actor.name);
+  // Asks for the caller's OWN case: the cases list is HR-only, so reading it
+  // here 403'd for the one person the tab exists for — the new hire.
+  const myCase = await getMyCase().catch(() => null);
   const showOnboarding = !!myCase && myCase.status !== "Active";
 
   return (
+    <OnboardingProvider scope="employee">
     <div className="min-h-screen bg-background">
       <Sidebar
         variant="employee"
@@ -58,5 +61,6 @@ export default async function EmployeeLayout({
         <main className="mx-auto max-w-[1500px] px-6 py-7">{children}</main>
       </div>
     </div>
+    </OnboardingProvider>
   );
 }

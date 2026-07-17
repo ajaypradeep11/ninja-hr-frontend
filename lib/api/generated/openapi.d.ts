@@ -2048,7 +2048,7 @@ export interface components {
             workLocation?: string;
             preferredName?: string;
             phone?: string;
-            manager?: string;
+            managerId?: Record<string, never> | null;
         };
         UpdateEmployeeDto: {
             birthdayPrivate?: boolean;
@@ -2057,7 +2057,7 @@ export interface components {
             birthDate?: string;
             title?: string;
             department?: string;
-            manager?: string;
+            managerId?: Record<string, never> | null;
             /** @enum {string} */
             status?: "Active" | "Pre-Hire" | "On Statutory Leave" | "Offboarding" | "Terminated";
             salary?: number;

@@ -186,14 +186,15 @@ export async function setTaskAssignee(
   );
 }
 
-/** Lightweight employee directory for the per-department Assign pickers. */
+/** Lightweight employee directory for the per-department Assign pickers
+ *  (and the employee-record Manager picker, which needs the id). */
 export async function listEmployeeDirectory(): Promise<
-  { name: string; department: string; title: string }[]
+  { id: string; name: string; department: string; title: string }[]
 > {
-  const rows = await unwrap<{ name: string; department: string; title: string }[]>(
+  const rows = await unwrap<{ id: string; name: string; department: string; title: string }[]>(
     (await api()).GET("/api/v1/people/employees"),
   );
-  return (rows ?? []).map((e) => ({ name: e.name, department: e.department, title: e.title }));
+  return (rows ?? []).map((e) => ({ id: e.id, name: e.name, department: e.department, title: e.title }));
 }
 
 export async function verifyDocument(id: string, docId: string): Promise<OnboardingCase | null> {

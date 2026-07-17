@@ -35,6 +35,7 @@ import { deleteVaultDocument, uploadVaultDocument } from "@/app/actions/document
 import {
   getDepartmentOptions,
   getJobTitleOptions,
+  listEmployeeDirectory,
   saveDepartmentOptions,
   saveJobTitleOptions,
 } from "@/app/actions/onboarding";
@@ -98,7 +99,7 @@ function seedFor(section: string, emp: EmployeeDetail): UpdateEmployeeInput {
         employeeNumber: emp.employeeNumber,
         title: emp.title,
         department: emp.department,
-        manager: emp.manager,
+        managerId: emp.managerId ?? null,
         status: emp.status,
         employmentType: emp.employmentType,
         workLocation: emp.workLocation,
@@ -163,6 +164,21 @@ export function EmployeeRecord({
     void getDepartmentOptions().then(setDeptOptions).catch(() => {});
     void getJobTitleOptions().then(setTitleOptions).catch(() => {});
   }, []);
+  // Employee directory for the Manager picker — existing profiles only, so a
+  // free-text manager name (which let duplicates/typos through) can't recur.
+  const [directory, setDirectory] = React.useState<
+    { id: string; name: string; department: string; title: string }[]
+  >([]);
+  React.useEffect(() => {
+    listEmployeeDirectory()
+      .then(setDirectory)
+      .catch(() => setDirectory([]));
+  }, []);
+  // Self is excluded so the simplest cycle can't even be picked.
+  const managerOptions = React.useMemo(
+    () => directory.filter((d) => d.id !== emp.id),
+    [directory, emp.id],
+  );
   const [docBusy, setDocBusy] = React.useState<string | null>(null);
   const [docError, setDocError] = React.useState<string | null>(null);
 
@@ -358,7 +374,21 @@ export function EmployeeRecord({
             {input("employeeNumber", "Employee ID")}
             {optionField("title", "Job title", titleOptions, saveJobTitleOptions, setTitleOptions)}
             {optionField("department", "Department", deptOptions, saveDepartmentOptions, setDeptOptions)}
-            {input("manager", "Manager")}
+            <div>
+              <label className="field-label">Manager</label>
+              <select
+                className="field-input"
+                value={draft.managerId ?? emp.managerId ?? ""}
+                onChange={(e) => setDraft((d) => ({ ...d, managerId: e.target.value || null }))}
+              >
+                <option value="">— No manager —</option>
+                {managerOptions.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name} · {m.title}
+                  </option>
+                ))}
+              </select>
+            </div>
             {select("employmentType", "Employment type", EMPLOYMENT_TYPES)}
             {input("workLocation", "Work location")}
             {input("hireDate", "Start date", { type: "date" })}
@@ -602,6 +632,33 @@ export function EmployeeRecord({
 
       {/* Emergency contacts */}
       <EmergencyContacts emp={emp} onChange={setEmp} />
+
+      {/* Direct reports — rendered whenever the person has reports, deliberately
+          not gated on the MANAGER role since HR admins and senior ICs have
+          reports too. */}
+      {!!emp.reportees?.length && (
+        <Card className="card-pad mt-6">
+          <h3 className="text-base font-bold text-ink">Direct reports</h3>
+          <p className="mt-1 text-sm text-ink-muted">
+            {emp.reportees.length} {emp.reportees.length === 1 ? "person reports" : "people report"} to {emp.name}.
+          </p>
+          <div className="mt-3 space-y-2">
+            {emp.reportees.map((r) => (
+              <Link
+                key={r.id}
+                href={`/admin/employees/${r.id}`}
+                className="flex items-center gap-3 rounded-xl border border-line px-3.5 py-2.5 hover:bg-canvas"
+              >
+                <Avatar name={r.name} size={28} />
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-medium text-ink">{r.name}</span>
+                  <span className="block truncate text-xs text-ink-muted">{r.title}</span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* Training record — the employee's assigned courses live on their profile. */}
       <Card className="card-pad">

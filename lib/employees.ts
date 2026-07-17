@@ -42,6 +42,7 @@ export interface EmployeeDetail {
   birthDate: string;
   birthdayPrivate?: boolean;
   manager?: string;
+  managerId?: string;
   status: EmployeeStatus;
   salary: number;
   employeeNumber?: string;
@@ -68,6 +69,8 @@ export interface EmployeeDetail {
   hasBanking: boolean;
   emergencyContacts: EmergencyContact[];
   documents: EmployeeDocumentRef[];
+  /** Direct reports — the reverse side of the manager relation. */
+  reportees?: { id: string; name: string; title: string }[];
 }
 
 export type UpdateEmployeeInput = Partial<{
@@ -77,7 +80,7 @@ export type UpdateEmployeeInput = Partial<{
   birthDate: string;
   title: string;
   department: string;
-  manager: string;
+  managerId: string | null;
   status: EmployeeStatus;
   salary: number;
   employeeNumber: string;

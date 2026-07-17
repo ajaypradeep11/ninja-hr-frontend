@@ -18,6 +18,13 @@ type NewCaseInput = actions.NewCaseInput;
 interface Ctx {
   cases: OnboardingCase[];
   loading: boolean;
+  /**
+   * The signed-in caller's OWN case (null for HR, and for anyone who never
+   * onboarded through this system). This is how the wizard identifies its
+   * subject when reached WITHOUT an invite token — i.e. from the sidebar,
+   * where there is no `?case=` to read.
+   */
+  myCase: OnboardingCase | null;
   getCase: (id: string) => OnboardingCase | undefined;
   getByToken: (token: string) => OnboardingCase | undefined;
   refresh: () => Promise<void>;
@@ -62,13 +69,14 @@ export function OnboardingProvider({
   children: React.ReactNode;
 }) {
   const [cases, setCases] = React.useState<OnboardingCase[]>([]);
+  const [myCase, setMyCase] = React.useState<OnboardingCase | null>(null);
   const [loading, setLoading] = React.useState(true);
   // `/employee/onboarding?case=<token>` — where the invite drops the new hire,
   // and how HR previews a case from the preboard screen.
   const caseToken = useSearchParams().get("case");
 
-  const load = React.useCallback(async (): Promise<OnboardingCase[]> => {
-    if (scope === "hr") return actions.listCases();
+  const load = React.useCallback(async (): Promise<{ cases: OnboardingCase[]; mine: OnboardingCase | null }> => {
+    if (scope === "hr") return { cases: await actions.listCases(), mine: null };
     // Both, because neither alone covers everyone: the hire has a case of their
     // own but may arrive without the token (the sidebar's Onboarding tab), and
     // an HR admin previewing this shell has the token but no case of their own.
@@ -76,18 +84,25 @@ export function OnboardingProvider({
       actions.getMyCase(),
       caseToken ? actions.getCaseByToken(caseToken) : Promise.resolve(null),
     ]);
-    return [mine, invited].filter((c): c is OnboardingCase => !!c)
-      .filter((c, i, all) => all.findIndex((o) => o.id === c.id) === i);
+    const all = [mine, invited]
+      .filter((c): c is OnboardingCase => !!c)
+      .filter((c, i, list) => list.findIndex((o) => o.id === c.id) === i);
+    return { cases: all, mine };
   }, [scope, caseToken]);
 
+  const apply = React.useCallback((data: { cases: OnboardingCase[]; mine: OnboardingCase | null }) => {
+    setCases(data.cases);
+    setMyCase(data.mine);
+  }, []);
+
   const refresh = React.useCallback(async () => {
-    setCases(await load());
-  }, [load]);
+    apply(await load());
+  }, [load, apply]);
 
   React.useEffect(() => {
     let active = true;
     load()
-      .then((data) => active && setCases(data))
+      .then((data) => active && apply(data))
       .catch((err: unknown) => {
         // Don't let a backend outage become an unhandled rejection; pages
         // render their empty states and the console records the cause.
@@ -109,6 +124,9 @@ export function OnboardingProvider({
       copy[i] = updated;
       return copy;
     });
+    // Keep the caller's own case in step with the list: the wizard renders from
+    // it, so skipping this would freeze their progress at its first-loaded state.
+    setMyCase((prev) => (prev && prev.id === updated.id ? updated : prev));
   }, []);
 
   // Full-checklist replaces (add / import) are delete-all + re-create on the
@@ -124,6 +142,7 @@ export function OnboardingProvider({
   const value: Ctx = {
     cases,
     loading,
+    myCase,
     getCase: (id) => cases.find((c) => c.id === id),
     getByToken: (token) => cases.find((c) => c.token === token),
     refresh,

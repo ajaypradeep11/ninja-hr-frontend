@@ -205,12 +205,19 @@ const STEPS = [
 function Wizard() {
   const params = useSearchParams();
   const token = params.get("case");
-  const { getByToken, markForm, submitProfile, uploadDocument, addConsent, finalizeSubmission, loading } =
+  const { getByToken, myCase, markForm, submitProfile, uploadDocument, addConsent, finalizeSubmission, loading } =
     useOnboarding();
-  const found = token ? getByToken(token) : undefined;
+  // The invite link carries `?case=`, but the sidebar's Onboarding tab does not
+  // — so without a token, fall back to the caller's OWN case rather than to the
+  // demo persona below, which showed real hires somebody else's name and data.
+  const found = token ? getByToken(token) : myCase ?? undefined;
+  // Writes are keyed by the CASE's token, not the URL's: the sidebar route
+  // carries no `?case=`, and keying off the URL made every save from there a
+  // silent no-op. Null only in the caseless demo, which persists nothing.
+  const caseToken = found?.token ?? null;
 
-  // Fall back to a standalone demo persona ONLY when no case token is present —
-  // a real invitee must never see another identity flash mid-wizard.
+  // Standalone demo persona — only ever reached tokenless AND caseless (the
+  // product tour). A real invitee must never see another identity.
   const profile = found
     ? { name: found.name, first: found.name.split(" ")[0], province: found.province }
     : { name: "Jim Scott", first: "Jim", province: "ON" as ProvinceCode };
@@ -224,12 +231,12 @@ function Wizard() {
   const prefilled = React.useRef(false);
   React.useEffect(() => {
     if (prefilled.current) return;
-    // With a case token, wait until the real invite resolves before prefilling.
-    // Otherwise this one-shot effect fires during the loading flash (found still
-    // undefined), captures the tokenless demo persona ("Jim Scott"), and never
-    // corrects itself once the actual employee loads — leaving the form stuck on
-    // the wrong name even though the header shows the right one.
-    if (token && !found) return;
+    // Wait until the store resolves before prefilling. This one-shot effect
+    // otherwise fires during the loading flash (found still undefined), captures
+    // the demo persona ("Jim Scott"), and never corrects itself once the real
+    // case loads — leaving the form stuck on the wrong name even though the
+    // header shows the right one.
+    if (loading) return;
     prefilled.current = true;
     const src = found?.name ?? profile.name;
     setP((prev) => ({
@@ -238,7 +245,7 @@ function Wizard() {
       legalLastName: src.split(" ").slice(1).join(" "),
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [found, token]);
+  }, [found, loading]);
 
   // Uploaded documents: server truth (found.documents) plus a local set so the
   // demo (tokenless) mode and just-finished uploads reflect instantly.
@@ -249,9 +256,9 @@ function Wizard() {
   /** Upload a section document — routes to the case's Documents automatically. */
   async function uploadKind(kind: UploadKind, file: File) {
     const dataBase64 = await fileToBase64(file);
-    if (token) {
+    if (caseToken) {
       // Store upsert re-binds the case → vault + progress update immediately.
-      await uploadDocument(token, { kind, fileName: file.name, mimeType: file.type, dataBase64 });
+      await uploadDocument(caseToken, { kind, fileName: file.name, mimeType: file.type, dataBase64 });
     }
     setLocalUploads((prev) => new Set(prev).add(kind));
   }
@@ -311,7 +318,7 @@ function Wizard() {
 
   async function next() {
     // Persist the current step to the database (if this is a real case).
-    if (token) {
+    if (caseToken) {
       setBusy(true);
       setStepError(null);
       try {
@@ -319,19 +326,19 @@ function Wizard() {
           // One submission covers personal info + direct deposit — the server
           // stores the form (SIN/bank masked on read) and ticks both flags.
           // profileValid gates this step, so the draft's work status is set.
-          await submitProfile(token, {
+          await submitProfile(caseToken, {
             ...p,
             workEligibility: p.workEligibility as WorkEligibilityLabel,
             preferredName: p.preferredName?.trim() || undefined,
             workPermitExpiry: needsPermitExpiry ? p.workPermitExpiry || undefined : undefined,
           });
         }
-        if (step === 1) await markForm(token, "td1");
-        if (step === 2) await markForm(token, "benefits");
+        if (step === 1) await markForm(caseToken, "td1");
+        if (step === 2) await markForm(caseToken, "benefits");
         if (step === 3) {
-          await markForm(token, "handbook");
-          await addConsent(token, "Privacy Policy");
-          await finalizeSubmission(token);
+          await markForm(caseToken, "handbook");
+          await addConsent(caseToken, "Privacy Policy");
+          await finalizeSubmission(caseToken);
         }
       } catch (err) {
         // Nothing was persisted — do NOT advance to a fake success screen.
@@ -344,8 +351,10 @@ function Wizard() {
     setStep((s) => s + 1);
   }
 
-  // With a token, wait for the store before rendering any identity.
-  if (token && loading) {
+  // Wait for the store before rendering ANY identity — tokenless too, since the
+  // caller's own case arrives from the same fetch. Rendering early here is what
+  // flashed "Jim" at real hires and stuck the form on his name.
+  if (loading) {
     return <div className="py-16 text-center text-sm text-ink-muted">Loading your onboarding…</div>;
   }
   // Unknown/expired invite — hard error instead of silently onboarding "Jim".

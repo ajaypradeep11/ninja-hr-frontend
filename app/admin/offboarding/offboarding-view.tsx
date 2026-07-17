@@ -17,14 +17,15 @@ import {
   CardHeader,
   Badge,
   Avatar,
+  EmptyState,
+  LinkButton,
   PageHeader,
 } from "@/components/ui";
 import { AssigneePicker } from "@/components/assignee-picker";
 import { TaskStatusPill, BlockingTag } from "@/components/task-pills";
 import { ToolLauncher } from "@/components/tools/tool-launcher";
-import { offboardingEmployee } from "@/lib/data";
 import type { OffboardingTask } from "@/lib/data";
-import { cn, formatDate } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import {
   setOffboardingTaskStatus,
   setOffboardingAssignee,
@@ -91,9 +92,15 @@ const NEXT: Record<Status, Status> = {
 export function OffboardingView({
   initialTasks,
   subjectName,
+  subjectTitle,
+  initiated = false,
 }: {
   initialTasks: OffboardingTask[];
+  /** The real separation subject — deep-linked or in Offboarding status. No demo fallback. */
   subjectName?: string;
+  subjectTitle?: string;
+  /** True when just initiated via the directory deep-link (shows the kickoff banner). */
+  initiated?: boolean;
 }) {
   const [template, setTemplate] = React.useState(TEMPLATES[1]);
   const [tasks, setTasks] = React.useState(initialTasks);
@@ -136,10 +143,7 @@ export function OffboardingView({
     }
   }
 
-  // When deep-linked from the directory ("Initiate Offboarding"), the flow is
-  // scoped to that employee; otherwise it falls back to the demo record.
-  const subject = subjectName?.trim() || offboardingEmployee.name;
-  const isCustomSubject = subject !== offboardingEmployee.name;
+  const subject = subjectName?.trim() || null;
 
   const blockers = tasks.filter((t) => t.blocking && t.status !== "Completed");
   const canFinalize = blockers.length === 0 || override;
@@ -158,6 +162,7 @@ export function OffboardingView({
   }
 
   async function handleSaveOffboarding() {
+    if (!subject) return;
     try {
       setSaving(true);
       setSaveError(null);
@@ -175,6 +180,7 @@ export function OffboardingView({
 
   /** Finalize, optionally with the certified statutory-leave override. */
   async function handleFinalize(withStatutoryOverride: boolean) {
+    if (!subject) return;
     try {
       setFinalizing(true);
       setActionError(null);
@@ -203,6 +209,29 @@ export function OffboardingView({
     }
   }
 
+  // No live separation: nothing deep-linked and nobody in Offboarding status.
+  if (!subject) {
+    return (
+      <div>
+        <PageHeader
+          title="Offboarding"
+          subtitle="Role-based separation workflows with IT/Admin termination automation and asset-clearance guardrails."
+          action={<ToolLauncher surface="offboarding" />}
+        />
+        <EmptyState
+          icon={<LogOut className="h-8 w-8" />}
+          title="No offboarding in progress"
+          description="Start a separation from the Employees directory — open an employee and choose “Initiate Offboarding”."
+        />
+        <div className="mt-4 flex justify-center">
+          <LinkButton href="/admin/employees" variant="outline">
+            Open Employees directory
+          </LinkButton>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <PageHeader
@@ -229,7 +258,7 @@ export function OffboardingView({
         }
       />
 
-      {isCustomSubject && !terminated && (
+      {initiated && !terminated && (
         <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
           <Bell className="mt-0.5 h-4 w-4 shrink-0" />
           <span>
@@ -247,13 +276,7 @@ export function OffboardingView({
             <div>
               <p className="text-base font-bold text-ink">{subject}</p>
               <p className="text-xs text-ink-muted">
-                {isCustomSubject ? (
-                  "Separation checklist"
-                ) : (
-                  <>
-                    {offboardingEmployee.title} · Last day {formatDate(offboardingEmployee.lastDay)}
-                  </>
-                )}
+                {subjectTitle ? `${subjectTitle} · Separation checklist` : "Separation checklist"}
               </p>
             </div>
           </div>

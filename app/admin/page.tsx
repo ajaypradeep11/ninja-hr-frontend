@@ -23,7 +23,7 @@ import { Bill149Badge } from "@/components/dashboard/bill149-badge";
 import { TeamHealthCard } from "@/components/dashboard/team-health-card";
 import { LeaveRequestsCard } from "@/components/dashboard/leave-requests-card";
 import { OffboardingCard } from "@/components/dashboard/offboarding-card";
-import { upcomingEvents } from "@/lib/data";
+import { deriveUpcomingEvents } from "@/lib/events";
 import { getActor } from "@/lib/actor";
 import {
   getSalaryBenchmarks,
@@ -77,6 +77,8 @@ export default async function AdminDashboard() {
   // Guard the empty case — Math.max() of nothing is -Infinity, which breaks bar widths.
   const maxSalary = salaryBenchmarks.length ? Math.max(...salaryBenchmarks.map((b) => b.high)) : 1;
   const pendingLeave = leaveRequests.filter((l) => l.status === "Pending");
+  // Derived from live HRIS + review data — probations, anniversaries, birthdays, review dues.
+  const upcomingEvents = deriveUpcomingEvents(employees, performanceReviews);
 
   return (
     <div>
@@ -257,6 +259,12 @@ export default async function AdminDashboard() {
         <Card className="card-pad lg:col-span-4">
           <CardHeader title="Upcoming Events" />
           <div className="mt-4 space-y-4">
+            {upcomingEvents.length === 0 && (
+              <p className="py-4 text-sm text-ink-muted">
+                Nothing on the horizon — probations, anniversaries and review due dates will
+                show up here.
+              </p>
+            )}
             {upcomingEvents.map((ev) => {
               const Icon = eventIcon[ev.kind];
               const d = new Date(ev.date + "T00:00:00");

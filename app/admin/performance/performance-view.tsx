@@ -107,23 +107,10 @@ interface GuardrailRequest {
   status: "Pending" | "Approved" | "Rejected";
 }
 
-// Seeded demo of a change that tripped the >15% constructive-dismissal guardrail
-// and was routed to HR. Live entries are appended by the goal weight editor
-// below whenever the backend rejects an out-of-band change on a signed goal.
-const INITIAL_GUARDRAIL_REQUESTS: GuardrailRequest[] = [
-  {
-    id: "gr-1",
-    employee: "Jim Scott",
-    manager: "Michael Scott",
-    goalTitle: "Close $1.2M in net-new pipeline (Q2)",
-    field: "Core responsibility weight",
-    previousValue: "30%",
-    proposedValue: "55%",
-    changePct: 25,
-    requestedAt: "2026-07-02",
-    status: "Pending",
-  },
-];
+// The approvals queue starts empty — entries are appended by the goal weight
+// editor below whenever the backend rejects an out-of-band change (>15%) on a
+// signed goal and routes it to HR.
+const INITIAL_GUARDRAIL_REQUESTS: GuardrailRequest[] = [];
 
 const CADENCES: ReviewCadence[] = ["Annual", "Bi-Annual", "Quarterly"];
 

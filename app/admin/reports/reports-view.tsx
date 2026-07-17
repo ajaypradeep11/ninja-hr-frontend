@@ -28,7 +28,6 @@ import {
   Ring,
   PageHeader,
 } from "@/components/ui";
-import { complianceScore } from "@/lib/data";
 import type { Employee, Requisition } from "@/lib/data";
 import { PROVINCES, provinceName } from "@/lib/compliance";
 import { BRAND } from "@/lib/brand";
@@ -95,6 +94,41 @@ export function ReportsView({ employees, headcountByDept, requisitions }: Report
   const nonCompliantJobs = requisitions.filter(
     (r) => r.province === "ON" && r.status === "Published" && r.salaryMax - r.salaryMin > 50_000,
   ).length;
+
+  // Compliance scorecard — derived from live data (replaces the old hardcoded
+  // demo score). Only metrics we can actually compute from real records.
+  const publishedOn = requisitions.filter(
+    (r) => r.province === "ON" && r.status === "Published" && !r.archived,
+  );
+  const bill149Pct = publishedOn.length
+    ? Math.round(
+        (publishedOn.filter((r) => r.salaryMin > 0 && r.salaryMax > 0).length /
+          publishedOn.length) *
+          100,
+      )
+    : 100;
+  const recordsPct = employees.length
+    ? Math.round(
+        (employees.filter((e) => e.hireDate && e.province && e.email).length /
+          employees.length) *
+          100,
+      )
+    : 100;
+  const complianceScore = {
+    overall: Math.round((bill149Pct + recordsPct) / 2),
+    breakdown: [
+      {
+        label: "Bill 149 job postings (salary ranges)",
+        value: bill149Pct,
+        tone: (bill149Pct >= 90 ? "ok" : "warn") as "ok" | "warn",
+      },
+      {
+        label: "HRIS records complete",
+        value: recordsPct,
+        tone: (recordsPct >= 90 ? "ok" : "warn") as "ok" | "warn",
+      },
+    ],
+  };
 
   return (
     <div>

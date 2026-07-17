@@ -116,7 +116,7 @@ export function SignupForm() {
               id="password"
               className="field-input"
               required
-              minLength={8}
+              minLength={10}
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}

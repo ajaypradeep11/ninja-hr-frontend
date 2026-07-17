@@ -89,7 +89,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
             text: "Open the invite link from your personal email — you'll see **“Welcome to NinjaHR”** with your name.",
           },
           {
-            text: "Set a **Password** (at least 8 characters), confirm it, and click **Set password & continue** — or click **Continue with Google** using the same email the invite was sent to.",
+            text: "Set a **Password** (at least 10 characters), confirm it, and click **Set password & continue** — or click **Continue with Google** using the same email the invite was sent to.",
           },
           {
             text: "You're signed in and taken straight to your onboarding checklist — see “Complete your onboarding”.",

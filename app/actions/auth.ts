@@ -37,8 +37,8 @@ export interface ActivateAccountResult {
  * and mints a session the same way `/login` does.
  */
 export async function activateAccount(caseToken: string, password: string): Promise<ActivateAccountResult> {
-  if (password.length < 8) {
-    throw new Error("Password must be at least 8 characters.");
+  if (password.length < 10) {
+    throw new Error("Password must be at least 10 characters.");
   }
   return acceptInvite(caseToken, { password });
 }

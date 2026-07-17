@@ -39,7 +39,7 @@ export function WelcomeForm({ token, expectedEmail }: { token: string; expectedE
         onSubmit={(e) => {
           e.preventDefault();
           void withBusy(async () => {
-            if (password.length < 8) throw new Error("Password must be at least 8 characters.");
+            if (password.length < 10) throw new Error("Password must be at least 10 characters.");
             if (password !== confirm) throw new Error("Passwords don't match.");
             const { email } = await activateAccount(token, password);
             const cred = await signInWithEmailAndPassword(firebaseClientAuth(), email, password);
@@ -55,7 +55,7 @@ export function WelcomeForm({ token, expectedEmail }: { token: string; expectedE
             id="password"
             type="password"
             required
-            minLength={8}
+            minLength={10}
             className="field-input"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -70,7 +70,7 @@ export function WelcomeForm({ token, expectedEmail }: { token: string; expectedE
             id="confirm"
             type="password"
             required
-            minLength={8}
+            minLength={10}
             className="field-input"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}

@@ -104,7 +104,16 @@ export interface NewHireProfile {
   submittedAt?: string;
 }
 
-export type NewHireProfileInput = Omit<NewHireProfile, "submittedAt">;
+/**
+ * What we SEND. SIN and bank account are optional here only: reads mask them
+ * (••• ••• 789), so a returning employee has no way to resend the real value —
+ * omitting them tells the server to keep what's already on file. Send them only
+ * when the employee deliberately re-types one.
+ */
+export type NewHireProfileInput = Omit<NewHireProfile, "submittedAt" | "sin" | "bankAccount"> & {
+  sin?: string;
+  bankAccount?: string;
+};
 
 export interface OnboardingCase {
   id: string;

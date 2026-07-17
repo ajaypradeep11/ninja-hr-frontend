@@ -25,6 +25,7 @@ import {
   hasUpload,
   mandatoryPolicies,
   PRIVACY_POLICY_VERSION,
+  UPLOAD_KIND_NAMES,
   type NewHireProfileInput,
   type UploadKind,
   type WorkEligibilityLabel,
@@ -195,6 +196,47 @@ const EMPTY_PROFILE: ProfileDraft = {
   bankAccountHolder: "",
 };
 
+/**
+ * A secret that's already stored. Reads mask SIN/banking, so there is no real
+ * value to put back in the input — showing the mask in an editable field would
+ * either fail validation or, if submitted, overwrite the real thing. Instead:
+ * state that it's on file, and make changing it deliberate.
+ */
+function OnFileField({ masked, onChange }: { masked: string; onChange: () => void }) {
+  return (
+    <div className="flex items-center gap-2">
+      <div className="field-input flex flex-1 items-center gap-2 bg-surface-muted text-ink-muted">
+        <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-300" />
+        <span className="font-mono text-sm">{masked}</span>
+        <span className="text-xs">on file</span>
+      </div>
+      <Button type="button" variant="outline" className="shrink-0" onClick={onChange}>
+        Change
+      </Button>
+    </div>
+  );
+}
+
+/**
+ * Which wizard step owns each uploadable document — so a rejected one can send
+ * the employee straight to the place they re-upload it, instead of leaving them
+ * to find it. Keep in step with STEPS below.
+ */
+const STEP_FOR_KIND: Record<UploadKind, number> = {
+  "td1-federal": 1,
+  "td1-ontario": 1,
+  "benefits-enrollment": 2,
+  "manual-acknowledgment": 3,
+};
+
+/** The step holding a rejected document, matched by its stored name prefix. */
+function stepForDocument(name: string): number | null {
+  const kind = (Object.keys(UPLOAD_KIND_NAMES) as UploadKind[]).find((k) =>
+    name.startsWith(UPLOAD_KIND_NAMES[k]),
+  );
+  return kind ? STEP_FOR_KIND[kind] : null;
+}
+
 const STEPS = [
   { id: "personal", label: "New Hire Form", icon: User },
   { id: "tax", label: "Tax Forms (TD1)", icon: Landmark },
@@ -224,10 +266,16 @@ function Wizard() {
 
   const [step, setStep] = React.useState(0);
 
-  // Standard new-hire form (Ontario) — controlled fields; only the legal name
-  // prefills (from the invite HR created). Everything else starts blank.
+  // Standard new-hire form (Ontario) — controlled fields, rehydrated below from
+  // whatever the employee already submitted.
   const [p, setP] = React.useState<ProfileDraft>(EMPTY_PROFILE);
   const set = (patch: Partial<ProfileDraft>) => setP((prev) => ({ ...prev, ...patch }));
+  // SIN + bank account come back MASKED (••• ••• 789), so they can't go in the
+  // draft — submitting the mask would be nonsense and the API rejects it. Track
+  // them as "on file" instead: left alone, we omit them and the server keeps the
+  // stored value; "Change" clears the flag and takes a real re-entry.
+  const [sinOnFile, setSinOnFile] = React.useState(false);
+  const [acctOnFile, setAcctOnFile] = React.useState(false);
   const prefilled = React.useRef(false);
   React.useEffect(() => {
     if (prefilled.current) return;
@@ -238,6 +286,25 @@ function Wizard() {
     // header shows the right one.
     if (loading) return;
     prefilled.current = true;
+    const saved = found?.profile;
+    if (saved) {
+      // Returning to review, or to fix a rejected document: show back everything
+      // they filled in. Without this the form re-opened blank and they had to
+      // retype the lot — including secrets they cannot even read.
+      setP({
+        ...EMPTY_PROFILE,
+        ...saved,
+        // Masked on read → never into the draft; carried by the flags below.
+        sin: "",
+        bankAccount: "",
+        preferredName: saved.preferredName ?? "",
+        workPermitExpiry: saved.workPermitExpiry ?? "",
+        workEligibility: (saved.workEligibility as WorkEligibilityLabel) ?? "",
+      });
+      setSinOnFile(!!saved.sin);
+      setAcctOnFile(!!saved.bankAccount);
+      return;
+    }
     const src = found?.name ?? profile.name;
     setP((prev) => ({
       ...prev,
@@ -276,7 +343,9 @@ function Wizard() {
     p.legalFirstName.trim() !== "" &&
     p.legalLastName.trim() !== "" &&
     p.dateOfBirth !== "" &&
-    /^\d{9}$/.test(p.sin) &&
+    // "On file" counts as valid: the value is already stored and we won't send
+    // it. Requiring a re-type would mean digging out a SIN to fix a typo'd city.
+    (sinOnFile || /^\d{9}$/.test(p.sin ?? "")) &&
     p.phone.trim() !== "" &&
     p.addressStreet.trim() !== "" &&
     p.addressCity.trim() !== "" &&
@@ -288,7 +357,7 @@ function Wizard() {
     (!needsPermitExpiry || !!p.workPermitExpiry) &&
     /^\d{3}$/.test(p.bankInstitution) &&
     /^\d{5}$/.test(p.bankTransit) &&
-    /^\d{7,12}$/.test(p.bankAccount) &&
+    (acctOnFile || /^\d{7,12}$/.test(p.bankAccount ?? "")) &&
     p.bankAccountHolder.trim() !== "";
 
   // Resume saved progress once the case loads ("your progress is saved
@@ -331,6 +400,10 @@ function Wizard() {
             workEligibility: p.workEligibility as WorkEligibilityLabel,
             preferredName: p.preferredName?.trim() || undefined,
             workPermitExpiry: needsPermitExpiry ? p.workPermitExpiry || undefined : undefined,
+            // Omitted = "keep what's on file" (the server merges). Sent only
+            // when they actually re-typed it.
+            sin: sinOnFile ? undefined : p.sin,
+            bankAccount: acctOnFile ? undefined : p.bankAccount,
           });
         }
         if (step === 1) await markForm(caseToken, "td1");
@@ -390,19 +463,31 @@ function Wizard() {
         {STEPS.map((s, i) => {
           const Icon = s.icon;
           const state = done || i < step ? "done" : i === step ? "current" : "todo";
+          // Any step you've already cleared is reachable again. HR rejecting a
+          // document tells you to "upload it again from its step" — without this
+          // the only way back was step 0, re-entering the entire form to get there.
+          const revisitable = state === "done" && i !== step;
           return (
             <React.Fragment key={s.id}>
               <div className="flex flex-col items-center">
-                <span
+                <button
+                  type="button"
+                  disabled={!revisitable}
+                  onClick={() => setStep(i)}
+                  aria-label={revisitable ? `Go back to ${s.label}` : s.label}
+                  aria-current={state === "current" ? "step" : undefined}
                   className={cn(
                     "flex h-11 w-11 items-center justify-center rounded-full border-2 transition-colors",
                     state === "done" && "border-emerald-500 bg-emerald-500 text-white",
                     state === "current" && "border-brand-500 bg-brand-50 text-brand-600 dark:text-brand-400",
                     state === "todo" && "border-line bg-card text-ink-faint",
+                    revisitable
+                      ? "cursor-pointer hover:brightness-95 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+                      : "cursor-default",
                   )}
                 >
                   {state === "done" ? <Check className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
-                </span>
+                </button>
                 <span
                   className={cn(
                     "mt-2 text-xs font-medium",
@@ -491,13 +576,23 @@ function Wizard() {
                     </div>
                     <div>
                       <label className="field-label">Social Insurance Number *</label>
-                      <input
-                        className="field-input"
-                        value={p.sin}
-                        onChange={(e) => set({ sin: e.target.value.replace(/\D/g, "").slice(0, 9) })}
-                        placeholder="9 digits — required by the CRA"
-                        inputMode="numeric"
-                      />
+                      {sinOnFile ? (
+                        <OnFileField
+                          masked={found?.profile?.sin || "••• ••• •••"}
+                          onChange={() => {
+                            setSinOnFile(false);
+                            set({ sin: "" });
+                          }}
+                        />
+                      ) : (
+                        <input
+                          className="field-input"
+                          value={p.sin ?? ""}
+                          onChange={(e) => set({ sin: e.target.value.replace(/\D/g, "").slice(0, 9) })}
+                          placeholder="9 digits — required by the CRA"
+                          inputMode="numeric"
+                        />
+                      )}
                     </div>
                     <div>
                       <label className="field-label">Phone *</label>
@@ -587,7 +682,17 @@ function Wizard() {
                       </div>
                       <div>
                         <label className="field-label">Account # *</label>
-                        <input className="field-input" value={p.bankAccount} onChange={(e) => set({ bankAccount: e.target.value.replace(/\D/g, "").slice(0, 12) })} placeholder="7–12 digits" inputMode="numeric" />
+                        {acctOnFile ? (
+                          <OnFileField
+                            masked={found?.profile?.bankAccount || "••••••••"}
+                            onChange={() => {
+                              setAcctOnFile(false);
+                              set({ bankAccount: "" });
+                            }}
+                          />
+                        ) : (
+                          <input className="field-input" value={p.bankAccount ?? ""} onChange={(e) => set({ bankAccount: e.target.value.replace(/\D/g, "").slice(0, 12) })} placeholder="7–12 digits" inputMode="numeric" />
+                        )}
                       </div>
                     </div>
                     <div className="mt-3">
@@ -821,10 +926,26 @@ function Wizard() {
 
             {/* Resubmission loop: rejected docs demand a re-upload, with HR's note. */}
             {found && found.documents.some((d) => d.status === "Pending") && (
-              <div className="mt-3 rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-300">
-                Action needed: {found.documents.filter((d) => d.status === "Pending").length} document(s)
-                were rejected by HR. Review the note below, fix the document, and upload it again from its
-                step — the new upload replaces the rejected one and goes back to HR for review.
+              <div className="mt-3 space-y-2 rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-300">
+                <p>
+                  Action needed: {found.documents.filter((d) => d.status === "Pending").length} document(s)
+                  were rejected by HR. Review the note below, fix the document, and upload it again — the
+                  new upload replaces the rejected one and goes back to HR for review.
+                </p>
+                {/* Telling someone to "upload it again from its step" is no use
+                    if they can't get to that step — take them there. */}
+                {found.documents
+                  .filter((d) => d.status === "Pending" && stepForDocument(d.name) !== null)
+                  .map((d) => (
+                    <Button
+                      key={d.id}
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={() => setStep(stepForDocument(d.name) as number)}
+                    >
+                      Fix it now — {d.name}
+                    </Button>
+                  ))}
               </div>
             )}
 

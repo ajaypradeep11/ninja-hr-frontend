@@ -162,7 +162,7 @@ export default function LeaveView({ actorName, isManager, initialRequests }: Pro
       };
       const all = editingId
         ? await updateLeaveRecord(editingId, { ...payload, hours: hoursMode ? hours : null })
-        : await createLeaveRequest({ employeeName: actorName, ...payload });
+        : await createLeaveRequest({ employeeName: actorName, ...payload, note: notes });
       setRequests(all);
       setOpen(false);
       setEditingId(null);
@@ -401,6 +401,18 @@ export default function LeaveView({ actorName, isManager, initialRequests }: Pro
                 </div>
               )}
             </dl>
+
+            {/* The employee's own note submitted with the request. */}
+            <div className="mt-4 border-t border-line pt-3">
+              <p className="text-xs font-medium text-ink-muted">Note from {reviewing.employee.split(" ")[0]}</p>
+              {reviewing.note ? (
+                <p className="mt-1 whitespace-pre-wrap rounded-lg bg-canvas px-3 py-2 text-sm text-ink">
+                  {reviewing.note}
+                </p>
+              ) : (
+                <p className="mt-1 text-sm italic text-ink-faint">No note added.</p>
+              )}
+            </div>
 
             {reviewing.status === "Pending" && (
               <div className="mt-6 flex gap-2">

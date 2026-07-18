@@ -55,7 +55,7 @@ export interface SalaryBenchmark {
 export interface LeaveRequest {
   id: string;
   employee: string;
-  /** Routing key: pending requests go to this department's manager. */
+  /** Display/search only — approval routing is by reporting line (managerId), not department. */
   department: string;
   type: "Vacation" | "Sick Leave" | "Personal" | "Parental" | "Bereavement" | "Overtime";
   start: string;
@@ -65,6 +65,8 @@ export interface LeaveRequest {
   days: number;
   /** Partial-day request: hours taken on `start` (1–7). Undefined = full day(s). */
   hours?: number;
+  /** Free-text note the employee submitted with the request. Undefined when none. */
+  note?: string;
 }
 
 export interface LeaveBalance {

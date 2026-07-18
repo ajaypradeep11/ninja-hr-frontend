@@ -142,6 +142,8 @@ export interface NewLeaveInput {
   days: number;
   /** Partial-day request: hours on `start` (1–7). Omit for full day(s). */
   hours?: number;
+  /** Free-text note for the manager. Omit for none. */
+  note?: string;
 }
 
 export async function createLeaveRequest(input: NewLeaveInput): Promise<LeaveRequest[]> {
@@ -155,6 +157,7 @@ export async function createLeaveRequest(input: NewLeaveInput): Promise<LeaveReq
         end: input.end,
         days: input.days,
         ...(input.hours ? { hours: input.hours } : {}),
+        ...(input.note?.trim() ? { note: input.note.trim() } : {}),
       } as never,
     }),
   );

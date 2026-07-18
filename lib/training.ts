@@ -25,6 +25,14 @@ export interface CreateCourseInput {
   contentUrl?: string;
   durationMins?: number;
   passMark?: number;
+  // Optional uploaded material (PDF/slides): base64 payload + its MIME type and
+  // original file name (all three together, or none).
+  materialFileName?: string;
+  materialMimeType?: string;
+  materialDataBase64?: string;
+  // Optional cover image (PNG/JPEG/WebP) for the catalog card: base64 + MIME.
+  coverImageMimeType?: string;
+  coverImageDataBase64?: string;
 }
 
 export const TRAINING_CATEGORIES = [

@@ -99,6 +99,8 @@ export interface TrainingCourse {
   // /api/training/[id]/material); materialFileName is its original name.
   hasMaterial?: boolean;
   materialFileName?: string;
+  /** True when a cover image is stored (renders via /api/training/[id]/cover). */
+  hasCover?: boolean;
 }
 
 /** What an employee may set on their own peer-created course. */

@@ -1620,6 +1620,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workplace/training-courses/{id}/cover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["WorkplaceController_courseCover"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workplace/training-courses/{id}": {
         parameters: {
             query?: never;
@@ -2576,6 +2592,9 @@ export interface components {
             /** @enum {string} */
             materialMimeType?: "application/pdf" | "image/png" | "image/jpeg" | "application/vnd.openxmlformats-officedocument.wordprocessingml.document" | "application/vnd.openxmlformats-officedocument.presentationml.presentation";
             materialDataBase64?: string;
+            /** @enum {string} */
+            coverImageMimeType?: "image/png" | "image/jpeg" | "image/webp";
+            coverImageDataBase64?: string;
         };
         UpdateCourseDto: {
             title?: string;
@@ -5099,6 +5118,25 @@ export interface operations {
         };
     };
     WorkplaceController_downloadCourseMaterial: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    WorkplaceController_courseCover: {
         parameters: {
             query?: never;
             header?: never;

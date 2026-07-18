@@ -238,6 +238,30 @@ export async function advanceReviewState(id: string): Promise<PerformanceReview[
   );
 }
 
+/** Start a review for an employee (begins in Draft). */
+export async function createReview(input: {
+  employeeId: string;
+  cycle: string;
+  due: string;
+}): Promise<PerformanceReview[]> {
+  return unwrap<PerformanceReview[]>(
+    (await api()).POST("/api/v1/performance/reviews", { body: input as never }),
+  );
+}
+
+/** Fill in review content — only the fields provided are written. */
+export async function updateReview(
+  id: string,
+  input: { selfEvaluation?: string; managerEvaluation?: string; score?: number },
+): Promise<PerformanceReview[]> {
+  return unwrap<PerformanceReview[]>(
+    (await api()).PATCH("/api/v1/performance/reviews/{id}", {
+      params: { path: { id } },
+      body: input as never,
+    }),
+  );
+}
+
 /**
  * Guarded goal re-weighting. Saves when the change is within the 15%
  * constructive-dismissal guardrail; throws with a WEIGHT_GUARDRAIL-prefixed

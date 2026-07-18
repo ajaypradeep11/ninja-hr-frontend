@@ -95,6 +95,10 @@ export interface TrainingCourse {
   creatorName?: string;
   assignedCount?: number;
   completedCount?: number;
+  // True when an uploaded material file is attached (opens via
+  // /api/training/[id]/material); materialFileName is its original name.
+  hasMaterial?: boolean;
+  materialFileName?: string;
 }
 
 /** What an employee may set on their own peer-created course. */
@@ -172,6 +176,10 @@ export interface PerformanceReview {
     | "Calibrated"
     | "Completed";
   score?: number;
+  /** Employee self-assessment. Undefined until written. */
+  selfEvaluation?: string;
+  /** Manager's written assessment. Undefined until written. */
+  managerEvaluation?: string;
   due: string;
 }
 

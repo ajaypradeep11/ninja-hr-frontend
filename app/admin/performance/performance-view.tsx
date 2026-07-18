@@ -25,11 +25,13 @@ import {
 import {
   issuePip,
   advanceReviewState,
+  createReview,
+  updateReview,
   requestGoalWeightChange,
   saveSettings,
   type ProbationSweepResult,
 } from "@/app/actions/modules";
-import type { PerformanceReview, Pip } from "@/lib/data";
+import type { Employee, PerformanceReview, Pip } from "@/lib/data";
 import { ToolLauncher } from "@/components/tools/tool-launcher";
 import type { CompanySettings, GoalSummary, ReviewCadence } from "@/lib/queries";
 import { cn, formatDate } from "@/lib/utils";
@@ -127,6 +129,7 @@ export function PerformanceView({
   settings = null,
   probation = null,
   actorName,
+  employees = [],
 }: {
   initialReviews: PerformanceReview[];
   initialPips: Pip[];
@@ -135,10 +138,14 @@ export function PerformanceView({
   probation?: ProbationSweepResult | null;
   /** Real signed-in user (was the hardcoded lib/data mock "Sarah Mitchell"). */
   actorName: string;
+  employees?: Employee[];
 }) {
   const [pips, setPips] = React.useState(initialPips);
   const [reviews, setReviews] = React.useState(initialReviews);
   const [advanceError, setAdvanceError] = React.useState<string | null>(null);
+  // New-review modal + the review currently opened for detail/edit.
+  const [newReviewOpen, setNewReviewOpen] = React.useState(false);
+  const [openReview, setOpenReview] = React.useState<PerformanceReview | null>(null);
   const [guardrailReqs, setGuardrailReqs] = React.useState(INITIAL_GUARDRAIL_REQUESTS);
   const [reminderMsg, setReminderMsg] = React.useState<string | null>(null);
 
@@ -159,11 +166,29 @@ export function PerformanceView({
   async function handleAdvance(id: string) {
     try {
       setAdvanceError(null);
-      setReviews(await advanceReviewState(id));
+      const next = await advanceReviewState(id);
+      setReviews(next);
+      setOpenReview((cur) => (cur ? next.find((r) => r.id === cur.id) ?? null : null));
     } catch (err) {
       // Keep the current list — a failed advance must not wipe the cycles.
       setAdvanceError(err instanceof Error ? err.message : "Failed to advance review");
     }
+  }
+
+  async function handleCreateReview(input: { employeeId: string; cycle: string; due: string }) {
+    setAdvanceError(null);
+    setReviews(await createReview(input));
+    setNewReviewOpen(false);
+  }
+
+  async function handleSaveReview(
+    id: string,
+    input: { selfEvaluation?: string; managerEvaluation?: string; score?: number },
+  ) {
+    setAdvanceError(null);
+    const next = await updateReview(id, input);
+    setReviews(next);
+    setOpenReview(next.find((r) => r.id === id) ?? null);
   }
 
   function sendReminders() {
@@ -284,7 +309,7 @@ export function PerformanceView({
                     </span>
                   )}
                 </button>
-                <Button size="sm" variant="outline">
+                <Button size="sm" variant="outline" onClick={() => setNewReviewOpen(true)}>
                   New Review Cycle
                 </Button>
               </div>
@@ -359,6 +384,12 @@ export function PerformanceView({
                     <div className="flex items-center gap-2">
                       {r.score && <Badge tone="green">{r.score.toFixed(1)} / 5</Badge>}
                       <ReviewStatusPill state={r.state} />
+                      <button
+                        onClick={() => setOpenReview(r)}
+                        className="rounded-lg border border-line bg-card px-2 py-0.5 text-[11px] font-semibold text-ink-soft hover:bg-canvas"
+                      >
+                        Open
+                      </button>
                       {r.state !== "Completed" && (
                         <button
                           onClick={() => handleAdvance(r.id)}
@@ -401,6 +432,17 @@ export function PerformanceView({
                 </div>
               );
             })}
+            {reviews.length === 0 && (
+              <div className="rounded-xl border border-dashed border-line py-10 text-center">
+                <p className="text-sm font-medium text-ink">No review cycles yet</p>
+                <p className="mt-1 text-xs text-ink-muted">
+                  Start one for an employee to begin the review process.
+                </p>
+                <Button size="sm" className="mt-3" onClick={() => setNewReviewOpen(true)}>
+                  New Review Cycle
+                </Button>
+              </div>
+            )}
           </div>
         </Card>
 
@@ -549,6 +591,215 @@ export function PerformanceView({
           actorName={actorName}
         />
       </div>
+
+      {newReviewOpen && (
+        <NewReviewModal
+          employees={employees}
+          onClose={() => setNewReviewOpen(false)}
+          onCreate={handleCreateReview}
+        />
+      )}
+      {openReview && (
+        <ReviewDetailModal
+          key={openReview.id}
+          review={openReview}
+          onClose={() => setOpenReview(null)}
+          onSave={handleSaveReview}
+          onAdvance={handleAdvance}
+        />
+      )}
+    </div>
+  );
+}
+
+/** Modal: start a review for an employee. */
+function NewReviewModal({
+  employees,
+  onClose,
+  onCreate,
+}: {
+  employees: Employee[];
+  onClose: () => void;
+  onCreate: (input: { employeeId: string; cycle: string; due: string }) => Promise<void>;
+}) {
+  const [employeeId, setEmployeeId] = React.useState(employees[0]?.id ?? "");
+  const [cycle, setCycle] = React.useState("2026 Annual");
+  const [due, setDue] = React.useState("");
+  const [busy, setBusy] = React.useState(false);
+  const [err, setErr] = React.useState<string | null>(null);
+  const valid = employeeId && cycle.trim() && due;
+
+  async function submit() {
+    if (!valid || busy) return;
+    setBusy(true);
+    setErr(null);
+    try {
+      await onCreate({ employeeId, cycle: cycle.trim(), due });
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Failed to create review");
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/30 p-4">
+      <Card className="card-pad w-full max-w-md sm:p-6">
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-bold text-ink">New review cycle</h3>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-ink-muted hover:bg-canvas">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="mt-5 space-y-4">
+          <div>
+            <label className="field-label">Employee</label>
+            <select
+              className="field-input"
+              value={employeeId}
+              onChange={(e) => setEmployeeId(e.target.value)}
+            >
+              {employees.length === 0 && <option value="">No employees</option>}
+              {employees.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.name} — {e.title}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="field-label">Review cycle</label>
+            <input
+              className="field-input"
+              value={cycle}
+              onChange={(e) => setCycle(e.target.value)}
+              placeholder="e.g. 2026 Annual, Q3 2026"
+            />
+          </div>
+          <div>
+            <label className="field-label">Due date</label>
+            <input type="date" className="field-input" value={due} onChange={(e) => setDue(e.target.value)} />
+          </div>
+        </div>
+        {err && <p className="mt-3 rounded-xl bg-red-50 dark:bg-red-500/10 px-3 py-2 text-xs text-red-600 dark:text-red-300">{err}</p>}
+        <div className="mt-6 flex justify-end gap-2">
+          <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>
+          <Button size="sm" disabled={!valid || busy} onClick={submit}>
+            {busy ? "Creating…" : "Create review"}
+          </Button>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+/** Modal: view and fill in a review (self/manager evaluation, score), advance stage. */
+function ReviewDetailModal({
+  review,
+  onClose,
+  onSave,
+  onAdvance,
+}: {
+  review: PerformanceReview;
+  onClose: () => void;
+  onSave: (
+    id: string,
+    input: { selfEvaluation?: string; managerEvaluation?: string; score?: number },
+  ) => Promise<void>;
+  onAdvance: (id: string) => Promise<void>;
+}) {
+  const [self, setSelf] = React.useState(review.selfEvaluation ?? "");
+  const [manager, setManager] = React.useState(review.managerEvaluation ?? "");
+  const [score, setScore] = React.useState(review.score != null ? String(review.score) : "");
+  const [busy, setBusy] = React.useState(false);
+  const [msg, setMsg] = React.useState<string | null>(null);
+
+  async function save() {
+    if (busy) return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      const parsed = score.trim() === "" ? undefined : Number(score);
+      await onSave(review.id, {
+        selfEvaluation: self,
+        managerEvaluation: manager,
+        score: parsed != null && !Number.isNaN(parsed) ? parsed : undefined,
+      });
+      setMsg("Saved.");
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "Failed to save");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/30 p-4">
+      <Card className="card-pad max-h-[90vh] w-full max-w-lg overflow-y-auto sm:p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <Avatar name={review.employee} size={34} />
+            <div>
+              <h3 className="text-base font-bold text-ink">{review.employee}</h3>
+              <p className="text-xs text-ink-muted">{review.cycle} · due {formatDate(review.due)}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-ink-muted hover:bg-canvas">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="mt-4 flex items-center justify-between rounded-xl border border-line bg-canvas/50 px-3.5 py-2.5">
+          <ReviewStatusPill state={review.state} />
+          {review.state !== "Completed" && (
+            <button
+              onClick={() => onAdvance(review.id)}
+              className="rounded-lg border border-brand-300 bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-600 dark:text-brand-400 hover:bg-brand-100"
+            >
+              Advance to next stage
+            </button>
+          )}
+        </div>
+
+        <div className="mt-4 space-y-4">
+          <div>
+            <label className="field-label">Self-evaluation</label>
+            <textarea
+              className="field-input min-h-24"
+              value={self}
+              onChange={(e) => setSelf(e.target.value)}
+              placeholder="The employee's self-assessment for this cycle…"
+            />
+          </div>
+          <div>
+            <label className="field-label">Manager evaluation</label>
+            <textarea
+              className="field-input min-h-24"
+              value={manager}
+              onChange={(e) => setManager(e.target.value)}
+              placeholder="The manager's written assessment…"
+            />
+          </div>
+          <div>
+            <label className="field-label">Overall rating (0–5)</label>
+            <input
+              type="number"
+              min={0}
+              max={5}
+              step={0.5}
+              className="field-input"
+              value={score}
+              onChange={(e) => setScore(e.target.value)}
+              placeholder="e.g. 4.5"
+            />
+          </div>
+        </div>
+
+        {msg && <p className="mt-3 text-xs text-ink-muted">{msg}</p>}
+        <div className="mt-6 flex justify-end gap-2">
+          <Button variant="outline" size="sm" onClick={onClose}>Close</Button>
+          <Button size="sm" disabled={busy} onClick={save}>{busy ? "Saving…" : "Save"}</Button>
+        </div>
+      </Card>
     </div>
   );
 }

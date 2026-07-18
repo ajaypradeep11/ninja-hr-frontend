@@ -1069,11 +1069,27 @@ export interface paths {
         };
         get: operations["PerformanceController_getReviews"];
         put?: never;
-        post?: never;
+        post: operations["PerformanceController_createReview"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/performance/reviews/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["PerformanceController_updateReview"];
         trace?: never;
     };
     "/api/v1/performance/pips": {
@@ -1518,6 +1534,22 @@ export interface paths {
         get: operations["WorkplaceController_getTrainingCourses"];
         put?: never;
         post: operations["WorkplaceController_createCourse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workplace/training-courses/{id}/material": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["WorkplaceController_downloadCourseMaterial"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2340,6 +2372,19 @@ export interface components {
             consent: boolean;
             answers: components["schemas"]["PreScreenAnswerDto"][];
         };
+        CreateReviewDto: {
+            employeeId: string;
+            /** @description e.g. "2026 Annual", "Q3 2026" */
+            cycle: string;
+            /** @description ISO date YYYY-MM-DD */
+            due: string;
+        };
+        UpdateReviewDto: {
+            selfEvaluation?: string;
+            managerEvaluation?: string;
+            /** @description Overall rating 0–5 */
+            score?: number;
+        };
         IssuePipDto: {
             employee: string;
             manager: string;
@@ -2456,6 +2501,10 @@ export interface components {
             contentUrl?: string;
             durationMins?: number;
             passMark?: number;
+            materialFileName?: string;
+            /** @enum {string} */
+            materialMimeType?: "application/pdf" | "image/png" | "image/jpeg" | "application/vnd.openxmlformats-officedocument.wordprocessingml.document" | "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+            materialDataBase64?: string;
         };
         UpdateCourseDto: {
             title?: string;
@@ -4183,6 +4232,50 @@ export interface operations {
             };
         };
     };
+    PerformanceController_createReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateReviewDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PerformanceController_updateReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateReviewDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     PerformanceController_getPips: {
         parameters: {
             query?: never;
@@ -4845,6 +4938,25 @@ export interface operations {
         };
         responses: {
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    WorkplaceController_downloadCourseMaterial: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -1,5 +1,5 @@
 export const dynamic = "force-dynamic";
-import { getAllGoals, getPerformanceReviews, getPips, getSettings } from "@/lib/queries";
+import { getAllGoals, getEmployees, getPerformanceReviews, getPips, getSettings } from "@/lib/queries";
 import { runProbationSweep } from "@/app/actions/modules";
 import { getActor } from "@/lib/actor";
 import { PerformanceView } from "./performance-view";
@@ -10,11 +10,12 @@ export default async function PerformancePage() {
   // Day-60 initializes the 90-day review, Day-80 escalates. Run it BEFORE
   // fetching reviews so a just-initialized review shows up immediately.
   const probation = await runProbationSweep().catch(() => null);
-  const [reviews, pips, goals, settings] = await Promise.all([
+  const [reviews, pips, goals, settings, employees] = await Promise.all([
     getPerformanceReviews(),
     getPips(),
     getAllGoals().catch(() => []),
     getSettings(),
+    getEmployees().catch(() => []),
   ]);
   return (
     <PerformanceView
@@ -24,6 +25,7 @@ export default async function PerformancePage() {
       settings={settings}
       probation={probation}
       actorName={actor.name}
+      employees={employees}
     />
   );
 }

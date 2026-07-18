@@ -1,5 +1,6 @@
 import * as React from "react";
 import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 import { cn, initials, avatarColor } from "@/lib/utils";
 
 /* ------------------------------- Card ------------------------------- */
@@ -366,14 +367,37 @@ export function Stat({
   value,
   hint,
   tone,
+  onClick,
 }: {
   label: string;
   value: React.ReactNode;
   hint?: React.ReactNode;
   tone?: Tone;
+  /** When set, the stat becomes an interactive button (opens a detail view). */
+  onClick?: () => void;
 }) {
+  const interactive = !!onClick;
   return (
-    <Card className="card-pad">
+    <Card
+      className={cn(
+        "card-pad",
+        interactive &&
+          "group relative cursor-pointer transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-pop focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400",
+      )}
+      {...(interactive
+        ? {
+            onClick,
+            role: "button",
+            tabIndex: 0,
+            onKeyDown: (e: React.KeyboardEvent) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onClick();
+              }
+            },
+          }
+        : {})}
+    >
       <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
         {label}
       </p>
@@ -382,6 +406,14 @@ export function Stat({
         <p className="mt-1 text-xs text-ink-muted">
           {tone && <Dot tone={tone} />} {hint}
         </p>
+      )}
+      {interactive && (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute right-3 top-3 text-ink-faint opacity-0 transition group-hover:opacity-100"
+        >
+          <ArrowUpRight className="h-4 w-4" />
+        </span>
       )}
     </Card>
   );

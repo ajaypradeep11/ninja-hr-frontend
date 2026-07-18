@@ -384,6 +384,7 @@ export function PerformanceView({
                     <div className="flex items-center gap-2">
                       {r.score && <Badge tone="green">{r.score.toFixed(1)} / 5</Badge>}
                       <ReviewStatusPill state={r.state} />
+                      {r.acknowledgedAt && <Badge tone="gray">Acknowledged</Badge>}
                       <button
                         onClick={() => setOpenReview(r)}
                         className="rounded-lg border border-line bg-card px-2 py-0.5 text-[11px] font-semibold text-ink-soft hover:bg-canvas"

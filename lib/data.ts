@@ -176,11 +176,23 @@ export interface PerformanceReview {
     | "Calibrated"
     | "Completed";
   score?: number;
-  /** Employee self-assessment. Undefined until written. */
+  /** Employee self-assessment. Undefined until written (or hidden by visibility gating). */
   selfEvaluation?: string;
-  /** Manager's written assessment. Undefined until written. */
+  /** Manager's written assessment. Undefined until written (or hidden by visibility gating). */
   managerEvaluation?: string;
+  /** ISO datetime when the employee submitted their self-assessment. */
+  selfSubmittedAt?: string;
+  /** ISO datetime when the assigned manager submitted their evaluation. */
+  managerSubmittedAt?: string;
+  /** ISO datetime when the employee acknowledged the completed review. */
+  acknowledgedAt?: string;
   due: string;
+}
+
+/** Actor-scoped review surface: own reviews + direct reports' reviews. */
+export interface MyReviews {
+  mine: PerformanceReview[];
+  reports: PerformanceReview[];
 }
 
 export interface Pip {

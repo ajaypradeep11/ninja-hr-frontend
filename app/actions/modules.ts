@@ -6,7 +6,7 @@ import { ACTOR_COOKIE, getActor } from "@/lib/actor";
 import { computeLeaveBalances } from "@/lib/leave-balances";
 import type {
   LeaveRequest,
-
+  MyReviews,
   Pip,
   OffboardingTask,
   PerformanceReview,
@@ -246,6 +246,51 @@ export async function createReview(input: {
 }): Promise<PerformanceReview[]> {
   return unwrap<PerformanceReview[]>(
     (await api()).POST("/api/v1/performance/reviews", { body: input as never }),
+  );
+}
+
+/** Actor-scoped review surface (own + direct reports'), visibility-shaped by the backend. */
+export async function getMyReviews(): Promise<MyReviews> {
+  const client = await actorApi();
+  return unwrap<MyReviews>(client.GET("/api/v1/performance/my-reviews"), {
+    mine: [],
+    reports: [],
+  });
+}
+
+/** Employee submits their self-assessment (locks it; opens the manager stage). */
+export async function submitSelfEvaluation(id: string, text: string): Promise<MyReviews> {
+  const client = await actorApi();
+  return unwrap<MyReviews>(
+    client.POST("/api/v1/performance/reviews/{id}/self", {
+      params: { path: { id } },
+      body: { text } as never,
+    }),
+  );
+}
+
+/** Assigned manager (or HR) submits the evaluation + proposed rating. */
+export async function submitManagerEvaluation(
+  id: string,
+  text: string,
+  score?: number,
+): Promise<MyReviews> {
+  const client = await actorApi();
+  return unwrap<MyReviews>(
+    client.POST("/api/v1/performance/reviews/{id}/manager", {
+      params: { path: { id } },
+      body: { text, ...(score != null ? { score } : {}) } as never,
+    }),
+  );
+}
+
+/** Employee acknowledges the completed, shared review. */
+export async function acknowledgeReview(id: string): Promise<MyReviews> {
+  const client = await actorApi();
+  return unwrap<MyReviews>(
+    client.POST("/api/v1/performance/reviews/{id}/acknowledge", {
+      params: { path: { id } },
+    }),
   );
 }
 

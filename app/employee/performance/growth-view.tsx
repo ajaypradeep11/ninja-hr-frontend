@@ -29,6 +29,12 @@ import {
   toggleActionItem,
   updateGoalProgress,
 } from "@/app/actions/growth";
+import {
+  acknowledgeReview,
+  submitManagerEvaluation,
+  submitSelfEvaluation,
+} from "@/app/actions/modules";
+import type { MyReviews, PerformanceReview } from "@/lib/data";
 import type {
   Colleague,
   GrowthGoal,
@@ -40,14 +46,6 @@ import type {
 import { formatDate } from "@/lib/utils";
 
 type Tab = "overview" | "syncs" | "feedback" | "career";
-
-interface HistoryReview {
-  id: string;
-  cycle: string;
-  date: string;
-  score?: number;
-  released: boolean;
-}
 
 interface Viewer {
   name: string;
@@ -118,15 +116,16 @@ function syncTimeLabel(iso: string): string {
 export function GrowthView({
   viewer,
   growth,
-  history,
+  myReviews,
   colleagues,
 }: {
   viewer: Viewer;
   growth: GrowthOverview;
-  history: HistoryReview[];
+  myReviews: MyReviews;
   colleagues: Colleague[];
 }) {
   const [tab, setTab] = React.useState<Tab>("overview");
+  const [reviews, setReviews] = React.useState<MyReviews>(myReviews);
   const [goals, setGoals] = React.useState(growth.goals);
   const [sync, setSync] = React.useState(growth.nextSync);
   const [feedbackSent, setFeedbackSent] = React.useState(growth.feedbackSent);
@@ -197,7 +196,9 @@ export function GrowthView({
           avgGoal={avgGoal}
           activeCount={activeGoals.length}
           sync={sync}
-          history={history}
+          reviews={reviews}
+          onReviews={setReviews}
+          guard={guard}
           onUpdateGoal={(id, input) =>
             guard(async () => {
               const next = await updateGoalProgress(id, input);
@@ -244,7 +245,9 @@ function OverviewTab({
   avgGoal,
   activeCount,
   sync,
-  history,
+  reviews,
+  onReviews,
+  guard,
   onUpdateGoal,
   goToSyncs,
 }: {
@@ -252,7 +255,9 @@ function OverviewTab({
   avgGoal: number;
   activeCount: number;
   sync: OneOnOneSync | null;
-  history: HistoryReview[];
+  reviews: MyReviews;
+  onReviews: (r: MyReviews) => void;
+  guard: <T>(work: () => Promise<T>) => Promise<T | undefined>;
   onUpdateGoal: (id: string, input: { progress: number; note?: string }) => Promise<unknown>;
   goToSyncs: () => void;
 }) {
@@ -437,36 +442,317 @@ function OverviewTab({
 
       {/* History */}
       <Card className="card-pad lg:col-span-12">
-        <CardHeader title="Review History" />
-        <div className="mt-3 divide-y divide-line">
-          {history.length === 0 && (
-            <p className="py-3 text-sm text-ink-muted">No formal reviews on file yet.</p>
-          )}
-          {history.map((h) => (
-            <div key={h.id} className="flex items-center gap-4 py-3">
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-ink">{h.cycle}</p>
-                <p className="text-xs text-ink-muted">{formatDate(h.date)}</p>
-              </div>
-              {h.released ? (
-                <>
-                  {h.score && <Badge tone="green">{h.score.toFixed(1)} / 5</Badge>}
-                  <Button size="sm" variant="outline">
-                    View
-                  </Button>
-                </>
-              ) : (
+        <ReviewsCard reviews={reviews} onReviews={onReviews} guard={guard} />
+      </Card>
+    </div>
+  );
+}
+
+/* ============================ Performance reviews ============================ */
+
+/** Guided prompts — distilled from BambooHR / 15Five / Lattice review templates. */
+const SELF_PROMPTS = [
+  "What accomplishments are you most proud of this cycle?",
+  "What are your top strengths, and how did you apply them?",
+  "What could have gone better, and what support would help?",
+  "What are your top priorities for the next cycle?",
+];
+const MANAGER_PROMPTS = [
+  "What were their most meaningful contributions this cycle?",
+  "Where should they focus their growth next cycle?",
+  "How will you support them in getting there?",
+];
+
+function reviewPhaseLabel(r: PerformanceReview, mine: boolean): string {
+  switch (r.state) {
+    case "Draft":
+      return "Being prepared by HR";
+    case "Self-Evaluation":
+      return mine ? "Your self-assessment is due" : "Waiting on their self-assessment";
+    case "Manager-Evaluation":
+      return mine ? "With your manager" : "Your evaluation is due";
+    case "Calibrated":
+      return "In HR calibration";
+    case "Completed":
+      return "Shared";
+  }
+}
+
+function ReviewsCard({
+  reviews,
+  onReviews,
+  guard,
+}: {
+  reviews: MyReviews;
+  onReviews: (r: MyReviews) => void;
+  guard: <T>(work: () => Promise<T>) => Promise<T | undefined>;
+}) {
+  const [selfFor, setSelfFor] = React.useState<PerformanceReview | null>(null);
+  const [evalFor, setEvalFor] = React.useState<PerformanceReview | null>(null);
+  const [viewing, setViewing] = React.useState<PerformanceReview | null>(null);
+
+  return (
+    <>
+      <CardHeader title="Performance Reviews" />
+      <div className="mt-3 divide-y divide-line">
+        {reviews.mine.length === 0 && (
+          <p className="py-3 text-sm text-ink-muted">No formal reviews on file yet.</p>
+        )}
+        {reviews.mine.map((r) => (
+          <div key={r.id} className="flex flex-wrap items-center gap-3 py-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-ink">{r.cycle}</p>
+              <p className="text-xs text-ink-muted">
+                Due {formatDate(r.due)} · {reviewPhaseLabel(r, true)}
+              </p>
+            </div>
+            {r.state === "Self-Evaluation" && (
+              <Button size="sm" onClick={() => setSelfFor(r)}>
+                Complete self-assessment
+              </Button>
+            )}
+            {r.state === "Completed" ? (
+              <>
+                {r.score != null && <Badge tone="green">{r.score.toFixed(1)} / 5</Badge>}
+                {r.acknowledgedAt && <Badge tone="gray">Acknowledged</Badge>}
+                <Button size="sm" variant="outline" onClick={() => setViewing(r)}>
+                  View
+                </Button>
+              </>
+            ) : (
+              r.state !== "Self-Evaluation" && (
                 <span className="inline-flex items-center gap-1.5 text-xs font-medium text-ink-faint">
-                  <Lock className="h-3.5 w-3.5" /> Locked until released by HR
+                  <Lock className="h-3.5 w-3.5" /> Shared once completed
                 </span>
+              )
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Manager capacity: reviews of direct reports awaiting this manager. */}
+      {reviews.reports.length > 0 && (
+        <div className="mt-4 rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50/40 dark:bg-amber-500/10 p-3.5">
+          <p className="text-xs font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+            Your team&apos;s reviews
+          </p>
+          <div className="mt-1 divide-y divide-amber-200/60 dark:divide-amber-500/20">
+            {reviews.reports.map((r) => (
+              <div key={r.id} className="flex flex-wrap items-center gap-3 py-2.5">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-ink">{r.employee}</p>
+                  <p className="text-xs text-ink-muted">
+                    {r.cycle} · {reviewPhaseLabel(r, false)}
+                  </p>
+                </div>
+                {r.state === "Manager-Evaluation" ? (
+                  <Button size="sm" onClick={() => setEvalFor(r)}>
+                    Write evaluation
+                  </Button>
+                ) : (
+                  <span className="text-xs text-ink-faint">{reviewPhaseLabel(r, false)}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <p className="mt-3 text-xs text-ink-faint">
+        Your manager can&apos;t see your self-assessment until you submit it, and their evaluation is
+        shared with you only after HR completes the cycle.
+      </p>
+
+      {selfFor && (
+        <WriteEvaluationModal
+          title={`Self-assessment — ${selfFor.cycle}`}
+          prompts={SELF_PROMPTS}
+          submitLabel="Submit self-assessment"
+          withScore={false}
+          onClose={() => setSelfFor(null)}
+          onSubmit={async (text) => {
+            const next = await guard(() => submitSelfEvaluation(selfFor.id, text));
+            if (next) {
+              onReviews(next);
+              setSelfFor(null);
+            }
+          }}
+        />
+      )}
+      {evalFor && (
+        <WriteEvaluationModal
+          title={`Evaluation — ${evalFor.employee} · ${evalFor.cycle}`}
+          prompts={MANAGER_PROMPTS}
+          context={
+            evalFor.selfEvaluation
+              ? { label: `${evalFor.employee.split(" ")[0]}'s self-assessment`, text: evalFor.selfEvaluation }
+              : undefined
+          }
+          submitLabel="Submit evaluation"
+          withScore
+          onClose={() => setEvalFor(null)}
+          onSubmit={async (text, score) => {
+            const next = await guard(() => submitManagerEvaluation(evalFor.id, text, score));
+            if (next) {
+              onReviews(next);
+              setEvalFor(null);
+            }
+          }}
+        />
+      )}
+      {viewing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/30 p-4">
+          <Card className="card-pad max-h-[90vh] w-full max-w-lg overflow-y-auto sm:p-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-ink">{viewing.cycle}</h3>
+              <button onClick={() => setViewing(null)} className="rounded-lg p-1.5 text-ink-muted hover:bg-canvas">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="mt-4 space-y-4 text-sm">
+              {viewing.score != null && (
+                <p>
+                  <Badge tone="green">Overall {viewing.score.toFixed(1)} / 5</Badge>
+                </p>
+              )}
+              <div>
+                <p className="text-xs font-medium text-ink-muted">Your self-assessment</p>
+                <p className="mt-1 whitespace-pre-wrap rounded-lg bg-canvas px-3 py-2 text-ink">
+                  {viewing.selfEvaluation || <i className="text-ink-faint">Not submitted.</i>}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-ink-muted">Manager evaluation</p>
+                <p className="mt-1 whitespace-pre-wrap rounded-lg bg-canvas px-3 py-2 text-ink">
+                  {viewing.managerEvaluation || <i className="text-ink-faint">None recorded.</i>}
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={() => setViewing(null)}>
+                Close
+              </Button>
+              {!viewing.acknowledgedAt && (
+                <Button
+                  size="sm"
+                  onClick={async () => {
+                    const next = await guard(() => acknowledgeReview(viewing.id));
+                    if (next) {
+                      onReviews(next);
+                      setViewing(next.mine.find((m) => m.id === viewing.id) ?? null);
+                    }
+                  }}
+                >
+                  Acknowledge review
+                </Button>
               )}
             </div>
-          ))}
+          </Card>
         </div>
+      )}
+    </>
+  );
+}
+
+/** Shared write modal for self-assessments and manager evaluations. */
+function WriteEvaluationModal({
+  title,
+  prompts,
+  context,
+  submitLabel,
+  withScore,
+  onClose,
+  onSubmit,
+}: {
+  title: string;
+  prompts: string[];
+  context?: { label: string; text: string };
+  submitLabel: string;
+  withScore: boolean;
+  onClose: () => void;
+  onSubmit: (text: string, score?: number) => Promise<void>;
+}) {
+  const [text, setText] = React.useState("");
+  const [score, setScore] = React.useState("");
+  const [busy, setBusy] = React.useState(false);
+
+  async function submit() {
+    if (!text.trim() || busy) return;
+    setBusy(true);
+    try {
+      const parsed = score.trim() === "" ? undefined : Number(score);
+      await onSubmit(text.trim(), parsed != null && !Number.isNaN(parsed) ? parsed : undefined);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/30 p-4">
+      <Card className="card-pad max-h-[90vh] w-full max-w-lg overflow-y-auto sm:p-6">
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-bold text-ink">{title}</h3>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-ink-muted hover:bg-canvas">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {context && (
+          <div className="mt-4">
+            <p className="text-xs font-medium text-ink-muted">{context.label}</p>
+            <p className="mt-1 max-h-40 overflow-y-auto whitespace-pre-wrap rounded-lg bg-canvas px-3 py-2 text-sm text-ink">
+              {context.text}
+            </p>
+          </div>
+        )}
+
+        <div className="mt-4 rounded-xl border border-line bg-canvas/50 p-3">
+          <p className="text-[11px] font-bold uppercase tracking-wide text-ink-faint">
+            Consider covering
+          </p>
+          <ul className="mt-1.5 space-y-1 text-xs text-ink-muted">
+            {prompts.map((p) => (
+              <li key={p} className="flex gap-1.5">
+                <span className="text-brand-500">•</span> {p}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <textarea
+          className="field-input mt-4 min-h-40"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Write your assessment…"
+        />
+
+        {withScore && (
+          <div className="mt-3">
+            <label className="field-label">Proposed rating (0–5, optional — HR calibrates)</label>
+            <input
+              type="number"
+              min={0}
+              max={5}
+              step={0.5}
+              className="field-input"
+              value={score}
+              onChange={(e) => setScore(e.target.value)}
+              placeholder="e.g. 4"
+            />
+          </div>
+        )}
+
         <p className="mt-3 text-xs text-ink-faint">
-          Internal manager calibration notes are never shown here — you only see feedback once it
-          has been formally released.
+          Submitting locks your response and moves the review to the next stage.
         </p>
+        <div className="mt-5 flex justify-end gap-2">
+          <Button variant="outline" size="sm" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button size="sm" disabled={!text.trim() || busy} onClick={submit}>
+            {busy ? "Submitting…" : submitLabel}
+          </Button>
+        </div>
       </Card>
     </div>
   );

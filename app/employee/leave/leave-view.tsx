@@ -81,9 +81,12 @@ export default function LeaveView({ actorName, isManager, initialRequests }: Pro
   const [submitError, setSubmitError] = React.useState<string | null>(null);
 
   const mine = requests.filter((r) => r.employee === actorName);
-  const teamPending = isManager
-    ? requests.filter((r) => r.employee !== actorName && r.status === "Pending")
-    : [];
+  // The backend scopes this list to the actor's own requests + those of anyone
+  // who reports to them (by reporting line), so any non-own request here is a
+  // direct report's — regardless of the actor's role code.
+  const teamPending = requests.filter(
+    (r) => r.employee !== actorName && r.status === "Pending",
+  );
 
   // Derived, never stored: "used" comes from the SAME approved requests the
   // My Requests table renders, so cards and history stay in lockstep.
@@ -189,14 +192,16 @@ export default function LeaveView({ actorName, isManager, initialRequests }: Pro
         <p className="mb-4 rounded-xl bg-red-50 dark:bg-red-500/10 px-3.5 py-2.5 text-sm text-red-600 dark:text-red-300">{error}</p>
       )}
 
-      {/* Manager approval queue — leave requests route HERE, not to HR. */}
-      {isManager && (
+      {/* Manager approval queue — leave requests route HERE, not to HR. Shown to
+          role-MANAGER users (empty-state included) and to anyone who actually
+          has a report's request waiting, so managers of any role see it. */}
+      {(isManager || teamPending.length > 0) && (
         <Card className="card-pad mb-5 border-amber-200 dark:border-amber-500/30 bg-amber-50/30 dark:bg-amber-500/10">
           <CardHeader title={`Team requests awaiting your approval (${teamPending.length})`} />
           <div className="mt-3 space-y-2">
             {teamPending.length === 0 && (
               <p className="py-3 text-center text-sm text-ink-muted">
-                Nothing waiting — your department is all caught up.
+                Nothing waiting — your team is all caught up.
               </p>
             )}
             {teamPending.map((r) => (

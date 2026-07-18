@@ -39,7 +39,7 @@ export default async function WelcomePage({
                 Set a password to activate your account and start onboarding.
               </p>
             </div>
-            <WelcomeForm token={token} expectedEmail={onboardingCase.personalEmail} />
+            <WelcomeForm token={token} />
           </>
         ) : (
           <div className="card card-pad space-y-2 text-center">

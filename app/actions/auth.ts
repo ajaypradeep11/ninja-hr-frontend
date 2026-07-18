@@ -43,15 +43,6 @@ export async function activateAccount(caseToken: string, password: string): Prom
   return acceptInvite(caseToken, { password });
 }
 
-/**
- * Google-lane invite acceptance: the hire already signed in with the popup, so
- * the backend verifies that ID token itself (never trust a client-claimed
- * identity) and links the resulting uid to this case's employee record.
- */
-export async function activateAccountWithGoogle(caseToken: string, idToken: string): Promise<ActivateAccountResult> {
-  return acceptInvite(caseToken, { idToken });
-}
-
 /** Revoke the session's refresh tokens and clear session + impersonation cookies. */
 export async function signOutSession(): Promise<void> {
   const store = await cookies();

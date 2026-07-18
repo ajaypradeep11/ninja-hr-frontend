@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { firebaseClientAuth } from "@/lib/firebase/client";
 import { createSession } from "@/app/actions/auth";
 import { Button } from "@/components/ui";
@@ -64,22 +64,6 @@ export function LoginForm() {
           {busy ? "Signing in…" : "Sign in"}
         </Button>
       </form>
-      <div className="flex items-center gap-3 text-[11px] uppercase tracking-wide text-ink-faint">
-        <span className="h-px flex-1 bg-line" /> or <span className="h-px flex-1 bg-line" />
-      </div>
-      <Button
-        variant="outline"
-        className="w-full"
-        disabled={busy}
-        onClick={() =>
-          void withBusy(async () => {
-            const cred = await signInWithPopup(firebaseClientAuth(), new GoogleAuthProvider());
-            await finish(await cred.user.getIdToken());
-          })
-        }
-      >
-        Continue with Google
-      </Button>
     </div>
   );
 }

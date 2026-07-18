@@ -2,12 +2,12 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { signInWithEmailAndPassword, signInWithPopup, signOut, GoogleAuthProvider } from "firebase/auth";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { firebaseClientAuth } from "@/lib/firebase/client";
-import { createSession, activateAccount, activateAccountWithGoogle } from "@/app/actions/auth";
+import { createSession, activateAccount } from "@/app/actions/auth";
 import { Button } from "@/components/ui";
 
-export function WelcomeForm({ token, expectedEmail }: { token: string; expectedEmail: string }) {
+export function WelcomeForm({ token }: { token: string }) {
   const router = useRouter();
   const [password, setPassword] = React.useState("");
   const [confirm, setConfirm] = React.useState("");
@@ -86,32 +86,6 @@ export function WelcomeForm({ token, expectedEmail }: { token: string; expectedE
           {busy ? "Setting up…" : "Set password & continue"}
         </Button>
       </form>
-      <div className="flex items-center gap-3 text-[11px] uppercase tracking-wide text-ink-faint">
-        <span className="h-px flex-1 bg-line" /> or <span className="h-px flex-1 bg-line" />
-      </div>
-      <Button
-        variant="outline"
-        className="w-full"
-        disabled={busy}
-        onClick={() =>
-          void withBusy(async () => {
-            const auth = firebaseClientAuth();
-            const cred = await signInWithPopup(auth, new GoogleAuthProvider());
-            if (cred.user.email?.toLowerCase() !== expectedEmail.toLowerCase()) {
-              await signOut(auth);
-              throw new Error(`Sign in with ${expectedEmail} to accept this invite.`);
-            }
-            // Accept BEFORE minting the session: this is what creates the
-            // employee record behind the Google identity, and without it the
-            // very next page (the employee shell) 403s on an unknown caller.
-            const idToken = await cred.user.getIdToken();
-            await activateAccountWithGoogle(token, idToken);
-            await finish(idToken);
-          })
-        }
-      >
-        Continue with Google
-      </Button>
     </div>
   );
 }

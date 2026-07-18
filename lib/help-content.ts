@@ -63,11 +63,11 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         slug: "signing-in",
         title: "Signing in",
         audience: "everyone",
-        summary: "Sign in with your work email, or with Google if it matches your work email.",
+        summary: "Sign in with your work email and password.",
         steps: [
           { text: "Go to the sign-in page and enter your **Work email** and **Password**." },
           {
-            text: "Click **Sign in** — or use **Continue with Google** with your work account.",
+            text: "Click **Sign in**.",
           },
           {
             text: "You'll land in the right place automatically: HR admins in the Admin Console, everyone else in the Employee Portal.",
@@ -89,7 +89,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
             text: "Open the invite link from your personal email — you'll see **“Welcome to NinjaHR”** with your name.",
           },
           {
-            text: "Set a **Password** (at least 10 characters), confirm it, and click **Set password & continue** — or click **Continue with Google** using the same email the invite was sent to.",
+            text: "Set a **Password** (at least 10 characters), confirm it, and click **Set password & continue**.",
           },
           {
             text: "You're signed in and taken straight to your onboarding checklist — see “Complete your onboarding”.",

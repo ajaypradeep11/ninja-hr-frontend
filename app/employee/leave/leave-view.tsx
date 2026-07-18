@@ -6,6 +6,7 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  Eye,
   MoreVertical,
   Pencil,
   Plus,
@@ -67,6 +68,8 @@ interface Props {
 export default function LeaveView({ actorName, isManager, initialRequests }: Props) {
   const [requests, setRequests] = React.useState<LeaveRequest[]>(initialRequests);
   const [error, setError] = React.useState<string | null>(null);
+  // A report's request the manager is reviewing in detail before deciding.
+  const [reviewing, setReviewing] = React.useState<LeaveRequest | null>(null);
 
   // Request modal state — `editingId` switches it into edit mode.
   const [open, setOpen] = React.useState(false);
@@ -87,6 +90,13 @@ export default function LeaveView({ actorName, isManager, initialRequests }: Pro
   const teamPending = requests.filter(
     (r) => r.employee !== actorName && r.status === "Pending",
   );
+  // The report's balance for the reviewed leave type — the manager's scoped
+  // list already carries that report's full history, so this is derivable here.
+  const reviewBalance = reviewing
+    ? computeLeaveBalances(requests, reviewing.employee).find(
+        (b) => BALANCE_TYPE[b.type] === reviewing.type,
+      )
+    : undefined;
 
   // Derived, never stored: "used" comes from the SAME approved requests the
   // My Requests table renders, so cards and history stay in lockstep.
@@ -215,6 +225,12 @@ export default function LeaveView({ actorName, isManager, initialRequests }: Pro
                   </p>
                 </div>
                 <button
+                  onClick={() => setReviewing(r)}
+                  className="inline-flex h-7 items-center gap-1 rounded-lg border border-line bg-card px-2 text-xs font-semibold text-ink-muted hover:bg-canvas"
+                >
+                  <Eye className="h-3.5 w-3.5" /> Review
+                </button>
+                <button
                   onClick={() => mutate(() => setLeaveStatus(r.id, "Approved"))}
                   className="inline-flex h-7 items-center gap-1 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 px-2 text-xs font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-500/20"
                 >
@@ -325,6 +341,94 @@ export default function LeaveView({ actorName, isManager, initialRequests }: Pro
           </table>
         </div>
       </Card>
+
+      {/* Review-details modal — a manager inspects a report's request before deciding. */}
+      {reviewing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/30 p-4">
+          <Card className="card-pad w-full max-w-md sm:p-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-ink">Review leave request</h3>
+              <button
+                onClick={() => setReviewing(null)}
+                className="rounded-lg p-1.5 text-ink-muted hover:bg-canvas"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="mt-4 flex items-center gap-3">
+              <Avatar name={reviewing.employee} size={40} />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-ink">{reviewing.employee}</p>
+                <p className="text-xs text-ink-muted">{reviewing.department}</p>
+              </div>
+              <Badge tone={statusTone[reviewing.status]} className="ml-auto">
+                {reviewing.status}
+              </Badge>
+            </div>
+
+            <dl className="mt-5 space-y-2.5 text-sm">
+              <div className="flex justify-between gap-4">
+                <dt className="text-ink-muted">Leave type</dt>
+                <dd className="font-medium text-ink">{reviewing.type}</dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-ink-muted">
+                  {reviewing.type === "Overtime" ? "Date worked" : "Dates"}
+                </dt>
+                <dd className="text-right font-medium text-ink">
+                  {formatDate(reviewing.start)}
+                  {reviewing.end !== reviewing.start && <> – {formatDate(reviewing.end)}</>}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-ink-muted">Duration</dt>
+                <dd className="font-medium text-ink">{duration(reviewing)}</dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-ink-muted">Province</dt>
+                <dd className="font-medium text-ink">{reviewing.province}</dd>
+              </div>
+              {reviewBalance && (
+                <div className="flex justify-between gap-4 border-t border-line pt-2.5">
+                  <dt className="text-ink-muted">{reviewing.type} balance</dt>
+                  <dd className="text-right font-medium text-ink">
+                    {reviewBalance.used} used of {reviewBalance.used + reviewBalance.available}
+                    <span className="block text-xs font-normal text-ink-muted">
+                      this request: {duration(reviewing)}
+                    </span>
+                  </dd>
+                </div>
+              )}
+            </dl>
+
+            {reviewing.status === "Pending" && (
+              <div className="mt-6 flex gap-2">
+                <button
+                  onClick={() => {
+                    const id = reviewing.id;
+                    setReviewing(null);
+                    void mutate(() => setLeaveStatus(id, "Approved"));
+                  }}
+                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+                >
+                  <Check className="h-4 w-4" /> Approve
+                </button>
+                <button
+                  onClick={() => {
+                    const id = reviewing.id;
+                    setReviewing(null);
+                    void mutate(() => setLeaveStatus(id, "Denied"));
+                  }}
+                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-red-200 dark:border-red-500/30 px-3 py-2 text-sm font-semibold text-red-600 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/10"
+                >
+                  <X className="h-4 w-4" /> Deny
+                </button>
+              </div>
+            )}
+          </Card>
+        </div>
+      )}
 
       {/* Request / edit modal */}
       {open && (
